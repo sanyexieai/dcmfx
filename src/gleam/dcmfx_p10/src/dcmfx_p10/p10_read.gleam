@@ -329,8 +329,10 @@ fn next_delimiter_part(
 
       // Update current path
       let new_path = case part {
-        p10_part.SequenceDelimiter | p10_part.SequenceItemDelimiter ->
-          data_set_path.pop(context.path)
+        p10_part.SequenceDelimiter | p10_part.SequenceItemDelimiter -> {
+          let assert Ok(path) = data_set_path.pop(context.path)
+          path
+        }
         _ -> context.path
       }
 
@@ -797,12 +799,16 @@ fn read_data_element_header_part(
         })
       use new_location <- result.try(new_location)
 
+      let assert Ok(new_path) =
+        data_set_path.add_data_element(context.path, tag)
+
       let new_context =
         P10ReadContext(
           ..context,
           stream: new_stream,
           next_action: ReadPixelDataItem(vr),
           location: new_location,
+          path: new_path,
         )
 
       Ok(#([part], new_context))
@@ -817,7 +823,7 @@ fn read_data_element_header_part(
         p10_location.end_sequence(context.location)
       {
         Ok(new_location) -> {
-          let new_path = data_set_path.pop(context.path)
+          let assert Ok(new_path) = data_set_path.pop(context.path)
           let new_sequence_depth = context.sequence_depth - 1
 
           #(
@@ -872,7 +878,7 @@ fn read_data_element_header_part(
         })
       use new_location <- result.try(new_location)
 
-      let new_path = data_set_path.pop(context.path)
+      let assert Ok(new_path) = data_set_path.pop(context.path)
 
       let new_context =
         P10ReadContext(
@@ -1239,7 +1245,10 @@ fn read_data_element_value_bytes_part(
       }
 
       let new_path = case bytes_remaining {
-        0 -> data_set_path.pop(context.path)
+        0 -> {
+          let assert Ok(path) = data_set_path.pop(context.path)
+          path
+        }
         _ -> context.path
       }
 
@@ -1339,11 +1348,19 @@ fn read_pixel_data_item_part(
               True,
             )
 
+          // Add item to the path
+          let item_count =
+            p10_location.sequence_item_count(context.location)
+            |> result.unwrap(1)
+          let assert Ok(new_path) =
+            data_set_path.add_sequence_item(context.path, item_count - 1)
+
           let new_context =
             P10ReadContext(
               ..context,
               stream: new_stream,
               next_action: next_action,
+              path: new_path,
             )
 
           Ok(#([part], new_context))
@@ -1366,6 +1383,8 @@ fn read_pixel_data_item_part(
             })
           use new_location <- result.try(new_location)
 
+          let assert Ok(new_path) = data_set_path.pop(context.path)
+
           let next_action = ReadDataElementHeader
 
           let new_context =
@@ -1374,6 +1393,7 @@ fn read_pixel_data_item_part(
               stream: new_stream,
               next_action: next_action,
               location: new_location,
+              path: new_path,
             )
 
           Ok(#([part], new_context))

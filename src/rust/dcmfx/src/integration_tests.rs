@@ -13,12 +13,6 @@ mod tests {
   use dcmfx_json::*;
   use dcmfx_p10::*;
 
-  // Integration tests are run with encapsulated pixel data allowed in the DICOM
-  // JSON data
-  const JSON_CONFIG: DicomJsonConfig = DicomJsonConfig {
-    store_encapsulated_pixel_data: true,
-  };
-
   #[test]
   fn integration_tests() -> Result<(), ()> {
     let test_assets_dir = if Path::new("../../test/assets").is_dir() {
@@ -131,6 +125,13 @@ mod tests {
       dicom,
       &data_set,
       &expected_json,
+      false,
+    )?;
+    test_data_set_matches_expected_json_output(
+      dicom,
+      &data_set,
+      &expected_json,
+      true,
     )?;
     test_dicom_json_rewrite_cycle(dicom, &expected_json_string)?;
     test_p10_rewrite_cycle(dicom, &data_set)?;
@@ -192,10 +193,16 @@ mod tests {
     dicom: &Path,
     data_set: &DataSet,
     expected_json: &serde_json::Value,
+    pretty_print: bool,
   ) -> Result<(), DicomValidationError> {
+    let json_config = DicomJsonConfig {
+      store_encapsulated_pixel_data: true,
+      pretty_print,
+    };
+
     // Convert the data set to JSON
     let data_set_json: serde_json::Value =
-      serde_json::from_str(&data_set.to_json(JSON_CONFIG).unwrap()).unwrap();
+      serde_json::from_str(&data_set.to_json(json_config).unwrap()).unwrap();
 
     // Compare the actual JSON to the expected JSON
     if data_set_json == *expected_json {
@@ -227,12 +234,17 @@ mod tests {
     let original_json: serde_json::Value =
       serde_json::from_str(expected_json_string).unwrap();
 
+    let json_config = DicomJsonConfig {
+      store_encapsulated_pixel_data: true,
+      pretty_print: false,
+    };
+
     // Check the reverse by converting the expected JSON to a data set then back
     // to JSON and checking it matches the original. This tests the reading of
     // DICOM JSON data into a data set.
     let data_set = DataSet::from_json(expected_json_string).unwrap();
     let data_set_json: serde_json::Value =
-      serde_json::from_str(&data_set.to_json(JSON_CONFIG).unwrap()).unwrap();
+      serde_json::from_str(&data_set.to_json(json_config).unwrap()).unwrap();
 
     // Compare the actual JSON to the expected JSON
     if original_json == data_set_json {

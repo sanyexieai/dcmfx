@@ -111,7 +111,8 @@ fn validate_dicom(dicom: String) -> Result(Nil, DicomValidationError) {
     json.decode(expected_json_string, dynamic.dynamic)
 
   [
-    test_data_set_matches_expected_json(dicom, data_set, expected_json),
+    test_data_set_matches_expected_json(dicom, data_set, expected_json, False),
+    test_data_set_matches_expected_json(dicom, data_set, expected_json, True),
     test_dicom_json_rewrite_cycle(dicom, expected_json_string),
     test_dcmfx_p10_rewrite_cycle(dicom, data_set),
     test_jittered_read(dicom, data_set, fn() { 15 }),
@@ -128,9 +129,11 @@ fn test_data_set_matches_expected_json(
   dicom: String,
   data_set: DataSet,
   expected_json: Dynamic,
+  pretty_print: Bool,
 ) -> Result(Nil, DicomValidationError) {
   // Convert the data set to JSON
-  let config = DicomJsonConfig(store_encapsulated_pixel_data: True)
+  let config =
+    DicomJsonConfig(store_encapsulated_pixel_data: True, pretty_print:)
   let assert Ok(data_set_json) = dcmfx_json.data_set_to_json(data_set, config)
   let assert Ok(data_set_json) = json.decode(data_set_json, dynamic.dynamic)
 
@@ -164,7 +167,8 @@ fn test_dicom_json_rewrite_cycle(
   // Check the reverse by converting the expected JSON to a data set then back
   // to JSON and checking it matches the original. This tests the reading of
   // DICOM JSON data into a data set.
-  let config = DicomJsonConfig(store_encapsulated_pixel_data: True)
+  let config =
+    DicomJsonConfig(store_encapsulated_pixel_data: True, pretty_print: False)
   let assert Ok(data_set) = dcmfx_json.json_to_data_set(expected_json_string)
   let assert Ok(data_set_json_string) =
     dcmfx_json.data_set_to_json(data_set, config)

@@ -61,6 +61,16 @@ impl DataSetPath {
     self.0.is_empty()
   }
 
+  /// Returns the number of sequence items present in a data set path.
+  ///
+  pub fn sequence_item_count(&self) -> usize {
+    self
+      .0
+      .iter()
+      .filter(|entry| matches!(entry, DataSetPathEntry::SequenceItem { .. }))
+      .count()
+  }
+
   /// Returns the final data element entry in a data set path. Returns an error
   /// if the last entry in the data set path is not a data element.
   ///
@@ -105,11 +115,16 @@ impl DataSetPath {
     }
   }
 
-  /// Removes the last entry in a data set path. If the data set path is empty
-  /// then it is not changed.
+  /// Removes the last entry in a data set path.
   ///
-  pub fn pop(&mut self) {
-    self.0.pop();
+  #[allow(clippy::result_unit_err)]
+  pub fn pop(&mut self) -> Result<(), ()> {
+    if self.0.is_empty() {
+      Err(())
+    } else {
+      self.0.pop();
+      Ok(())
+    }
   }
 
   /// Parses a data set path from a string.

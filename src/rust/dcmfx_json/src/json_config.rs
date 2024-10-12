@@ -15,4 +15,10 @@ pub struct DicomJsonConfig {
   /// will error on conversion to DICOM JSON.
   ///
   pub store_encapsulated_pixel_data: bool,
+
+  /// Whether to format the DICOM JSON for readability with newlines and
+  /// indentation. This increases the size of the output but is easier to
+  /// directly inspect.
+  ///
+  pub pretty_print: bool,
 }

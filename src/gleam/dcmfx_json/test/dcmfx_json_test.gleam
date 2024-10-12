@@ -163,8 +163,11 @@ pub fn data_set_to_json_test() {
 
     let ds = data_set.from_list(tags)
 
+    let config =
+      DicomJsonConfig(store_encapsulated_pixel_data: True, pretty_print: False)
+
     ds
-    |> dcmfx_json.data_set_to_json(DicomJsonConfig(True))
+    |> dcmfx_json.data_set_to_json(config)
     |> should.equal(Ok(expected_json))
   })
 }

@@ -15,6 +15,12 @@
 /// standard, which means that data sets with encapsulated pixel data elements
 /// will error on conversion to DICOM JSON.
 ///
+/// ### `pretty_print: Bool`
+///
+/// Whether to format the DICOM JSON for readability with newlines and
+/// indentation. This increases the size of the output but is easier to directly
+/// inspect.
+///
 pub type DicomJsonConfig {
-  DicomJsonConfig(store_encapsulated_pixel_data: Bool)
+  DicomJsonConfig(store_encapsulated_pixel_data: Bool, pretty_print: Bool)
 }

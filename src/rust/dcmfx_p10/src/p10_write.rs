@@ -186,20 +186,29 @@ impl P10WriteContext {
         // Update the current path
         match part {
           P10Part::DataElementHeader { tag, .. } => {
-            let _ = self.path.add_data_element(*tag);
+            self.path.add_data_element(*tag)
           }
+
           P10Part::SequenceStart { tag, .. } => {
-            let _ = self.path.add_data_element(*tag);
             self.sequence_item_counts.push(0);
+            self.path.add_data_element(*tag)
           }
-          P10Part::SequenceItemStart => {
-            if let Some(index) = self.sequence_item_counts.last_mut() {
-              let _ = self.path.add_sequence_item(*index);
-              *index += 1;
-            }
+
+          P10Part::SequenceItemStart | P10Part::PixelDataItem { .. } => {
+            let index = self.sequence_item_counts.last_mut().unwrap();
+
+            *index += 1;
+            self.path.add_sequence_item(*index - 1)
           }
-          _ => (),
-        };
+
+          _ => Ok(()),
+        }
+        .map_err(|_| P10Error::PartStreamInvalid {
+          when: "Writing part to context".to_string(),
+          details: "The data set path is not in a valid state for this part"
+            .to_string(),
+          part: part.clone(),
+        })?;
 
         // Convert part to bytes
         let part_bytes =
@@ -222,12 +231,19 @@ impl P10WriteContext {
             bytes_remaining: 0, ..
           }
           | P10Part::SequenceItemDelimiter => self.path.pop(),
+
           P10Part::SequenceDelimiter => {
-            self.path.pop();
             self.sequence_item_counts.pop();
+            self.path.pop()
           }
-          _ => (),
-        };
+
+          _ => Ok(()),
+        }
+        .map_err(|_| P10Error::PartStreamInvalid {
+          when: "Writing part to context".to_string(),
+          details: "The data set path is empty".to_string(),
+          part: part.clone(),
+        })?;
 
         // If a zlib stream is active then pass the P10 bytes through it
         if let Some(zlib_stream) = self.zlib_stream.as_mut() {

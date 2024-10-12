@@ -301,7 +301,7 @@ impl P10ReadContext {
         if part == P10Part::SequenceDelimiter
           || part == P10Part::SequenceItemDelimiter
         {
-          self.path.pop();
+          self.path.pop().unwrap();
         }
 
         vec![part]
@@ -684,6 +684,8 @@ impl P10ReadContext {
             offset: Some(self.stream.bytes_read()),
           })?;
 
+        self.path.add_data_element(tag).unwrap();
+
         self.next_action = NextAction::ReadPixelDataItem { vr };
 
         Ok(vec![part])
@@ -696,7 +698,7 @@ impl P10ReadContext {
       {
         let parts = match self.location.end_sequence() {
           Ok(()) => {
-            self.path.pop();
+            self.path.pop().unwrap();
             self.sequence_depth -= 1;
 
             vec![P10Part::SequenceDelimiter]
@@ -730,7 +732,7 @@ impl P10ReadContext {
             offset: Some(self.stream.bytes_read()),
           })?;
 
-        self.path.pop();
+        self.path.pop().unwrap();
 
         Ok(vec![part])
       }
@@ -1087,7 +1089,7 @@ impl P10ReadContext {
         };
 
         if bytes_remaining == 0 {
-          self.path.pop();
+          self.path.pop().unwrap();
         }
 
         self.next_action = next_action;
@@ -1182,6 +1184,10 @@ impl P10ReadContext {
             emit_parts: true,
           };
 
+          // Add item to the path
+          let item_count = self.location.sequence_item_count().unwrap_or(1);
+          self.path.add_sequence_item(item_count - 1).unwrap();
+
           Ok(vec![part])
         }
 
@@ -1200,6 +1206,8 @@ impl P10ReadContext {
               offset: Some(self.stream.bytes_read()),
             }
           })?;
+
+          self.path.pop().unwrap();
 
           self.next_action = NextAction::ReadDataElementHeader;
 

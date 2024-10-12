@@ -9,6 +9,7 @@ pub fn main() {
 
     let json_config = DicomJsonConfig {
         store_encapsulated_pixel_data: true,
+        pretty_print: true,
     };
 
     let ds_json = ds.to_json(json_config).unwrap();

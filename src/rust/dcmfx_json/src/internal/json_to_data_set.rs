@@ -41,7 +41,7 @@ pub fn convert_json_to_data_set(
       }
     };
 
-    let _ = path.add_data_element(tag);
+    path.add_data_element(tag).unwrap();
 
     // Parse the data element value
     let value =
@@ -57,7 +57,7 @@ pub fn convert_json_to_data_set(
       }
     }
 
-    path.pop();
+    path.pop().unwrap();
   }
 
   Ok(data_set)
@@ -472,7 +472,7 @@ fn read_dicom_json_primitive_value(
       for (i, item) in raw_items.into_iter().enumerate() {
         path.add_sequence_item(i).unwrap();
         final_items.push(convert_json_to_data_set(item, path)?);
-        path.pop();
+        path.pop().unwrap();
       }
 
       Ok(DataElementValue::new_sequence(final_items))

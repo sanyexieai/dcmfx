@@ -24,10 +24,18 @@ pub struct ToJsonArgs {
   output_filename: String,
 
   #[arg(
+    long = "pretty",
+    help = "Whether to format the DICOM JSON for readability with newlines and \
+      indentation",
+    default_value_t = false
+  )]
+  pretty_print: bool,
+
+  #[arg(
     long,
     short = 'p',
-    help = "Whether to extend the DICOM JSON model to store encapsulated pixel \
-      data as inline binaries",
+    help = "Whether to extend DICOM JSON to store encapsulated pixel data as \
+      inline binaries",
     default_value_t = false
   )]
   store_encapsulated_pixel_data: bool,
@@ -35,6 +43,7 @@ pub struct ToJsonArgs {
 
 pub fn run(args: &ToJsonArgs) -> Result<(), ()> {
   let config = DicomJsonConfig {
+    pretty_print: args.pretty_print,
     store_encapsulated_pixel_data: args.store_encapsulated_pixel_data,
   };
 
@@ -104,13 +113,13 @@ fn perform_to_json(
     for part in parts.iter() {
       match json_transform.add_part(part, &mut output_stream) {
         Ok(()) => (),
-        Err(JsonSerializeError::DataError(e)) => return Err(Box::new(e)),
         Err(JsonSerializeError::IOError(e)) => {
           return Err(Box::new(P10Error::FileError {
             when: "Writing output file".to_string(),
             details: e.to_string(),
           }));
         }
+        Err(e) => return Err(Box::new(e)),
       };
 
       // When the end part has been written the conversion is complete

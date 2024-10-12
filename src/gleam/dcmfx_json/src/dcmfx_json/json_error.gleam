@@ -2,6 +2,7 @@ import dcmfx_core/data_element_tag
 import dcmfx_core/data_error
 import dcmfx_core/data_set_path.{type DataSetPath}
 import dcmfx_core/dictionary
+import dcmfx_p10/p10_error.{type P10Error}
 import gleam/io
 import gleam/list
 import gleam/option.{None}
@@ -12,6 +13,12 @@ pub type JsonSerializeError {
   /// The data to be serialized to the DICOM JSON model is invalid. Details of
   /// the issue are contained in the contained `DataError`.
   DataError(data_error: data_error.DataError)
+
+  /// A P10 error that occurred during JSON serialization. The most common error
+  /// is `PartStreamInvalid`, indicating that the stream of parts was not
+  /// well-formed.
+  ///
+  P10Error(P10Error)
 }
 
 /// Occurs when an error is encountered converting from the DICOM JSON model.
@@ -30,6 +37,7 @@ pub fn serialize_error_to_lines(
 ) -> List(String) {
   case error {
     DataError(error) -> data_error.to_lines(error, task_description)
+    P10Error(error) -> p10_error.to_lines(error, task_description)
   }
 }
 

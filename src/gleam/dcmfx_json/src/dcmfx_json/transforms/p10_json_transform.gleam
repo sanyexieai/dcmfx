@@ -10,6 +10,7 @@ import dcmfx_core/internal/utils
 import dcmfx_core/value_representation.{type ValueRepresentation}
 import dcmfx_json/json_config.{type DicomJsonConfig}
 import dcmfx_json/json_error.{type JsonSerializeError}
+import dcmfx_p10/p10_error
 import dcmfx_p10/p10_part.{type P10Part}
 import gleam/bit_array
 import gleam/bool
@@ -68,14 +69,26 @@ pub fn new(config: DicomJsonConfig) -> P10JsonTransform {
 }
 
 /// Adds the next DICOM P10 part to this JSON transform. Bytes of JSON data are
-/// returned as they become available. Note that if P10 parts are provided in an
-/// invalid order then no error will be returned, but the resulting JSON will
-/// most likely be invalid.
+/// returned as they become available.
+///
+/// If P10 parts are provided in an invalid order then an error may be returned,
+/// but this is not guaranteed for all invalid part orders, so in some cases the
+/// resulting JSON stream could be invalid when the incoming stream of P10 parts
+/// is malformed.
 ///
 pub fn add_part(
   transform: P10JsonTransform,
   part: P10Part,
 ) -> Result(#(P10JsonTransform, String), JsonSerializeError) {
+  let part_stream_invalid_error = fn(_: a) {
+    p10_error.PartStreamInvalid(
+      when: "Adding part to JSON transform",
+      details: "The transform was not able to write this part",
+      part:,
+    )
+    |> json_error.P10Error
+  }
+
   case part {
     p10_part.FilePreambleAndDICMPrefix(..) -> Ok(#(transform, ""))
     p10_part.FileMetaInformation(data_set) -> Ok(begin(transform, data_set))
@@ -84,15 +97,18 @@ pub fn add_part(
       let #(transform, json) =
         write_data_element_header(transform, tag, vr, length)
 
-      let path =
+      use path <- result.map(
         data_set_path.add_data_element(transform.data_set_path, tag)
-        |> result.unwrap(transform.data_set_path)
+        |> result.map_error(part_stream_invalid_error),
+      )
+
       let transform = P10JsonTransform(..transform, data_set_path: path)
 
-      Ok(#(transform, json))
+      #(transform, json)
     }
+
     p10_part.DataElementValueBytes(vr, data, bytes_remaining) -> {
-      use #(transform, json) <- result.map(write_data_element_value_bytes(
+      use #(transform, json) <- result.try(write_data_element_value_bytes(
         transform,
         vr,
         data,
@@ -101,17 +117,22 @@ pub fn add_part(
 
       let transform = case bytes_remaining {
         0 -> {
-          let path = data_set_path.pop(transform.data_set_path)
-          P10JsonTransform(..transform, data_set_path: path)
+          data_set_path.pop(transform.data_set_path)
+          |> result.map_error(part_stream_invalid_error)
+          |> result.map(fn(path) {
+            P10JsonTransform(..transform, data_set_path: path)
+          })
         }
-        _ -> transform
+        _ -> Ok(transform)
       }
+
+      use transform <- result.map(transform)
 
       #(transform, json)
     }
 
     p10_part.SequenceStart(tag, vr) -> {
-      use #(transform, json) <- result.map(write_sequence_start(
+      use #(transform, json) <- result.try(write_sequence_start(
         transform,
         tag,
         vr,
@@ -119,7 +140,9 @@ pub fn add_part(
 
       let path =
         data_set_path.add_data_element(transform.data_set_path, tag)
-        |> result.unwrap(transform.data_set_path)
+        |> result.map_error(part_stream_invalid_error)
+      use path <- result.map(path)
+
       let transform =
         P10JsonTransform(
           ..transform,
@@ -129,10 +152,15 @@ pub fn add_part(
 
       #(transform, json)
     }
+
     p10_part.SequenceDelimiter -> {
       let #(transform, json) = write_sequence_end(transform)
 
-      let path = data_set_path.pop(transform.data_set_path)
+      let path =
+        data_set_path.pop(transform.data_set_path)
+        |> result.map_error(part_stream_invalid_error)
+      use path <- result.try(path)
+
       let sequence_item_counts =
         list.rest(transform.sequence_item_counts) |> result.unwrap([])
 
@@ -147,18 +175,17 @@ pub fn add_part(
     }
 
     p10_part.SequenceItemStart -> {
-      let #(transform, json) = write_sequence_item_start(transform)
+      let path_and_item_counts = case transform.sequence_item_counts {
+        [count, ..rest] ->
+          transform.data_set_path
+          |> data_set_path.add_sequence_item(count)
+          |> result.map_error(part_stream_invalid_error)
+          |> result.map(fn(path) { #(path, [count + 1, ..rest]) })
 
-      let #(path, sequence_item_counts) = case transform.sequence_item_counts {
-        [count, ..rest] -> {
-          let path =
-            data_set_path.add_sequence_item(transform.data_set_path, count)
-            |> result.unwrap(transform.data_set_path)
-
-          #(path, [count + 1, ..rest])
-        }
-        _ -> #(transform.data_set_path, transform.sequence_item_counts)
+        _ -> Ok(#(transform.data_set_path, transform.sequence_item_counts))
       }
+
+      use #(path, sequence_item_counts) <- result.map(path_and_item_counts)
 
       let transform =
         P10JsonTransform(
@@ -167,31 +194,66 @@ pub fn add_part(
           sequence_item_counts:,
         )
 
-      Ok(#(transform, json))
+      write_sequence_item_start(transform)
     }
-    p10_part.SequenceItemDelimiter -> Ok(write_sequence_item_end(transform))
 
-    p10_part.PixelDataItem(length) -> {
-      use #(transform, json) <- result.map(write_encapsulated_pixel_data_item(
-        transform,
-        length,
-      ))
+    p10_part.SequenceItemDelimiter -> {
+      let #(transform, json) = write_sequence_item_end(transform)
 
-      let path = data_set_path.pop(transform.data_set_path)
+      let path =
+        data_set_path.pop(transform.data_set_path)
+        |> result.map_error(part_stream_invalid_error)
+      use path <- result.try(path)
+
       let transform = P10JsonTransform(..transform, data_set_path: path)
 
-      #(transform, json)
+      Ok(#(transform, json))
     }
 
-    p10_part.End -> Ok(#(transform, end()))
+    p10_part.PixelDataItem(length) -> {
+      let path_and_item_counts = case transform.sequence_item_counts {
+        [count, ..rest] ->
+          transform.data_set_path
+          |> data_set_path.add_sequence_item(count)
+          |> result.map_error(part_stream_invalid_error)
+          |> result.map(fn(path) { #(path, [count + 1, ..rest]) })
+
+        _ -> Ok(#(transform.data_set_path, transform.sequence_item_counts))
+      }
+
+      use #(path, sequence_item_counts) <- result.try(path_and_item_counts)
+
+      let transform =
+        P10JsonTransform(
+          ..transform,
+          data_set_path: path,
+          sequence_item_counts:,
+        )
+
+      write_encapsulated_pixel_data_item(transform, length)
+    }
+
+    p10_part.End -> Ok(#(transform, end(transform)))
   }
+}
+
+fn indent(transform: P10JsonTransform, offset: Int) {
+  string.repeat(
+    "  ",
+    1 + data_set_path.sequence_item_count(transform.data_set_path) * 3 + offset,
+  )
 }
 
 fn begin(
   transform: P10JsonTransform,
   file_meta_information: DataSet,
 ) -> #(P10JsonTransform, String) {
-  let json = "{"
+  let json =
+    "{"
+    <> case transform.config.pretty_print {
+      True -> "\n"
+      False -> ""
+    }
 
   // Exclude all File Meta Information data elements except for '(0002,0010)
   // Transfer Syntax UID' when encapsulated pixel data is being included as it
@@ -210,10 +272,16 @@ fn begin(
         Ok(transfer_syntax_uid) -> {
           let transform = P10JsonTransform(..transform, insert_comma: True)
 
-          let json =
-            "\"00020010\":{\"vr\":\"UI\",\"Value\":[\""
-            <> transfer_syntax_uid
-            <> "\"]}"
+          let json = case transform.config.pretty_print {
+            True ->
+              "  \"00020010\": {\n    \"vr\": \"UI\",\n    \"Value\": [\n      \""
+              <> transfer_syntax_uid
+              <> "\"\n    ]\n  }"
+            False ->
+              "\"00020010\":{\"vr\":\"UI\",\"Value\":[\""
+              <> transfer_syntax_uid
+              <> "\"]}"
+          }
 
           #(transform, json)
         }
@@ -246,7 +314,11 @@ fn write_data_element_header(
   )
 
   let json = case transform.insert_comma {
-    True -> ","
+    True ->
+      case transform.config.pretty_print {
+        True -> ",\n"
+        False -> ","
+      }
     False -> ""
   }
 
@@ -260,16 +332,33 @@ fn write_data_element_header(
   // Write the tag and VR
   let json =
     json
-    <> "\""
-    <> data_element_tag.to_hex_string(tag)
-    <> "\":{\"vr\":\""
-    <> value_representation.to_string(vr)
-    <> "\""
+    <> case transform.config.pretty_print {
+      True ->
+        indent(transform, 0)
+        <> "\""
+        <> data_element_tag.to_hex_string(tag)
+        <> "\": {\n"
+        <> indent(transform, 1)
+        <> "\"vr\": \""
+        <> value_representation.to_string(vr)
+        <> "\""
+      False ->
+        "\""
+        <> data_element_tag.to_hex_string(tag)
+        <> "\":{\"vr\":\""
+        <> value_representation.to_string(vr)
+        <> "\""
+    }
 
   // If the value's length is zero then no 'Value' or 'InlineBinary' should be
   // added to the output. Ref: PS3.18 F.2.5.
   use <- bool.lazy_guard(length == 0, fn() {
-    let json = json <> "}"
+    let json =
+      json
+      <> case transform.config.pretty_print {
+        True -> "\n" <> indent(transform, 0) <> "}"
+        False -> "}"
+      }
 
     let transform =
       P10JsonTransform(..transform, ignore_data_element_value_bytes: True)
@@ -287,8 +376,16 @@ fn write_data_element_header(
       | value_representation.OtherLongString
       | value_representation.OtherVeryLongString
       | value_representation.OtherWordString
-      | value_representation.Unknown -> ",\"InlineBinary\":\""
-      _ -> ",\"Value\":["
+      | value_representation.Unknown ->
+        case transform.config.pretty_print {
+          True -> ",\n" <> indent(transform, 1) <> "\"InlineBinary\": \""
+          False -> ",\"InlineBinary\":\""
+        }
+      _ ->
+        case transform.config.pretty_print {
+          True -> ",\n" <> indent(transform, 1) <> "\"Value\": [\n"
+          False -> ",\"Value\":["
+        }
     }
 
   #(transform, json)
@@ -328,7 +425,11 @@ fn write_data_element_value_bytes(
     let json =
       json
       <> case bytes_remaining == 0 && !transform.in_encapsulated_pixel_data {
-        True -> "\"}"
+        True ->
+          case transform.config.pretty_print {
+            True -> "\"\n" <> indent(transform, 0) <> "}"
+            False -> "\"}"
+          }
         False -> ""
       }
 
@@ -360,13 +461,25 @@ fn write_data_element_value_bytes(
   let value = data_element_value.new_binary_unchecked(vr, bytes)
 
   let json_values =
-    convert_binary_value_to_json(value, bytes)
+    convert_binary_value_to_json(value, bytes, transform)
     |> result.map_error(fn(e) {
       json_error.DataError(data_error.with_path(e, transform.data_set_path))
     })
-  use json_values <- result.try(json_values)
+  use json_values <- result.map(json_values)
 
-  Ok(#(transform, string.join(json_values, ",") <> "]}"))
+  let json = case transform.config.pretty_print {
+    True ->
+      indent(transform, 2)
+      <> string.join(json_values, ",\n" <> indent(transform, 2))
+      <> "\n"
+      <> indent(transform, 1)
+      <> "]\n"
+      <> indent(transform, 0)
+      <> "}"
+    False -> string.join(json_values, ",") <> "]}"
+  }
+
+  #(transform, json)
 }
 
 fn write_sequence_start(
@@ -375,7 +488,11 @@ fn write_sequence_start(
   vr: ValueRepresentation,
 ) -> Result(#(P10JsonTransform, String), JsonSerializeError) {
   let json = case transform.insert_comma {
-    True -> ","
+    True ->
+      case transform.config.pretty_print {
+        True -> ",\n"
+        False -> ","
+      }
     False -> ""
   }
 
@@ -387,9 +504,22 @@ fn write_sequence_start(
 
       let json =
         json
-        <> "\""
-        <> data_element_tag.to_hex_string(tag)
-        <> "\":{\"vr\":\"SQ\",\"Value\":["
+        <> case transform.config.pretty_print {
+          True ->
+            indent(transform, 0)
+            <> "\""
+            <> data_element_tag.to_hex_string(tag)
+            <> "\": {\n"
+            <> indent(transform, 1)
+            <> "\"vr\": \"SQ\",\n"
+            <> indent(transform, 1)
+            <> "\"Value\": ["
+
+          False ->
+            "\""
+            <> data_element_tag.to_hex_string(tag)
+            <> "\":{\"vr\":\"SQ\",\"Value\":["
+        }
 
       Ok(#(transform, json))
     }
@@ -413,11 +543,26 @@ fn write_sequence_start(
 
       let json =
         json
-        <> "\""
-        <> data_element_tag.to_hex_string(tag)
-        <> "\":{\"vr\":\""
-        <> value_representation.to_string(vr)
-        <> "\",\"InlineBinary\":\""
+        <> case transform.config.pretty_print {
+          True ->
+            indent(transform, 0)
+            <> "\""
+            <> data_element_tag.to_hex_string(tag)
+            <> "\": {\n"
+            <> indent(transform, 1)
+            <> "\"vr\": \""
+            <> value_representation.to_string(vr)
+            <> "\",\n"
+            <> indent(transform, 1)
+            <> "\"InlineBinary\": \""
+
+          False ->
+            "\""
+            <> data_element_tag.to_hex_string(tag)
+            <> "\":{\"vr\":\""
+            <> value_representation.to_string(vr)
+            <> "\",\"InlineBinary\":\""
+        }
 
       Ok(#(transform, json))
     }
@@ -434,13 +579,26 @@ fn write_sequence_end(
 
       let #(transform, json) = write_base64(transform, <<>>, True)
 
-      #(transform, json <> "\"}")
+      let json =
+        json
+        <> case transform.config.pretty_print {
+          True -> "\"\n" <> indent(transform, 0) <> "}"
+          False -> "\"}"
+        }
+
+      #(transform, json)
     }
 
     False -> {
       let transform = P10JsonTransform(..transform, insert_comma: True)
 
-      #(transform, "]}")
+      let json = case transform.config.pretty_print {
+        True ->
+          "\n" <> indent(transform, 1) <> "]\n" <> indent(transform, 0) <> "}"
+        False -> "]}"
+      }
+
+      #(transform, json)
     }
   }
 }
@@ -455,7 +613,14 @@ fn write_sequence_item_start(
 
   let transform = P10JsonTransform(..transform, insert_comma: False)
 
-  #(transform, json <> "{")
+  let json =
+    json
+    <> case transform.config.pretty_print {
+      True -> "\n" <> indent(transform, -1) <> "{\n"
+      False -> "{"
+    }
+
+  #(transform, json)
 }
 
 fn write_sequence_item_end(
@@ -463,7 +628,12 @@ fn write_sequence_item_end(
 ) -> #(P10JsonTransform, String) {
   let transform = P10JsonTransform(..transform, insert_comma: True)
 
-  #(transform, "}")
+  let json = case transform.config.pretty_print {
+    True -> "\n" <> indent(transform, -1) <> "}"
+    False -> "}"
+  }
+
+  #(transform, json)
 }
 
 fn write_encapsulated_pixel_data_item(
@@ -486,8 +656,13 @@ fn write_encapsulated_pixel_data_item(
   Ok(write_base64(transform, bytes, False))
 }
 
-fn end() -> String {
-  "}"
+fn end(transform: P10JsonTransform) -> String {
+  let json = case transform.config.pretty_print {
+    True -> "\n}\n"
+    False -> "}"
+  }
+
+  json
 }
 
 fn write_base64(
@@ -561,6 +736,7 @@ fn write_base64(
 fn convert_binary_value_to_json(
   value: DataElementValue,
   bytes: BitArray,
+  transform: P10JsonTransform,
 ) -> Result(List(String), DataError) {
   case data_element_value.value_representation(value) {
     // AttributeTag value representation
@@ -595,10 +771,11 @@ fn convert_binary_value_to_json(
       s
       |> string.split("\\")
       |> list.map(fn(raw_name) {
-        let component_groups: List(String) =
+        let component_groups =
           raw_name
           |> string.split("=")
           |> list.map(string.trim_end)
+          |> list.index_map(fn(s, i) { #(i, s) })
 
         use <- bool.guard(
           list.length(component_groups) > 3,
@@ -608,21 +785,49 @@ fn convert_binary_value_to_json(
           )),
         )
 
-        component_groups
-        |> list.index_fold([], fn(acc, s, i) {
-          use <- bool.guard(string.is_empty(s), acc)
+        let component_groups =
+          component_groups |> list.filter(fn(x) { !string.is_empty(x.1) })
 
-          let name = case i {
-            0 -> "Alphabetic"
-            1 -> "Ideographic"
-            _ -> "Phonetic"
+        let result = case transform.config.pretty_print {
+          True -> indent(transform, -1) <> "{\n"
+          False -> "{"
+        }
+
+        let result =
+          component_groups
+          |> list.index_fold(result, fn(result, x, i) {
+            let name = case x.0 {
+              0 -> "Alphabetic"
+              1 -> "Ideographic"
+              _ -> "Phonetic"
+            }
+
+            // Escape the value of the component group appropriately for JSON
+            let value = json.to_string(json.string(x.1))
+
+            result
+            <> case transform.config.pretty_print {
+              True -> indent(transform, 3) <> "\"" <> name <> "\": " <> value
+              False -> "\"" <> name <> "\":" <> value
+            }
+            <> case i == list.length(component_groups) - 1 {
+              True -> ""
+              False ->
+                case transform.config.pretty_print {
+                  True -> ",\n"
+                  False -> ","
+                }
+            }
+          })
+
+        let result =
+          case transform.config.pretty_print {
+            True -> result <> "\n" <> indent(transform, 2)
+            False -> result
           }
+          <> "}"
 
-          [#(name, json.string(s)), ..acc]
-        })
-        |> json.object
-        |> json.to_string
-        |> Ok
+        Ok(result)
       })
       |> result.all
     }

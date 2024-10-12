@@ -55,6 +55,12 @@ Options:
    dcmfx to-json input.dcm output.json
    ```
 
+   To pretty-print the DICOM JSON directly to stdout:
+
+   ```sh
+   dcmfx to-json --pretty input.dcm -
+   ```
+
 3. Convert a DICOM JSON file to a DICOM P10 file:
 
    ```sh

@@ -1,4 +1,5 @@
 use dcmfx_core::{dictionary, DataError, DataSetPath};
+use dcmfx_p10::P10Error;
 
 /// Occurs when an error is encountered converting to the DICOM JSON model.
 ///
@@ -7,6 +8,12 @@ pub enum JsonSerializeError {
   /// The data to be serialized to the DICOM JSON model is invalid. Details of
   /// the issue are contained in the contained [`DataError`].
   DataError(DataError),
+
+  /// A P10 error that occurred during JSON serialization. The most common error
+  /// is [`P10Error::PartStreamInvalid`], indicating that the stream of parts
+  /// was not well-formed.
+  ///
+  P10Error(P10Error),
 
   /// An error occurred when trying to read or write DICOM JSON data on the
   /// provided stream. Details of the issue are contained in the enclosed
@@ -21,15 +28,6 @@ pub enum JsonSerializeError {
 pub enum JsonDeserializeError {
   /// The DICOM JSON data to be deserialized is invalid.
   JsonInvalid { details: String, path: DataSetPath },
-}
-
-impl std::fmt::Display for JsonSerializeError {
-  fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-    match self {
-      JsonSerializeError::DataError(e) => e.fmt(f),
-      JsonSerializeError::IOError(e) => e.fmt(f),
-    }
-  }
 }
 
 impl std::fmt::Display for JsonDeserializeError {
@@ -54,6 +52,7 @@ impl dcmfx_core::DcmfxError for JsonSerializeError {
   fn to_lines(&self, task_description: &str) -> Vec<String> {
     match self {
       JsonSerializeError::DataError(e) => e.to_lines(task_description),
+      JsonSerializeError::P10Error(e) => e.to_lines(task_description),
       JsonSerializeError::IOError(e) => vec![
         format!("DICOM JSON I/O error {}", task_description),
         "".to_string(),

@@ -69,6 +69,18 @@ pub fn is_empty(path: DataSetPath) -> Bool {
   path.entries |> list.is_empty
 }
 
+/// Returns the number of sequence items present in a data set path.
+///
+pub fn sequence_item_count(path: DataSetPath) -> Int {
+  path.entries
+  |> list.fold(0, fn(acc, entry) {
+    case entry {
+      DataElement(..) -> acc
+      SequenceItem(..) -> acc + 1
+    }
+  })
+}
+
 /// Returns the final data element entry in a data set path. Returns an error if
 /// the last entry in the data set path is not a data element.
 ///
@@ -112,13 +124,12 @@ pub fn add_sequence_item(
   }
 }
 
-/// Removes the last entry in a data set path. If the data set path is empty
-/// then it is not changed.
+/// Removes the last entry in a data set path.
 ///
-pub fn pop(path: DataSetPath) -> DataSetPath {
+pub fn pop(path: DataSetPath) -> Result(DataSetPath, Nil) {
   case path.entries {
-    [_, ..rest] -> DataSetPath(rest)
-    _ -> path
+    [_, ..rest] -> Ok(DataSetPath(rest))
+    _ -> Error(Nil)
   }
 }
 

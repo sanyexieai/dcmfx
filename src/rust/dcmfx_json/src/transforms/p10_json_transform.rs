@@ -10,7 +10,7 @@ use dcmfx_core::{
   dictionary, DataElementTag, DataElementValue, DataError, DataSet,
   DataSetPath, ValueRepresentation,
 };
-use dcmfx_p10::P10Part;
+use dcmfx_p10::{P10Error, P10Part};
 
 use crate::json_error::JsonSerializeError;
 use crate::DicomJsonConfig;
@@ -66,71 +66,127 @@ impl P10JsonTransform {
   }
 
   /// Adds the next DICOM P10 part to this JSON transform. Bytes of JSON data
-  /// are written to the provided `stream` as they become available. Note that
-  /// if P10 parts are provided in an invalid order then no error will be
-  /// returned, but the resulting JSON will most likely be invalid.
+  /// are written to the provided `stream` as they become available.
+  ///
+  /// If P10 parts are provided in an invalid order then an error may be
+  /// returned, but this is not guaranteed for all invalid part orders, so in
+  /// some cases the resulting JSON stream could be invalid when the incoming
+  /// stream of P10 parts is malformed.
   ///
   pub fn add_part(
     &mut self,
     part: &P10Part,
     stream: &mut dyn std::io::Write,
   ) -> Result<(), JsonSerializeError> {
+    let part_stream_invalid_error = || {
+      JsonSerializeError::P10Error(P10Error::PartStreamInvalid {
+        when: "Adding part to JSON transform".to_string(),
+        details: "The transform was not able to write this part".to_string(),
+        part: part.clone(),
+      })
+    };
+
     match part {
       P10Part::FilePreambleAndDICMPrefix { .. } => Ok(()),
       P10Part::FileMetaInformation { data_set } => self
         .begin(data_set, stream)
         .map_err(JsonSerializeError::IOError),
 
-      P10Part::DataElementHeader { tag, vr, length } => self
-        .write_data_element_header(*tag, *vr, *length, stream)
-        .map_err(JsonSerializeError::IOError)
-        .map(|_| {
-          let _ = self.data_set_path.add_data_element(*tag);
-        }),
+      P10Part::DataElementHeader { tag, vr, length } => {
+        self
+          .write_data_element_header(*tag, *vr, *length, stream)
+          .map_err(JsonSerializeError::IOError)?;
+
+        self
+          .data_set_path
+          .add_data_element(*tag)
+          .map_err(|_| part_stream_invalid_error())
+      }
 
       P10Part::DataElementValueBytes {
         vr,
         data,
         bytes_remaining,
-      } => self
-        .write_data_element_value_bytes(*vr, data, *bytes_remaining, stream)
-        .map(|_| {
-          if *bytes_remaining == 0 {
-            self.data_set_path.pop();
-          }
-        }),
+      } => {
+        self.write_data_element_value_bytes(
+          *vr,
+          data,
+          *bytes_remaining,
+          stream,
+        )?;
+
+        if *bytes_remaining == 0 {
+          self
+            .data_set_path
+            .pop()
+            .map_err(|_| part_stream_invalid_error())?;
+        }
+
+        Ok(())
+      }
 
       P10Part::SequenceStart { tag, vr } => {
-        self.write_sequence_start(*tag, *vr, stream).map(|_| {
-          let _ = self.data_set_path.add_data_element(*tag);
-          self.sequence_item_counts.push(0);
-        })
-      }
-      P10Part::SequenceDelimiter => self
-        .write_sequence_end(stream)
-        .map_err(JsonSerializeError::IOError)
-        .map(|_| {
-          self.data_set_path.pop();
-          self.sequence_item_counts.pop();
-        }),
+        self.write_sequence_start(*tag, *vr, stream)?;
 
-      P10Part::SequenceItemStart => self
-        .write_sequence_item_start(stream)
-        .map_err(JsonSerializeError::IOError)
-        .map(|_| {
-          if let Some(sequence_item_count) =
-            self.sequence_item_counts.last_mut()
-          {
-            let _ = self.data_set_path.add_sequence_item(*sequence_item_count);
-            *sequence_item_count += 1;
-          }
-        }),
-      P10Part::SequenceItemDelimiter => self
-        .write_sequence_item_end(stream)
-        .map_err(JsonSerializeError::IOError)
-        .map(|_| self.data_set_path.pop()),
+        self.sequence_item_counts.push(0);
+
+        self
+          .data_set_path
+          .add_data_element(*tag)
+          .map_err(|_| part_stream_invalid_error())
+      }
+
+      P10Part::SequenceDelimiter => {
+        self
+          .write_sequence_end(stream)
+          .map_err(JsonSerializeError::IOError)?;
+
+        self.sequence_item_counts.pop();
+
+        self
+          .data_set_path
+          .pop()
+          .map_err(|_| part_stream_invalid_error())
+      }
+
+      P10Part::SequenceItemStart => {
+        if let Some(sequence_item_count) = self.sequence_item_counts.last_mut()
+        {
+          self
+            .data_set_path
+            .add_sequence_item(*sequence_item_count)
+            .map_err(|_| part_stream_invalid_error())?;
+
+          *sequence_item_count += 1;
+        }
+
+        self
+          .write_sequence_item_start(stream)
+          .map_err(JsonSerializeError::IOError)
+      }
+
+      P10Part::SequenceItemDelimiter => {
+        self
+          .write_sequence_item_end(stream)
+          .map_err(JsonSerializeError::IOError)?;
+
+        self
+          .data_set_path
+          .pop()
+          .map_err(|_| part_stream_invalid_error())
+      }
 
       P10Part::PixelDataItem { length } => {
+        if let Some(sequence_item_count) = self.sequence_item_counts.last_mut()
+        {
+          self
+            .data_set_path
+            .add_sequence_item(*sequence_item_count)
+            .map_err(|_| part_stream_invalid_error())?;
+
+          *sequence_item_count += 1;
+        }
+
         self.write_encapsulated_pixel_data_item(*length, stream)
       }
 
@@ -138,12 +194,33 @@ impl P10JsonTransform {
     }
   }
 
+  fn indent(&self, offset: isize) -> String {
+    let mut indent = 1isize;
+    indent += self.data_set_path.sequence_item_count() as isize * 3;
+    indent += offset;
+    indent = indent.max(0);
+
+    "  ".repeat(indent as usize)
+  }
+
+  fn write_indent(
+    &self,
+    stream: &mut dyn std::io::Write,
+    offset: isize,
+  ) -> Result<(), std::io::Error> {
+    stream.write_all(self.indent(offset).as_bytes())
+  }
+
   fn begin(
     &mut self,
     file_meta_information: &DataSet,
     stream: &mut dyn std::io::Write,
   ) -> Result<(), std::io::Error> {
-    stream.write_all(b"{")?;
+    if self.config.pretty_print {
+      stream.write_all(b"{\n")?;
+    } else {
+      stream.write_all(b"{")?;
+    }
 
     // Exclude all File Meta Information data elements except for '(0002,0010)
     // Transfer Syntax UID' when encapsulated pixel data is being included as it
@@ -152,9 +229,15 @@ impl P10JsonTransform {
       if let Ok(transfer_syntax_uid) =
         file_meta_information.get_string(dictionary::TRANSFER_SYNTAX_UID.tag)
       {
-        stream.write_all(br#""00020010":{"vr":"UI","Value":[""#)?;
-        stream.write_all(transfer_syntax_uid.as_bytes())?;
-        stream.write_all(br#""]}"#)?;
+        if self.config.pretty_print {
+          stream.write_all(b"  \"00020010\": {\n    \"vr\": \"UI\",\n    \"Value\": [\n      \"")?;
+          stream.write_all(transfer_syntax_uid.as_bytes())?;
+          stream.write_all(b"\"\n    ]\n  }")?;
+        } else {
+          stream.write_all(br#""00020010":{"vr":"UI","Value":[""#)?;
+          stream.write_all(transfer_syntax_uid.as_bytes())?;
+          stream.write_all(br#""]}"#)?;
+        }
 
         self.insert_comma = true;
       }
@@ -179,7 +262,11 @@ impl P10JsonTransform {
     }
 
     if self.insert_comma {
-      stream.write_all(b",")?;
+      if self.config.pretty_print {
+        stream.write_all(b",\n")?;
+      } else {
+        stream.write_all(b",")?;
+      }
     }
     self.insert_comma = true;
 
@@ -187,16 +274,38 @@ impl P10JsonTransform {
     self.current_data_element.1.clear();
 
     // Write the tag and VR
-    let mut json = *br#""________":{"vr":"__""#;
-    json[1..9].copy_from_slice(&tag.to_hex_digits());
-    json[18..20].copy_from_slice(&vr.to_bytes());
-    stream.write_all(json.as_slice())?;
+    if self.config.pretty_print {
+      self.write_indent(stream, 0)?;
+
+      let mut json = *b"\"________\": {\n";
+      json[1..9].copy_from_slice(&tag.to_hex_digits());
+      stream.write_all(json.as_slice())?;
+
+      self.write_indent(stream, 1)?;
+
+      let mut json = *b"\"vr\": \"__\"";
+      json[7..9].copy_from_slice(&vr.to_bytes());
+      stream.write_all(json.as_slice())?;
+    } else {
+      let mut json = *br#""________":{"vr":"__""#;
+      json[1..9].copy_from_slice(&tag.to_hex_digits());
+      json[18..20].copy_from_slice(&vr.to_bytes());
+      stream.write_all(json.as_slice())?;
+    }
 
     // If the value's length is zero then no 'Value' or 'InlineBinary' should be
     // added to the output. Ref: PS3.18 F.2.5.
     if length == 0 {
-      stream.write_all(b"}")?;
+      if self.config.pretty_print {
+        stream.write_all(b"\n")?;
+        self.write_indent(stream, 0)?;
+        stream.write_all(b"}")?;
+      } else {
+        stream.write_all(b"}")?;
+      }
+
       self.ignore_data_element_value_bytes = true;
+
       return Ok(());
     }
 
@@ -209,10 +318,22 @@ impl P10JsonTransform {
       || vr == ValueRepresentation::OtherWordString
       || vr == ValueRepresentation::Unknown
     {
-      stream.write_all(br#","InlineBinary":""#)
+      if self.config.pretty_print {
+        stream.write_all(b",\n")?;
+        self.write_indent(stream, 1)?;
+        stream.write_all(b"\"InlineBinary\": \"")?;
+      } else {
+        stream.write_all(br#","InlineBinary":""#)?;
+      }
+    } else if self.config.pretty_print {
+      stream.write_all(b",\n")?;
+      self.write_indent(stream, 1)?;
+      stream.write_all(b"\"Value\": [\n")?;
     } else {
-      stream.write_all(br#","Value":["#)
+      stream.write_all(br#","Value":["#)?;
     }
+
+    Ok(())
   }
 
   fn write_data_element_value_bytes(
@@ -249,9 +370,15 @@ impl P10JsonTransform {
         .map_err(JsonSerializeError::IOError)?;
 
       if bytes_remaining == 0 && !self.in_encapsulated_pixel_data {
-        stream
-          .write_all(br#""}"#)
-          .map_err(JsonSerializeError::IOError)?;
+        if self.config.pretty_print {
+          stream
+            .write_all(b"\"\n")
+            .and_then(|_| self.write_indent(stream, 0))
+            .and_then(|_| stream.write_all(b"}"))
+        } else {
+          stream.write_all(br#""}"#)
+        }
+        .map_err(JsonSerializeError::IOError)?
       }
 
       return Ok(());
@@ -288,10 +415,17 @@ impl P10JsonTransform {
 
     let value = DataElementValue::new_binary_unchecked(vr, bytes.clone());
 
-    let json_values =
-      convert_binary_value_to_json(&value, bytes).map_err(|e| {
+    let json_values = self
+      .convert_binary_value_to_json(&value, bytes)
+      .map_err(|e| {
         JsonSerializeError::DataError(e.with_path(&self.data_set_path))
       })?;
+
+    if self.config.pretty_print {
+      self
+        .write_indent(stream, 2)
+        .map_err(JsonSerializeError::IOError)?;
+    }
 
     for (i, json_value) in json_values.iter().enumerate() {
       stream
@@ -299,13 +433,29 @@ impl P10JsonTransform {
         .map_err(JsonSerializeError::IOError)?;
 
       if i != json_values.len() - 1 {
-        stream
-          .write_all(b",")
-          .map_err(JsonSerializeError::IOError)?;
+        if self.config.pretty_print {
+          stream
+            .write_all(b",\n")
+            .and_then(|_| self.write_indent(stream, 2))
+        } else {
+          stream.write_all(b",")
+        }
+        .map_err(JsonSerializeError::IOError)?;
       }
     }
 
-    stream.write_all(b"]}").map_err(JsonSerializeError::IOError)
+    if self.config.pretty_print {
+      stream
+        .write_all(b"\n")
+        .and_then(|_| self.write_indent(stream, 1))
+        .and_then(|_| stream.write(b"]\n"))
+        .and_then(|_| self.write_indent(stream, 0))
+        .and_then(|_| stream.write(b"}"))
+        .map(|_| ())
+    } else {
+      stream.write_all(b"]}")
+    }
+    .map_err(JsonSerializeError::IOError)
   }
 
   fn write_sequence_start(
@@ -315,20 +465,36 @@ impl P10JsonTransform {
     stream: &mut dyn std::io::Write,
   ) -> Result<(), JsonSerializeError> {
     if self.insert_comma {
-      stream
-        .write_all(b",")
-        .map_err(JsonSerializeError::IOError)?;
+      if self.config.pretty_print {
+        stream.write_all(b",\n")
+      } else {
+        stream.write_all(b",")
+      }
+      .map_err(JsonSerializeError::IOError)?;
     }
     self.insert_comma = true;
 
     if vr == ValueRepresentation::Sequence {
       self.insert_comma = false;
 
-      let mut json = *br#""________":{"vr":"SQ","Value":["#;
-      json[1..9].copy_from_slice(&tag.to_hex_digits());
-      stream
-        .write_all(json.as_slice())
-        .map_err(JsonSerializeError::IOError)
+      if self.config.pretty_print {
+        (|| {
+          self.write_indent(stream, 0)?;
+
+          let mut json = *b"\"________\": {\n";
+          json[1..9].copy_from_slice(&tag.to_hex_digits());
+          stream.write_all(json.as_slice())?;
+
+          self.write_indent(stream, 0)?;
+          stream.write_all(b"\"vr\": \"SQ\",\n")?;
+          self.write_indent(stream, 1)?;
+          stream.write_all(b"\"Value\": [")
+        })()
+      } else {
+        let mut json = *br#""________":{"vr":"SQ","Value":["#;
+        json[1..9].copy_from_slice(&tag.to_hex_digits());
+        stream.write_all(json.as_slice())
+      }
     } else {
       if !self.config.store_encapsulated_pixel_data {
         return Err(JsonSerializeError::DataError(
@@ -343,14 +509,32 @@ impl P10JsonTransform {
 
       self.in_encapsulated_pixel_data = true;
 
-      let mut json = *br#""________":{"vr":"__","InlineBinary":""#;
-      json[1..9].copy_from_slice(&tag.to_hex_digits());
-      json[18..20].copy_from_slice(&vr.to_bytes());
+      if self.config.pretty_print {
+        (|| {
+          self.write_indent(stream, 0)?;
 
-      stream
-        .write_all(json.as_slice())
-        .map_err(JsonSerializeError::IOError)
+          let mut json = *b"\"________\": {\n";
+          json[1..9].copy_from_slice(&tag.to_hex_digits());
+          stream.write_all(json.as_slice())?;
+
+          self.write_indent(stream, 1)?;
+
+          let mut json = *b"\"vr\": \"__\",\n";
+          json[7..9].copy_from_slice(&vr.to_bytes());
+          stream.write_all(json.as_slice())?;
+
+          self.write_indent(stream, 1)?;
+          stream.write_all(b"\"InlineBinary\": \"")
+        })()
+      } else {
+        let mut json = *br#""________":{"vr":"__","InlineBinary":""#;
+        json[1..9].copy_from_slice(&tag.to_hex_digits());
+        json[18..20].copy_from_slice(&vr.to_bytes());
+
+        stream.write_all(json.as_slice())
+      }
     }
+    .map_err(JsonSerializeError::IOError)
   }
 
   fn write_sequence_end(
@@ -360,10 +544,26 @@ impl P10JsonTransform {
     if self.in_encapsulated_pixel_data {
       self.in_encapsulated_pixel_data = false;
       self.write_base64(&[], true, stream)?;
-      stream.write_all(b"\"}")
+
+      if self.config.pretty_print {
+        stream.write_all(b"\"\n")?;
+        self.write_indent(stream, 0)?;
+        stream.write_all(b"}")
+      } else {
+        stream.write_all(b"\"}")
+      }
     } else {
       self.insert_comma = true;
-      stream.write_all(b"]}")
+
+      if self.config.pretty_print {
+        stream.write_all(b"\n")?;
+        self.write_indent(stream, 1)?;
+        stream.write_all(b"]\n")?;
+        self.write_indent(stream, 0)?;
+        stream.write_all(b"}")
+      } else {
+        stream.write_all(b"]}")
+      }
     }
   }
 
@@ -376,7 +576,13 @@ impl P10JsonTransform {
     }
     self.insert_comma = false;
 
-    stream.write_all(b"{")
+    if self.config.pretty_print {
+      stream.write_all(b"\n")?;
+      self.write_indent(stream, -1)?;
+      stream.write_all(b"{\n")
+    } else {
+      stream.write_all(b"{")
+    }
   }
 
   fn write_sequence_item_end(
@@ -384,7 +590,14 @@ impl P10JsonTransform {
     stream: &mut dyn std::io::Write,
   ) -> Result<(), std::io::Error> {
     self.insert_comma = true;
-    stream.write_all(b"}")
+
+    if self.config.pretty_print {
+      stream.write_all(b"\n")?;
+      self.write_indent(stream, -1)?;
+      stream.write_all(b"}")
+    } else {
+      stream.write_all(b"}")
+    }
   }
 
   fn write_encapsulated_pixel_data_item(
@@ -416,7 +629,11 @@ impl P10JsonTransform {
     &mut self,
     stream: &mut dyn std::io::Write,
   ) -> Result<(), std::io::Error> {
-    stream.write_all(b"}")
+    if self.config.pretty_print {
+      stream.write_all(b"\n}\n")
+    } else {
+      stream.write_all(b"}")
+    }
   }
 
   fn write_base64(
@@ -455,156 +672,196 @@ impl P10JsonTransform {
 
     Ok(())
   }
-}
 
-/// Converts a data element value containing binary data to DICOM JSON.
-///
-fn convert_binary_value_to_json(
-  value: &DataElementValue,
-  bytes: Rc<Vec<u8>>,
-) -> Result<Vec<String>, DataError> {
-  match value.value_representation() {
-    // AttributeTag value representation
-    ValueRepresentation::AttributeTag => Ok(
-      value
-        .get_attribute_tags()?
-        .iter()
-        .map(|tag| format!("\"{}\"", tag.to_hex_string()))
-        .collect(),
-    ),
-
-    // Floating point value representations. Because JSON doesn't allow NaN or
-    // Infinity values, but they can be present in a DICOM data element, they
-    // are converted to strings in the generated JSON.
-    ValueRepresentation::DecimalString
-    | ValueRepresentation::FloatingPointDouble
-    | ValueRepresentation::FloatingPointSingle => Ok(
-      value
-        .get_floats()?
-        .iter()
-        .map(|f| {
-          if f.is_nan() {
-            "\"NaN\"".to_string()
-          } else if *f == f64::INFINITY {
-            "\"Infinity\"".to_string()
-          } else if *f == f64::NEG_INFINITY {
-            "\"-Infinity\"".to_string()
-          } else {
-            format!("{:?}", f)
-          }
-        })
-        .collect(),
-    ),
-
-    // PersonName value representation
-    ValueRepresentation::PersonName => {
-      let string = str::from_utf8(&bytes).map_err(|_| {
-        DataError::new_value_invalid("PersonName is invalid UTF-8".to_string())
-      })?;
-
-      string
-        .split("\\")
-        .map(|raw_name| {
-          let component_groups: Vec<_> =
-            raw_name.split("=").map(|s| s.trim_end()).collect();
-
-          if component_groups.len() > 3 {
-            return Err(DataError::new_value_invalid(format!(
-              "PersonName has too many component groups: {}",
-              component_groups.len()
-            )));
-          }
-
-          let mut result = serde_json::Map::new();
-
-          for (i, component_group) in component_groups.iter().enumerate() {
-            if !component_group.is_empty() {
-              result.insert(
-                ["Alphabetic", "Ideographic", "Phonetic"][i].to_string(),
-                serde_json::Value::from(component_group.trim_end()),
-              );
-            }
-          }
-
-          Ok(serde_json::to_string(&result).unwrap())
-        })
-        .collect()
-    }
-
-    // Binary signed/unsigned integer value representations
-    ValueRepresentation::SignedLong
-    | ValueRepresentation::SignedShort
-    | ValueRepresentation::UnsignedLong
-    | ValueRepresentation::UnsignedShort
-    | ValueRepresentation::IntegerString => {
-      Ok(value.get_ints()?.iter().map(|i| i.to_string()).collect())
-    }
-
-    // Binary signed/unsigned big integer value representations
-    ValueRepresentation::SignedVeryLong
-    | ValueRepresentation::UnsignedVeryLong => {
-      // The range of integers representable by JavaScript's Number type. Values
-      // outside this range are converted to strings in the generated JSON.
-      let safe_integer_range = -9007199254740991i128..=9007199254740991i128;
-
-      Ok(
+  /// Converts a data element value containing binary data to DICOM JSON.
+  ///
+  fn convert_binary_value_to_json(
+    &self,
+    value: &DataElementValue,
+    bytes: Rc<Vec<u8>>,
+  ) -> Result<Vec<String>, DataError> {
+    match value.value_representation() {
+      // AttributeTag value representation
+      ValueRepresentation::AttributeTag => Ok(
         value
-          .get_big_ints()?
+          .get_attribute_tags()?
           .iter()
-          .map(|i| {
-            if safe_integer_range.contains(i) {
-              i.to_string()
+          .map(|tag| format!("\"{}\"", tag.to_hex_string()))
+          .collect(),
+      ),
+
+      // Floating point value representations. Because JSON doesn't allow NaN or
+      // Infinity values, but they can be present in a DICOM data element, they
+      // are converted to strings in the generated JSON.
+      ValueRepresentation::DecimalString
+      | ValueRepresentation::FloatingPointDouble
+      | ValueRepresentation::FloatingPointSingle => Ok(
+        value
+          .get_floats()?
+          .iter()
+          .map(|f| {
+            if f.is_nan() {
+              "\"NaN\"".to_string()
+            } else if *f == f64::INFINITY {
+              "\"Infinity\"".to_string()
+            } else if *f == f64::NEG_INFINITY {
+              "\"-Infinity\"".to_string()
             } else {
-              format!("\"{}\"", i)
+              format!("{:?}", f)
             }
           })
           .collect(),
-      )
-    }
+      ),
 
-    // Handle string VRs that have explicit internal structure. Their value is
-    // deliberately not parsed or validated beyond conversion to UTF-8, and is
-    // just passed straight through.
-    ValueRepresentation::AgeString
-    | ValueRepresentation::Date
-    | ValueRepresentation::DateTime
-    | ValueRepresentation::Time => {
-      let string = std::str::from_utf8(&bytes)
-        .map_err(|_| {
+      // PersonName value representation
+      ValueRepresentation::PersonName => {
+        let string = str::from_utf8(&bytes).map_err(|_| {
           DataError::new_value_invalid(
-            "String bytes are not valid UTF-8".to_string(),
+            "PersonName is invalid UTF-8".to_string(),
           )
-        })?
-        .trim_end_matches(['\u{0000}', '\u{0020}']);
+        })?;
 
-      Ok(vec![prepare_json_string(string)])
+        string
+          .split("\\")
+          .map(|raw_name| {
+            let mut component_groups: Vec<_> = raw_name
+              .split("=")
+              .map(|s| s.trim_end())
+              .enumerate()
+              .collect();
+
+            if component_groups.len() > 3 {
+              return Err(DataError::new_value_invalid(format!(
+                "PersonName has too many component groups: {}",
+                component_groups.len()
+              )));
+            }
+
+            component_groups.retain(|(_, s)| !s.is_empty());
+
+            let mut result = if self.config.pretty_print {
+              format!("{}{{\n", self.indent(-1))
+            } else {
+              "{".to_string()
+            };
+
+            for (j, (i, component_group)) in component_groups.iter().enumerate()
+            {
+              let name = ["Alphabetic", "Ideographic", "Phonetic"][*i];
+
+              // Escape the value of the component group appropriately for JSON
+              let value = serde_json::Value::from(*component_group).to_string();
+
+              if self.config.pretty_print {
+                result.push_str(&self.indent(3));
+                result.push('"');
+                result.push_str(name);
+                result.push_str("\": ");
+                result.push_str(&value);
+              } else {
+                result.push('"');
+                result.push_str(name);
+                result.push_str("\":");
+                result.push_str(&value);
+              }
+
+              if j != component_groups.len() - 1 {
+                if self.config.pretty_print {
+                  result.push_str(",\n");
+                } else {
+                  result.push(',');
+                }
+              }
+            }
+
+            if self.config.pretty_print {
+              result.push('\n');
+              result.push_str(&self.indent(2));
+            };
+
+            result.push('}');
+
+            Ok(result)
+          })
+          .collect()
+      }
+
+      // Binary signed/unsigned integer value representations
+      ValueRepresentation::SignedLong
+      | ValueRepresentation::SignedShort
+      | ValueRepresentation::UnsignedLong
+      | ValueRepresentation::UnsignedShort
+      | ValueRepresentation::IntegerString => {
+        Ok(value.get_ints()?.iter().map(|i| i.to_string()).collect())
+      }
+
+      // Binary signed/unsigned big integer value representations
+      ValueRepresentation::SignedVeryLong
+      | ValueRepresentation::UnsignedVeryLong => {
+        // The range of integers representable by JavaScript's Number type.
+        // Values outside this range are converted to strings in the generated
+        // JSON.
+        let safe_integer_range = -9007199254740991i128..=9007199254740991i128;
+
+        Ok(
+          value
+            .get_big_ints()?
+            .iter()
+            .map(|i| {
+              if safe_integer_range.contains(i) {
+                i.to_string()
+              } else {
+                format!("\"{}\"", i)
+              }
+            })
+            .collect(),
+        )
+      }
+
+      // Handle string VRs that have explicit internal structure. Their value is
+      // deliberately not parsed or validated beyond conversion to UTF-8, and is
+      // just passed straight through.
+      ValueRepresentation::AgeString
+      | ValueRepresentation::Date
+      | ValueRepresentation::DateTime
+      | ValueRepresentation::Time => {
+        let string = std::str::from_utf8(&bytes)
+          .map_err(|_| {
+            DataError::new_value_invalid(
+              "String bytes are not valid UTF-8".to_string(),
+            )
+          })?
+          .trim_end_matches(['\u{0000}', '\u{0020}']);
+
+        Ok(vec![prepare_json_string(string)])
+      }
+
+      // Handle string VRs that don't support multiplicity
+      ValueRepresentation::ApplicationEntity
+      | ValueRepresentation::LongText
+      | ValueRepresentation::ShortText
+      | ValueRepresentation::UniversalResourceIdentifier
+      | ValueRepresentation::UnlimitedText => {
+        let string = prepare_json_string(value.get_string()?);
+
+        Ok(vec![string])
+      }
+
+      // Handle remaining string-based VRs that support multiplicity
+      ValueRepresentation::CodeString
+      | ValueRepresentation::LongString
+      | ValueRepresentation::ShortString
+      | ValueRepresentation::UniqueIdentifier
+      | ValueRepresentation::UnlimitedCharacters => Ok(
+        value
+          .get_strings()?
+          .into_iter()
+          .map(prepare_json_string)
+          .collect(),
+      ),
+
+      _ => unreachable!(),
     }
-
-    // Handle string VRs that don't support multiplicity
-    ValueRepresentation::ApplicationEntity
-    | ValueRepresentation::LongText
-    | ValueRepresentation::ShortText
-    | ValueRepresentation::UniversalResourceIdentifier
-    | ValueRepresentation::UnlimitedText => {
-      let string = prepare_json_string(value.get_string()?);
-
-      Ok(vec![string])
-    }
-
-    // Handle remaining string-based VRs that support multiplicity
-    ValueRepresentation::CodeString
-    | ValueRepresentation::LongString
-    | ValueRepresentation::ShortString
-    | ValueRepresentation::UniqueIdentifier
-    | ValueRepresentation::UnlimitedCharacters => Ok(
-      value
-        .get_strings()?
-        .into_iter()
-        .map(prepare_json_string)
-        .collect(),
-    ),
-
-    _ => unreachable!(),
   }
 }
 

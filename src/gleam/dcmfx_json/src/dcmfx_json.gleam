@@ -22,7 +22,9 @@ pub fn data_set_to_json(
 ) -> Result(String, JsonSerializeError) {
   let transform = p10_json_transform.new(config)
 
-  p10_write.data_set_to_parts(data_set, #(transform, ""), fn(context, part) {
+  let context = #(transform, "")
+
+  p10_write.data_set_to_parts(data_set, context, fn(context, part) {
     let #(transform, json) = context
     use #(transform, new_json) <- result.map(p10_json_transform.add_part(
       transform,

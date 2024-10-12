@@ -217,43 +217,44 @@ pub fn write_part(
 
     _ -> {
       // Update the current path
-      let context = case part {
-        p10_part.DataElementHeader(tag:, ..) -> {
-          let path =
+      let context =
+        case part {
+          p10_part.DataElementHeader(tag:, ..) ->
             data_set_path.add_data_element(context.path, tag)
-            |> result.unwrap(context.path)
+            |> result.map(fn(path) { P10WriteContext(..context, path:) })
 
-          P10WriteContext(..context, path:)
-        }
-
-        p10_part.SequenceStart(tag:, ..) -> {
-          let path =
+          p10_part.SequenceStart(tag:, ..) ->
             data_set_path.add_data_element(context.path, tag)
-            |> result.unwrap(context.path)
+            |> result.map(fn(path) {
+              P10WriteContext(
+                ..context,
+                path:,
+                sequence_item_counts: [0, ..context.sequence_item_counts],
+              )
+            })
 
-          P10WriteContext(
-            ..context,
-            path:,
-            sequence_item_counts: [0, ..context.sequence_item_counts],
-          )
-        }
+          p10_part.SequenceItemStart | p10_part.PixelDataItem(..) -> {
+            let assert [count, ..rest] = context.sequence_item_counts
 
-        p10_part.SequenceItemStart -> {
-          case context.sequence_item_counts {
-            [count, ..rest] -> {
-              let path =
-                data_set_path.add_sequence_item(context.path, count)
-                |> result.unwrap(context.path)
+            data_set_path.add_sequence_item(context.path, count)
+            |> result.map(fn(path) {
               let sequence_item_counts = [count + 1, ..rest]
 
               P10WriteContext(..context, path:, sequence_item_counts:)
-            }
-            _ -> context
+            })
           }
-        }
 
-        _ -> context
-      }
+          _ -> Ok(context)
+        }
+        |> result.map_error(fn(_) {
+          p10_error.PartStreamInvalid(
+            when: "Writing part to context",
+            details: "The data set path is not in a valid state for this part",
+            part:,
+          )
+        })
+
+      use context <- result.try(context)
 
       // Convert part to bytes
       let part_bytes =
@@ -270,27 +271,37 @@ pub fn write_part(
             e -> e
           }
         })
-      use part_bytes <- result.map(part_bytes)
+      use part_bytes <- result.try(part_bytes)
 
       // Update the current path
-      let context = case part {
-        p10_part.DataElementValueBytes(bytes_remaining: 0, ..)
-        | p10_part.SequenceItemDelimiter -> {
-          let path = data_set_path.pop(context.path)
-          P10WriteContext(..context, path:)
+      let context =
+        case part {
+          p10_part.DataElementValueBytes(bytes_remaining: 0, ..)
+          | p10_part.SequenceItemDelimiter ->
+            data_set_path.pop(context.path)
+            |> result.map(fn(path) { P10WriteContext(..context, path:) })
+
+          p10_part.SequenceDelimiter -> {
+            let assert Ok(sequence_item_counts) =
+              list.rest(context.sequence_item_counts)
+
+            data_set_path.pop(context.path)
+            |> result.map(fn(path) {
+              P10WriteContext(..context, path:, sequence_item_counts:)
+            })
+          }
+
+          _ -> Ok(context)
         }
+        |> result.map_error(fn(_) {
+          p10_error.PartStreamInvalid(
+            when: "Writing part to context",
+            details: "The data set path is empty",
+            part:,
+          )
+        })
 
-        p10_part.SequenceDelimiter(..) -> {
-          let path = data_set_path.pop(context.path)
-          let sequence_item_counts =
-            list.rest(context.sequence_item_counts)
-            |> result.unwrap(context.sequence_item_counts)
-
-          P10WriteContext(..context, path:, sequence_item_counts:)
-        }
-
-        _ -> context
-      }
+      use context <- result.map(context)
 
       // If a zlib stream is active then pass the P10 bytes through it
       case context.zlib_stream {

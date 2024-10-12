@@ -95,6 +95,7 @@ mod tests {
   // Tests are run with encapsulated pixel data allowed in the DICOM JSON data
   const JSON_CONFIG: DicomJsonConfig = DicomJsonConfig {
     store_encapsulated_pixel_data: true,
+    pretty_print: false,
   };
 
   #[test]
