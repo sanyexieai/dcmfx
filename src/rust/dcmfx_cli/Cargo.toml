@@ -13,3 +13,6 @@ flate2 = { version = "1.0.34", features = ["zlib-ng"], default-features = false 
 
 [target.'cfg(not(windows))'.dependencies]
 libc = "0.2.159"
+
+[package.metadata.cargo-machete]
+ignored = ["flate2"]

@@ -1,3 +1,5 @@
+use std::io::IsTerminal;
+
 use crate::{registry, DataElementTag, DataSet, ValueRepresentation};
 
 /// Configurable options used when printing a data set to stdout.
@@ -19,21 +21,33 @@ pub struct DataSetPrintOptions {
   pub max_width: usize,
 }
 
+#[cfg(not(target_arch = "wasm32"))]
+fn terminal_width() -> Option<usize> {
+  if let Some((terminal_size::Width(width), _)) = terminal_size::terminal_size()
+  {
+    Some(width as usize)
+  } else {
+    None
+  }
+}
+
+#[cfg(target_arch = "wasm32")]
+fn terminal_width() -> Option<usize> {
+  None
+}
+
 impl DataSetPrintOptions {
   /// Constructs new data set print options and auto-detects output settings
   /// when possible.
   ///
   pub fn new() -> Self {
-    let is_terminal = atty::is(atty::Stream::Stdout);
+    let is_terminal = std::io::stdout().is_terminal();
     let color_support =
       supports_color::on(supports_color::Stream::Stdout).is_some();
 
-    let terminal_width =
-      term_size::dimensions_stdout().map(|(width, _height)| width);
-
     Self {
       styled: is_terminal && color_support,
-      max_width: terminal_width.unwrap_or(80),
+      max_width: terminal_width().unwrap_or(80),
     }
   }
 
