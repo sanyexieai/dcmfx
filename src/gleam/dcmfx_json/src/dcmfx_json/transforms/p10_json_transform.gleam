@@ -66,9 +66,9 @@ pub fn new(config: DicomJsonConfig) -> P10JsonTransform {
 }
 
 /// Adds the next DICOM P10 part to this JSON transform. Bytes of JSON data are
-/// written to the provided `stream` as they become available. Note that if P10
-/// parts are provided in an invalid order then no error will be returned, but
-/// the resulting JSON will most likely be invalid.
+/// returned as they become available. Note that if P10 parts are provided in an
+/// invalid order then no error will be returned, but the resulting JSON will
+/// most likely be invalid.
 ///
 pub fn add_part(
   transform: P10JsonTransform,
@@ -232,7 +232,7 @@ fn write_data_element_header(
 ) -> #(P10JsonTransform, String) {
   // Exclude group length data elements as these have no use in DICOM JSON. Also
   // exclude the '(0008,0005) Specific Character Set' data element as DICOM JSON
-  // always uses UTF-8, and the data set
+  // always uses UTF-8.
   use <- bool.lazy_guard(
     tag.element == 0 || tag == registry.specific_character_set.tag,
     fn() {
