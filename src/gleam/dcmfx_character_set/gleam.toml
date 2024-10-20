@@ -2,7 +2,7 @@ name = "dcmfx_character_set"
 description = "DCMfx - Character Set Library"
 licences = ["AGPL-3.0-only"]
 repository = { type = "github", user = "dcmfx", repo = "dcmfx" }
-gleam = ">= 1.5.1"
+gleam = ">= 1.5.0"
 
 [dependencies]
 gleam_stdlib = ">= 0.40.0 and < 1.0.0"
