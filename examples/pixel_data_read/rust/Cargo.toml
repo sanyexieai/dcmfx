@@ -1,0 +1,6 @@
+[package]
+name = "pixel_data_read"
+edition = "2021"
+
+[dependencies]
+dcmfx = { path = "../../../src/rust/dcmfx" }

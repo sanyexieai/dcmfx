@@ -1,0 +1,6 @@
+[package]
+name = "dicom_json_read"
+edition = "2021"
+
+[dependencies]
+dcmfx = { path = "../../../src/rust/dcmfx" }

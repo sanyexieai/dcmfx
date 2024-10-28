@@ -1,0 +1,6 @@
+[package]
+name = "dicom_write"
+edition = "2021"
+
+[dependencies]
+dcmfx = { path = "../../../src/rust/dcmfx" }
