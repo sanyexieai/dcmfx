@@ -12,7 +12,6 @@
     "codepoint",
     "codepoints",
     "concat",
-    "DICM",
     "DICOM",
     "endianness",
     "dcmfx",
@@ -26,11 +25,12 @@
   ],
 
   "files.exclude": {
-    "**/build": true,
-    "**/target": true
+    "**/build/": true,
+    "**/cache/": true,
+    "**/dist/": true,
+    "**/node_modules/": true,
+    "**/target/": true
   },
-
-  "coverage-gutters.coverageFileNames": ["rust/coverage/tests.lcov"],
 
   "debug.allowBreakpointsEverywhere": true
 }

@@ -1,0 +1,2 @@
+# Set a max width that avoids horizontal scrolling of code in the VitePress docs
+max_width = 76

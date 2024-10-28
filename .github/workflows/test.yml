@@ -5,6 +5,10 @@ on:
   pull_request:
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
 env:
   CARGO_TERM_COLOR: always
 
@@ -101,3 +105,28 @@ jobs:
       - name: Run tests
         working-directory: examples
         run: ./test_all.sh
+
+  build_docs:
+    name: Build docs
+    timeout-minutes: 10
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          path: dcmfx
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 22.10
+
+      - name: Install dependencies
+        uses: bahmutov/npm-install@v1
+        with:
+          working-directory: dcmfx/docs
+
+      - name: Build with VitePress
+        working-directory: dcmfx/docs
+        run: npm run docs:build

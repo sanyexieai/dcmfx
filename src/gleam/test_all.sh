@@ -6,11 +6,9 @@ set -e
 
 for dir in dcmfx_*; do
   echo ""
-  echo ""
+  echo "Testing $dir ..."
 
-  echo "Checking $dir ..."
   cd "$dir"
-
   gleam format --check .
 
   if [ "$dir" != "dcmfx_registry_codegen" ]; then
@@ -24,3 +22,6 @@ for dir in dcmfx_*; do
 
   cd ..
 done
+
+echo ""
+echo "Done"

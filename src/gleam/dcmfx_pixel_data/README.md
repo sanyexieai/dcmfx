@@ -1,24 +1,19 @@
-# DCMfx - Pixel Data Library
-
-Extracts frames of pixel data present in a data set.
-
-Part of the DCMfx project.
+# DCMfx Pixel Data
 
 [![Package Version](https://img.shields.io/hexpm/v/dcmfx_pixel_data)](https://hex.pm/packages/dcmfx_pixel_data)
 [![Hex Docs](https://img.shields.io/badge/hex-docs-ffaff3)](https://hexdocs.pm/dcmfx/)
 ![Erlang Compatible](https://img.shields.io/badge/target-erlang-a90432)
 ![JavaScript Compatible](https://img.shields.io/badge/target-javascript-f3e155)
-[![License: AGPL v3](https://img.shields.io/badge/License-AGPLv3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
+[![License: AGPL v3](https://img.shields.io/badge/License-AGPLv3-blue.svg)](https://dcmfx.github.io/license)
 
-API documentation is available [https://hexdocs.pm/dcmfx_pixel_data](here).
+Extracts frames of pixel data present in a DICOM data set.
 
-## License
+This library is part of the [DCMfx](https://dcmfx.github.io) project.
 
-DCMfx is published under the GNU Affero General Public License Version 3
-(AGPLv3). This license permits commercial use; however, any software that
-incorporates DCMfx, either directly or indirectly, must also be released under
-the AGPLv3 or a compatible license. This includes making the source code of the
-combined work available under the same terms, and ensuring that users who
-interact with the software over a network can access the source code.
+## Documentation
 
-Copyright © Dr Richard Viney, 2024.
+See the [DCMfx](https://dcmfx.github.io/about) documentation for more details
+and usage examples.
+
+API documentation for this library is available
+[here](https://hexdocs.pm/dcmfx_anonymize).
