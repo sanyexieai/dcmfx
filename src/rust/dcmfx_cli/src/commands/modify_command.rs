@@ -228,7 +228,7 @@ fn streaming_rewrite(
     )?;
 
     // Pass parts through the filter if one is specified
-    let parts = if let Some(filter_context) = filter_context.as_mut() {
+    let mut parts = if let Some(filter_context) = filter_context.as_mut() {
       parts
         .into_iter()
         .filter(|part| filter_context.add_part(part))
@@ -237,13 +237,10 @@ fn streaming_rewrite(
       parts
     };
 
-    let received_end_part = parts.last() == Some(&P10Part::End);
-
-    // Write all parts to the write context
-    for mut part in parts {
-      // If converting the transfer syntax then update the transfer syntax in
-      // the File Meta Information part
-      if let Some(ts) = output_transfer_syntax {
+    // If converting the transfer syntax then update the transfer syntax in the
+    // File Meta Information part
+    if let Some(ts) = output_transfer_syntax {
+      for part in parts.iter_mut() {
         if let P10Part::FileMetaInformation {
           data_set: ref mut fmi,
         } = part
@@ -251,33 +248,19 @@ fn streaming_rewrite(
           change_transfer_syntax(fmi, ts)?;
         }
       }
-
-      p10_write_context.write_part(&part)?;
     }
 
-    // Write bytes from the write context to the output stream
-    let p10_bytes = p10_write_context.read_bytes();
-    for bytes in p10_bytes {
-      match output_stream.write_all(&bytes) {
-        Ok(_) => Ok(()),
-        Err(e) => Err(P10Error::FileError {
-          when: "Writing to output file".to_string(),
-          details: e.to_string(),
-        }),
-      }?;
-    }
+    // Write parts to the output stream
+    let ended = dcmfx::p10::write_parts_to_stream(
+      &parts,
+      &mut output_stream,
+      &mut p10_write_context,
+    )?;
 
     // Stop when the end part is received
-    if received_end_part {
+    if ended {
       break;
     }
-  }
-
-  if let Err(e) = output_stream.flush() {
-    return Err(P10Error::FileError {
-      when: format!("Closing output file \"{}\"", output_filename),
-      details: e.to_string(),
-    });
   }
 
   Ok(())

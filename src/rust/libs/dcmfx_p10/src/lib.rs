@@ -237,6 +237,39 @@ pub fn write_stream(
   })
 }
 
+/// Writes the specified DICOM P10 parts to an output stream using the given
+/// write context. Returns whether a `P10Part::End` part was present in the
+/// parts.
+///
+pub fn write_parts_to_stream(
+  parts: &[P10Part],
+  stream: &mut dyn std::io::Write,
+  context: &mut P10WriteContext,
+) -> Result<bool, P10Error> {
+  for part in parts.iter() {
+    context.write_part(part)?;
+  }
+
+  let p10_bytes = context.read_bytes();
+  for bytes in p10_bytes.iter() {
+    stream.write_all(bytes).map_err(|e| P10Error::FileError {
+      when: "Writing to output stream".to_string(),
+      details: e.to_string(),
+    })?;
+  }
+
+  if parts.last() == Some(&P10Part::End) {
+    stream.flush().map_err(|e| P10Error::FileError {
+      when: "Writing to output stream".to_string(),
+      details: e.to_string(),
+    })?;
+
+    Ok(true)
+  } else {
+    Ok(false)
+  }
+}
+
 /// Adds functions to [`DataSet`] for converting to and from the DICOM P10
 /// format.
 ///

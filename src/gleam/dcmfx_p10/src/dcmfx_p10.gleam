@@ -7,7 +7,10 @@ import dcmfx_p10/p10_error.{type P10Error}
 @target(erlang)
 import dcmfx_p10/p10_part.{type P10Part}
 import dcmfx_p10/p10_read.{type P10ReadContext}
+@target(javascript)
 import dcmfx_p10/p10_write.{type P10WriteConfig}
+@target(erlang)
+import dcmfx_p10/p10_write.{type P10WriteConfig, type P10WriteContext}
 @target(erlang)
 import file_streams/file_stream.{type FileStream}
 @target(erlang)
@@ -318,4 +321,43 @@ pub fn write_bytes(
     |> list.reverse
     |> bit_array.concat
   })
+}
+
+@target(erlang)
+/// Writes the specified DICOM P10 parts to an output stream using the given
+/// write context. Returns whether a `p10_part.End` part was present in the
+/// parts.
+///
+pub fn write_parts_to_stream(
+  parts: List(P10Part),
+  stream: FileStream,
+  context: P10WriteContext,
+) -> Result(#(Bool, P10WriteContext), P10Error) {
+  use context <- result.try(
+    list.try_fold(parts, context, fn(context, part) {
+      p10_write.write_part(context, part)
+    }),
+  )
+
+  let #(context, p10_bytes) = p10_write.read_bytes(context)
+
+  use _ <- result.try(
+    list.try_fold(p10_bytes, Nil, fn(_, bytes) {
+      file_stream.write_bytes(stream, bytes)
+      |> result.map_error(fn(e) {
+        p10_error.FileStreamError("Writing to stdout", e)
+      })
+    }),
+  )
+
+  case list.last(parts) {
+    Ok(p10_part.End) ->
+      file_stream.sync(stream)
+      |> result.map_error(fn(e) {
+        p10_error.FileStreamError("Writing to stdout", e)
+      })
+      |> result.replace(#(True, context))
+
+    _ -> Ok(#(False, context))
+  }
 }

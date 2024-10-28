@@ -291,13 +291,12 @@ fn do_streaming_rewrite(
     None -> #(filter_context, parts)
   }
 
-  // Write all parts to the write context
-  let p10_write_context =
+  // If converting the transfer syntax then update the transfer syntax in the
+  // File Meta Information part
+  let parts =
     parts
-    |> list.fold(Ok(p10_write_context), fn(p10_write_context, part) {
-      // If converting the transfer syntax then update the transfer syntax in
-      // the File Meta Information part
-      let part = case output_transfer_syntax, part {
+    |> list.try_map(fn(part) {
+      case output_transfer_syntax, part {
         Some(ts), p10_part.FileMetaInformation(file_meta_information) ->
           file_meta_information
           |> change_transfer_syntax(ts)
@@ -305,29 +304,18 @@ fn do_streaming_rewrite(
 
         _, _ -> Ok(part)
       }
-      use part <- result.try(part)
-
-      p10_write_context
-      |> result.try(p10_write.write_part(_, part))
     })
-  use p10_write_context <- result.try(p10_write_context)
+  use parts <- result.try(parts)
 
-  // Write bytes from the write context to the output stream
-  let #(p10_write_context, p10_bytes) = p10_write.read_bytes(p10_write_context)
-  let write_result =
-    p10_bytes
-    |> list.fold_until(Ok(Nil), fn(_, bytes) {
-      case file_stream.write_bytes(output_stream, bytes) {
-        Ok(Nil) -> list.Continue(Ok(Nil))
-        Error(e) ->
-          Error(p10_error.FileStreamError("Writing to output file", e))
-          |> list.Stop
-      }
-    })
-  use _ <- result.try(write_result)
+  // Write parts to the output stream
+  use #(ended, p10_write_context) <- result.try(dcmfx_p10.write_parts_to_stream(
+    parts,
+    output_stream,
+    p10_write_context,
+  ))
 
   // Stop when the end part is received
-  use <- bool.guard(list.last(parts) == Ok(p10_part.End), Ok(Nil))
+  use <- bool.guard(ended, Ok(Nil))
 
   // Continue rewriting parts
   do_streaming_rewrite(
