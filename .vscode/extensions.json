@@ -8,5 +8,6 @@
     "streetsidesoftware.code-spell-checker",
     "tamasfe.even-better-toml",
     "vadimcn.vscode-lldb",
+    "vivaxy.vscode-conventional-commits",
   ]
 }

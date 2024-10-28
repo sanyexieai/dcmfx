@@ -1,6 +1,26 @@
+preset: conventionalcommits
+
 plugins:
-  - "@semantic-release/commit-analyzer"
+  - - "@semantic-release/commit-analyzer"
+
+    # Until v1.0 is reached breaking changes are minor' releases and
+    # everything else is a patch
+    - releaseRules:
+      - breaking: true
+        release: minor
+      - type: feat
+        release: minor
+      - type: fix
+        release: patch
+      - type: docs
+        release: patch
+      - type: perf
+        release: patch
+
   - "@semantic-release/release-notes-generator"
+
   - - "@semantic-release/github"
+
+    # Include all builds of the DCMfx CLI as assets in the GitHub release
     - assets:
-      - path: "dcmfx-cli-*/*"
+        - path: "dcmfx-cli-*/*"
