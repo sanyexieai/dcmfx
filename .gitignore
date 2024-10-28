@@ -1,1 +1,12 @@
+/**/build/
+/**/cache/
+/**/dist/
+/**/node_modules/
+/**/target/
+
 .DS_Store
+*.beam
+*.ez
+erl_crash.dump
+/examples/**/output.dcm
+/test/assets/**/*.validation_failure.*
