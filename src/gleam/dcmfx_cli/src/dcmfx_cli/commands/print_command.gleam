@@ -8,7 +8,6 @@ import dcmfx_p10/transforms/p10_print_transform.{type P10PrintTransform}
 import file_streams/file_stream.{type FileStream}
 import gleam/io
 import gleam/list
-import gleam/option.{Some}
 import gleam/result
 import glint
 import snag
@@ -132,7 +131,7 @@ fn do_perform_print(
       case part {
         p10_part.FilePreambleAndDICMPrefix(..) -> p10_print_transform
         p10_part.FileMetaInformation(data_set) -> {
-          data_set.print(data_set, Some(print_options))
+          data_set.print_with_options(data_set, print_options)
           p10_print_transform
         }
 

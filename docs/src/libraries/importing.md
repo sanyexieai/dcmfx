@@ -13,7 +13,7 @@ import dcmfx_p10
 
 pub fn main() {
   let assert Ok(ds) = dcmfx_p10.read_file("input.dcm")
-  data_set.print(ds, None)
+  data_set.print(ds)
 }
 ```
 
@@ -29,7 +29,7 @@ use dcmfx::p10::*;
 
 pub fn main() {
   let ds: DataSet = DataSet::read_p10_file("input.dcm").unwrap();
-  ds.print(None);
+  ds.print();
 }
 ```
 :::

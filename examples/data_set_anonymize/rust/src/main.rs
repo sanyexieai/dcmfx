@@ -8,5 +8,5 @@ pub fn main() {
     let mut ds = DataSet::read_p10_file(INPUT_FILE).unwrap();
 
     ds.anonymize();
-    ds.print(None);
+    ds.print();
 }

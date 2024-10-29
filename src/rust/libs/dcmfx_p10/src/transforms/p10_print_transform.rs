@@ -49,7 +49,7 @@ impl P10PrintTransform {
       P10Part::FileMetaInformation { data_set } => {
         let mut s = "".to_string();
 
-        data_set.to_lines(Some(self.print_options.clone()), &mut |line| {
+        data_set.to_lines(&self.print_options, &mut |line| {
           s.push_str(&line);
           s.push('\n');
         });

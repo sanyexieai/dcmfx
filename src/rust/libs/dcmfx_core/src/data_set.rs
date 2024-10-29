@@ -514,10 +514,16 @@ impl DataSet {
     self.0.iter_mut()
   }
 
+  /// Prints a data set to stdout formatted for readability.
+  ///
+  pub fn print(&self) {
+    self.print_with_options(&DataSetPrintOptions::default());
+  }
+
   /// Prints a data set to stdout formatted for readability using the given
   /// print options.
   ///
-  pub fn print(&self, print_options: Option<DataSetPrintOptions>) {
+  pub fn print_with_options(&self, print_options: &DataSetPrintOptions) {
     self.to_lines(print_options, &mut |line| {
       println!("{}", line);
     })
@@ -528,15 +534,10 @@ impl DataSet {
   ///
   pub fn to_lines(
     &self,
-    print_options: Option<DataSetPrintOptions>,
+    print_options: &DataSetPrintOptions,
     mut callback: &mut impl FnMut(String),
   ) {
-    print::data_set_to_lines(
-      self,
-      &print_options.unwrap_or_default(),
-      &mut callback,
-      0,
-    );
+    print::data_set_to_lines(self, print_options, &mut callback, 0);
   }
 
   /// Looks up a data set path in a data set and returns the data element or

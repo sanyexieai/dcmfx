@@ -23,7 +23,7 @@ import gleam/dict.{type Dict}
 import gleam/int
 import gleam/io
 import gleam/list
-import gleam/option.{type Option, None, Some}
+import gleam/option.{None, Some}
 import gleam/order
 import gleam/result
 import gleam/string
@@ -522,12 +522,18 @@ pub fn partition(
   })
 }
 
+/// Prints a data set to stdout formatted for readability.
+///
+pub fn print(data_set: DataSet) -> Nil {
+  print_with_options(data_set, data_set_print.new_print_options())
+}
+
 /// Prints a data set to stdout formatted for readability using the given print
 /// options.
 ///
-pub fn print(
+pub fn print_with_options(
   data_set: DataSet,
-  print_options: Option(DataSetPrintOptions),
+  print_options: DataSetPrintOptions,
 ) -> Nil {
   to_lines(data_set, print_options, Nil, fn(_, s) { io.println(s) })
 }
@@ -537,15 +543,11 @@ pub fn print(
 ///
 pub fn to_lines(
   data_set: DataSet,
-  print_options: Option(DataSetPrintOptions),
+  print_options: DataSetPrintOptions,
   context: a,
   callback: fn(a, String) -> a,
 ) -> a {
-  let print_options =
-    print_options |> option.unwrap(data_set_print.new_print_options())
-
-  data_set
-  |> do_to_lines(print_options, context, callback, 0)
+  do_to_lines(data_set, print_options, context, callback, 0)
 }
 
 fn do_to_lines(

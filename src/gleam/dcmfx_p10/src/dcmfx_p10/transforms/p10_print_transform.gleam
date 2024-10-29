@@ -55,7 +55,7 @@ pub fn add_part(
   case part {
     p10_part.FileMetaInformation(data_set) -> #(
       context,
-      data_set.to_lines(data_set, Some(context.print_options), "", fn(s, line) {
+      data_set.to_lines(data_set, context.print_options, "", fn(s, line) {
         s <> line <> "\n"
       }),
     )

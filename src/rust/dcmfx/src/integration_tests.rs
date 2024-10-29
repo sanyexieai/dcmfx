@@ -136,7 +136,7 @@ mod tests {
     // Print the data set into a string
     let mut print_result = String::new();
     data_set.to_lines(
-      Some(DataSetPrintOptions::new().styled(false).max_width(100)),
+      &DataSetPrintOptions::new().styled(false).max_width(100),
       &mut |s| {
         print_result.push_str(&s);
         print_result.push('\n');

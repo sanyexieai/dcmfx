@@ -10,5 +10,5 @@ pub fn main() {
 
   ds
   |> dcmfx_anonymize.anonymize_data_set
-  |> data_set.print(None)
+  |> data_set.print
 }
