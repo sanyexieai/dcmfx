@@ -5,6 +5,7 @@ import envoy
 import gleam/int
 import gleam/option.{type Option, None, Some}
 import gleam/result
+import gleam/string
 import term_size
 
 /// Configurable options used when printing a data set to stdout.
@@ -121,7 +122,11 @@ pub fn format_data_element_prefix(
     False -> 0
   }
 
-  let s = utils.spaces(indent * 2) <> output <> utils.spaces(padding) <> length
+  let s =
+    string.repeat(" ", indent * 2)
+    <> output
+    <> string.repeat(" ", padding)
+    <> length
 
   let width =
     indent * 2 + tag_and_vr_width + tag_name_len + padding + length_width

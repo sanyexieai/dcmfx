@@ -26,7 +26,7 @@ pub fn add_parts_test() {
     |> p10_insert_transform.new
 
   let input_parts =
-    list.concat([
+    list.flatten([
       parts_for_tag(DataElementTag(2, 0)),
       parts_for_tag(DataElementTag(5, 0)),
       [p10_part.End],
@@ -38,12 +38,12 @@ pub fn add_parts_test() {
       let #(tx, final_parts) = in
       let #(tx, new_parts) = p10_insert_transform.add_part(tx, input_part)
 
-      #(tx, list.concat([final_parts, new_parts]))
+      #(tx, list.flatten([final_parts, new_parts]))
     })
 
   final_parts
   |> should.equal(
-    list.concat([
+    list.flatten([
       parts_for_tag(DataElementTag(0, 0)),
       parts_for_tag(DataElementTag(1, 0)),
       parts_for_tag(DataElementTag(2, 0)),

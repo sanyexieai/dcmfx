@@ -8,10 +8,10 @@ import gleam/string
 /// Returns the length of a string in graphemes (on Erlang), or in UTF-16 code
 /// units (on JavaScript).
 ///
-/// This function is much faster than stdlib's `string.length()` on JavaScript
-/// because it uses `String.prototype.length`, but be aware it returns a
-/// different result when the string contains characters outside the Basic
-/// Multilingual Plane, or graphemes made up of multiple codepoints.
+/// This function is much faster than `string.length()` on JavaScript because it
+/// uses `String.length()`, but be aware it returns a different result when the
+/// string contains characters outside the Basic Multilingual Plane, or
+/// graphemes made up of multiple codepoints.
 ///
 /// This function should only be used where the above discrepancy will not occur
 /// or does not matter and performance is more important.
@@ -23,23 +23,12 @@ pub fn string_fast_length(s: String) -> Int {
 
 /// Pads a string to the desired length by prepending a pad string.
 ///
-/// This implementation is much faster than Gleam's native string.pad_left() on
-/// the JavaScript target, but is not grapheme aware.
+/// This implementation is faster than `string.pad_left()` on the JavaScript
+/// target, but is not grapheme aware.
 ///
 @external(javascript, "../../dcmfx_core_ffi.mjs", "utils__pad_start")
 pub fn pad_start(s: String, desired_length: Int, pad_string: String) -> String {
   string.pad_left(s, desired_length, pad_string)
-}
-
-/// Returns a string containing the specified number of spaces.
-///
-/// This implementation is much faster than Gleam's native string.repeat() on
-/// the JavaScript target. This function can be removed once gleam_stdlib 0.41
-/// is released.
-///
-@external(javascript, "../../dcmfx_core_ffi.mjs", "utils__spaces")
-pub fn spaces(n: Int) -> String {
-  string.repeat(" ", n)
 }
 
 /// Helper function that parses a string to a float, handling the case where the

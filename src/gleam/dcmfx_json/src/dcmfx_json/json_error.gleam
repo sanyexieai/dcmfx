@@ -42,7 +42,7 @@ pub fn deserialize_error_to_lines(
 ) -> List(String) {
   case error {
     JsonInvalid(details:, path:) -> {
-      list.concat([
+      list.flatten([
         [
           "DICOM JSON deserialize error " <> task_description,
           "",

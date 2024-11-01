@@ -4,4 +4,4 @@ name = "dicom_json_write"
 dcmfx_core = { path = "../../../src/gleam/dcmfx_core" }
 dcmfx_json = { path = "../../../src/gleam/dcmfx_json" }
 dcmfx_p10 = { path = "../../../src/gleam/dcmfx_p10" }
-gleam_stdlib = ">= 0.40.0 and < 2.0.0"
+gleam_stdlib = ">= 0.41.0 and < 2.0.0"

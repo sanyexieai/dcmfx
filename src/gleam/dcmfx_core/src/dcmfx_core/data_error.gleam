@@ -196,7 +196,7 @@ pub fn to_lines(error: DataError, task_description: String) -> List(String) {
     _ -> []
   }
 
-  list.concat([initial_lines, path_lines, details_lines])
+  list.flatten([initial_lines, path_lines, details_lines])
 }
 
 /// Prints a DICOM data error to stderr in a human-readable format.
