@@ -30,9 +30,9 @@ jobs:
           rebar3-version: "3"
 
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: 22.10
+          node-version: 22.11
 
       - name: Run tests
         working-directory: src/gleam
@@ -98,9 +98,9 @@ jobs:
           workspaces: examples/*/rust
 
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: 22.10
+          node-version: 22.11
 
       - name: Run tests
         working-directory: examples
@@ -118,9 +118,9 @@ jobs:
           path: dcmfx
 
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: 22.10
+          node-version: 22.11
 
       - name: Install dependencies
         uses: bahmutov/npm-install@v1

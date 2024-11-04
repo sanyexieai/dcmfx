@@ -15,5 +15,5 @@ dcmfx_p10 = { path = "../libs/dcmfx_p10" }
 dcmfx_pixel_data = { path = "../libs/dcmfx_pixel_data" }
 
 [dev-dependencies]
-serde_json = "1.0.128"
+serde_json = "1.0.132"
 walkdir = "2.5.0"
