@@ -1,14 +1,19 @@
 [package]
 name = "dcmfx_cli"
-version = "0.0.0"
 description = "DCMfx CLI tool"
-license = "AGPL-3.0-only"
-repository = "https://github.com/dcmfx/dcmfx"
-edition = "2021"
+categories = ["command-line-utilities"]
+
+repository.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+version.workspace = true
+homepage.workspace = true
+keywords.workspace = true
 
 [dependencies]
 clap = { version = "4.5.20", features = ["derive", "wrap_help"] }
-dcmfx = { path = "../dcmfx" }
+dcmfx = { path = "../dcmfx", version = "0.0.0" }
 flate2 = { version = "1.0.34", features = ["zlib-ng"], default-features = false }
 
 [target.'cfg(not(windows))'.dependencies]

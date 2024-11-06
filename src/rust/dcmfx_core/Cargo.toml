@@ -1,0 +1,23 @@
+[package]
+name = "dcmfx_core"
+description = "DCMfx core library"
+rust-version = "1.80"
+
+repository.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+version.workspace = true
+homepage.workspace = true
+keywords.workspace = true
+
+[dependencies]
+byteorder = "1.5.0"
+owo-colors = { version = "4.1.0", features = ["supports-colors"] }
+rand = "0.8.5"
+regex = "1.11.1"
+supports-color = "3.0.1"
+unicode-segmentation = "1.12.0"
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+terminal_size = "0.4.0"

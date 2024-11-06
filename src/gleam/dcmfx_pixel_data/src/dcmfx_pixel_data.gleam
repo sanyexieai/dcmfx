@@ -18,11 +18,11 @@ import gleam/result
 /// Returns all frames of image data present in a data set. Each returned frame
 /// is made up of one or more fragments of binary data. This function handles
 /// both encapsulated and non-encapsulated pixel data, and requires that the
-/// '(7FE0,0010) Pixel Data' data element is present in the data set.
+/// *'(7FE0,0010) Pixel Data'* data element is present in the data set.
 ///
-/// The '(0028,0008) Number of Frames', '(7FE0,0001) Extended Offset Table', and
-/// '(7FE0,0002) Extended Offset Table Lengths' data elements are used when
-/// present and relevant.
+/// The *'(0028,0008) Number of Frames'*, *'(7FE0,0001) Extended Offset Table'*,
+/// and *'(7FE0,0002) Extended Offset Table Lengths'* data elements are used
+/// when present and relevant.
 ///
 pub fn get_pixel_data(
   data_set: DataSet,
@@ -317,8 +317,8 @@ type ExtendedOffsetTableEntry {
 type ExtendedOffsetTable =
   List(ExtendedOffsetTableEntry)
 
-/// Returns the extended offset table present in the '(7FE0,0001) Extended
-/// Offset Table', and '(7FE0,0001) Extended Offset Table Lengths' data
+/// Returns the extended offset table present in the *'(7FE0,0001) Extended
+/// Offset Table'*, and *'(7FE0,0001) Extended Offset Table Lengths'* data
 /// elements, if present in the data set.
 ///
 fn parse_extended_offset_table(

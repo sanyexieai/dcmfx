@@ -38,8 +38,8 @@ details are relevant to users of this feature:
 
 1. The DICOM JSON specification is optionally extended to allow encapsulated
    pixel data to be stored. This is done by encoding the binary data present in
-   the '(7FE0,0010) PixelData' data element in Base64. This matches the behavior
-   of other libraries such as [`pydicom`](https://pydicom.github.io/).
+   the *'(7FE0,0010) PixelData'* data element in Base64. This matches the
+   behavior of other libraries such as [`pydicom`](https://pydicom.github.io/).
 
 2. `BulkDataURI` specifiers for storing and retrieving data from external
    sources are not supported. Binary data must be encoded inline using Base64.

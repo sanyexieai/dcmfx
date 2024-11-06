@@ -23,16 +23,17 @@ pub fn to_string(tag: DataElementTag) -> String {
   <> ")"
 }
 
-/// Returns whether the tag is private, which is determined by the group number
+/// Returns whether the tag is private, which is determined by its group number
 /// being odd.
 ///
 pub fn is_private(tag: DataElementTag) -> Bool {
   int.is_odd(tag.group)
 }
 
-/// Returns whether the tag is for a private creator, which is determined by the
-/// group number being odd and the element being between 0x10 and 0xFF. Ref:
-/// PS3.5 7.8.1.
+/// Returns whether the tag is for a private creator, which is determined by its
+/// group number being odd and its element being between 0x10 and 0xFF.
+///
+/// Ref: PS3.5 7.8.1.
 ///
 pub fn is_private_creator(tag: DataElementTag) -> Bool {
   int.is_odd(tag.group) && tag.element >= 0x10 && tag.element <= 0xFF

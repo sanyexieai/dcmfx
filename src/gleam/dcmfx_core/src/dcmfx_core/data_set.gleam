@@ -75,9 +75,9 @@ pub type DataSetLookupResult {
 /// Returns a new data set containing the File Meta Information data elements
 /// in this data set, i.e. those where the data element tag group equals 2.
 ///
-/// This function also sets the '(0002,0002) Media Storage SOP Class UID' and
-/// '(0002,0003) Media Storage SOP Instance UID' data elements to match the
-/// '(0008,0016) SOP Class UID' and '(0008,0018) SOP Instance UID' data
+/// This function also sets the *'(0002,0002) Media Storage SOP Class UID'* and
+/// *'(0002,0003) Media Storage SOP Instance UID'* data elements to match the
+/// *'(0008,0016) SOP Class UID'* and *'(0008,0018) SOP Instance UID'* data
 /// elements in this data set.
 ///
 pub fn file_meta_information(data_set: DataSet) -> DataSet {
@@ -1003,7 +1003,7 @@ pub fn get_person_names(
   |> result.try(data_element_value.get_person_names)
 }
 
-/// Looks up the '(0002,0010) Transfer Syntax UID' data element in a data set,
+/// Looks up the *'(0002,0010) Transfer Syntax UID'* data element in a data set,
 /// and if present, attempts to convert it to a known transfer syntax
 /// definition.
 ///

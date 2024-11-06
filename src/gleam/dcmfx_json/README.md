@@ -12,8 +12,8 @@ This library is part of the [DCMfx](https://dcmfx.github.io) project.
 
 ## Documentation
 
-See the [DCMfx](https://dcmfx.github.io/about) documentation for more details
-and usage examples.
-
 API documentation for this library is available
-[here](https://hexdocs.pm/dcmfx_anonymize).
+[here](https://hexdocs.pm/dcmfx_json).
+
+See the [DCMfx](https://dcmfx.github.io/) documentation for more details and
+usage examples.

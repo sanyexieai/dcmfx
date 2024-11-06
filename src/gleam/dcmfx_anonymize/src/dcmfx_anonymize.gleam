@@ -14,8 +14,9 @@ import gleam/result
 /// to identification of the patient, and that should be removed during
 /// anonymization.
 ///
-/// Note that this list does not include the 'SOP Instance UID', 'Series
-/// Instance UID', or 'Study Instance UID' data elements.
+/// Note that this list does not include the *'(0008,0018) SOP Instance UID'*,
+/// *'(0020,000E) Series Instance UID'*, or *'(0020,000D) Study Instance UID'*
+/// data elements.
 ///
 pub const identifying_data_elements = [
   registry.accession_number, registry.admitting_diagnoses_code_sequence,

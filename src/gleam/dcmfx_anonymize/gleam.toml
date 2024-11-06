@@ -1,5 +1,5 @@
 name = "dcmfx_anonymize"
-description = "DCMfx - Anonymize Library"
+description = "DCMfx anonymize library"
 licences = ["AGPL-3.0-only"]
 repository = { type = "github", user = "dcmfx", repo = "dcmfx" }
 gleam = ">= 1.5.0"

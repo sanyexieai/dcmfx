@@ -328,9 +328,9 @@ fn do_streaming_rewrite(
   )
 }
 
-/// Adds/updates the '(0002,0010) TransferSyntaxUID' data element in the data
-/// set. If the current '(0002,0010) TransferSyntaxUID' is not able to be
-/// converted from then an error is returned.
+/// Adds/updates the *'(0002,0010) TransferSyntaxUID'* data element in the data
+/// set. If the current transfer syntax is not able to be converted from then an
+/// error is returned.
 ///
 fn change_transfer_syntax(
   data_set: DataSet,

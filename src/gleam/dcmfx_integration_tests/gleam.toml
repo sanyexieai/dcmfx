@@ -1,5 +1,4 @@
 name = "dcmfx_integration_tests"
-description = "DCMfx - Integration Tests"
 licences = ["AGPL-3.0-only"]
 repository = { type = "github", user = "dcmfx", repo = "dcmfx" }
 gleam = ">= 1.5.0"

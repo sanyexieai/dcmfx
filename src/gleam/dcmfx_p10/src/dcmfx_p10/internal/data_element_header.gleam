@@ -16,7 +16,7 @@ pub type DataElementHeader {
 }
 
 /// Converts a data element header to a human-readable string in the format
-/// '(GROUP,ELEMENT) VR NAME', e.g. '(0008,0020) DA StudyDate'.
+/// "(GROUP,ELEMENT) VR NAME", e.g. `"(0008,0020) DA StudyDate"`.
 ///
 pub fn to_string(header: DataElementHeader) -> String {
   let vr = case header.vr {

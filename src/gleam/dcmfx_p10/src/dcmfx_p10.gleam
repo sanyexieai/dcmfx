@@ -50,9 +50,9 @@ pub fn is_valid_file(filename: String) -> Bool {
   }
 }
 
-/// Returns whether `bytes` contains DICOM P10 data by checking for the presence
-/// of the DICOM P10 header and the start of a File Meta Information Group
-/// Length data element.
+/// Returns whether the given bytes contain DICOM P10 data by checking for the
+/// presence of the DICOM P10 header and the start of a File Meta Information
+/// Group Length data element.
 ///
 pub fn is_valid_bytes(bytes: BitArray) -> Bool {
   case bytes {

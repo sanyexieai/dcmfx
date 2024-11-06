@@ -1,5 +1,5 @@
 name = "dcmfx_character_set"
-description = "DCMfx - Character Set Library"
+description = "DCMfx character set library"
 licences = ["AGPL-3.0-only"]
 repository = { type = "github", user = "dcmfx", repo = "dcmfx" }
 gleam = ">= 1.5.0"

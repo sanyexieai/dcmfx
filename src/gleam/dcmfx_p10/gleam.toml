@@ -1,5 +1,5 @@
 name = "dcmfx_p10"
-description = "DCMfx - Part 10 Library"
+description = "DCMfx Part 10 library"
 licences = ["AGPL-3.0-only"]
 repository = { type = "github", user = "dcmfx", repo = "dcmfx" }
 gleam = ">= 1.5.0"

@@ -194,13 +194,10 @@ pub fn with_config(
 /// specify a transfer syntax in its File Meta Information, or doesn't have any
 /// File Meta Information.
 ///
-/// The default is 'Implicit VR Little Endian', which is what's specified by the
-/// DICOM Part 10 specification. However, when to DICOM P10 data that uses a
-/// known transfer syntax and has no File Meta Information, explicitly setting
-/// the fallback transfer syntax is necessary.
+/// The default is 'Implicit VR Little Endian'.
 ///
-/// This function should be called prior to reading any DICOM P10 parts from the
-/// read context.
+/// The fallback transfer syntax should be set prior to reading any DICOM P10
+/// parts from the read context.
 ///
 pub fn set_fallback_transfer_syntax(
   context: P10ReadContext,
@@ -210,8 +207,8 @@ pub fn set_fallback_transfer_syntax(
 }
 
 /// Returns the transfer syntax for a P10 read context. This defaults to
-/// 'Implicit VR Little Endian' and is updated when a transfer syntax is
-/// specified in the File Meta Information.
+/// 'Implicit VR Little Endian' and is updated when a transfer syntax is read
+/// from the File Meta Information.
 ///
 /// The default transfer syntax can be set using
 /// `set_fallback_transfer_syntax()`.
@@ -220,10 +217,10 @@ pub fn transfer_syntax(context: P10ReadContext) -> TransferSyntax {
   context.transfer_syntax
 }
 
-/// Writes further bytes to a read context that can then be parsed into DICOM
-/// P10 parts by subsequent calls to `read_parts`. If `done` is true this
-/// indicates the end of the incoming DICOM P10 data to be parsed, after which
-/// any further calls to this function will error.
+/// Writes raw DICOM P10 bytes to a read context that will be parsed into
+/// DICOM P10 parts by subsequent calls to `read_parts()`. If `done` is true
+/// this indicates the end of the incoming DICOM P10 data to be parsed, after
+/// which any further calls to this function will error.
 ///
 pub fn write_bytes(
   context: P10ReadContext,
@@ -393,8 +390,8 @@ fn read_file_preamble_and_dicm_prefix_part(
 }
 
 /// Reads the File Meta Information into a data set and returns the relevant
-/// P10 part once complete. If there is a '(0002,0000) File Meta Information
-/// Group Length' data element present then it is used to specify where the
+/// P10 part once complete. If there is a *'(0002,0000) File Meta Information
+/// Group Length'* data element present then it is used to specify where the
 /// File Meta Information ends. If it is not present then data elements are
 /// read until one with a group other than 0x0002 is encountered.
 ///
@@ -1182,8 +1179,8 @@ fn read_data_element_value_bytes_part(
     is_materialized_value_required(context, tag, vr)
 
   // If this data element value is being fully materialized then it needs to be
-  // read as a whole so use its full length as the number of bytes to read,
-  // otherwise read up to the max part size
+  // read as a whole, so use its full length as the number of bytes to read.
+  // Otherwise, read up to the max part size.
   let bytes_to_read = case materialized_value_required {
     True -> value_length
     False -> int.min(bytes_remaining, context.config.max_part_size)
@@ -1191,8 +1188,8 @@ fn read_data_element_value_bytes_part(
 
   case byte_stream.read(context.stream, bytes_to_read) {
     Ok(#(data, new_stream)) -> {
-      // Data element values are always returned in little endian, so if this
-      // is a big endian transfer syntax then convert to little endian
+      // Data element values are always returned in little endian, so if this is
+      // a big endian transfer syntax then convert to little endian
       let data = case active_transfer_syntax(context).endianness {
         LittleEndian -> data
         BigEndian -> value_representation.swap_endianness(vr, data)
@@ -1279,14 +1276,13 @@ fn is_materialized_value_required(
   // If this is a clarifying data element then its data needs to be materialized
   use <- bool.guard(p10_location.is_clarifying_data_element(tag), True)
 
-  // If the value is a string and it isn't UTF-8 data for an encoded string that
-  // can be passed straight through then materialize it so that it can be
-  // converted to UTF-8 or have its ISO-646/US-ASCII byte sanitized.
+  // If the value is a string, and it isn't UTF-8 data that can be passed
+  // straight through, then materialize it so that it can be converted to UTF-8.
   //
-  // In theory strings that are defined to use ISO-646/US-ASCII don't need to be
-  // sanitized as they're already valid UTF-8, but DICOM P10 data has been seen
-  // that incorrectly puts out of range characters into these fields, so they
-  // are sanitized by replacing invalid characters with a question mark.
+  // In theory, strings that are defined to use ISO-646/US-ASCII don't need to
+  // be sanitized as they're already valid UTF-8, but DICOM P10 data has been
+  // observed that contains invalid ISO-646 data, hence they are sanitized by
+  // replacing invalid characters with a question mark.
   value_representation.is_string(vr)
   && !{
     value_representation.is_encoded_string(vr)

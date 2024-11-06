@@ -9,8 +9,8 @@ mod tests {
   use dcmfx_json::*;
   use dcmfx_p10::*;
 
-  // Integration tests are run with encapsulated pixel data allowed in the
-  // DICOM JSON data
+  // Integration tests are run with encapsulated pixel data allowed in the DICOM
+  // JSON data
   const JSON_CONFIG: DicomJsonConfig = DicomJsonConfig {
     store_encapsulated_pixel_data: true,
   };

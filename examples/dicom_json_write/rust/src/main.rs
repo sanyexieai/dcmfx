@@ -1,10 +1,16 @@
 use dcmfx::core::*;
+use dcmfx::json::*;
 use dcmfx::p10::*;
 
 const INPUT_FILE: &str = "../../example.dcm";
-const OUTPUT_FILE: &str = "output.dcm";
 
 pub fn main() {
     let ds = DataSet::read_p10_file(INPUT_FILE).unwrap();
-    ds.write_p10_file(OUTPUT_FILE, None).unwrap();
+
+    let json_config = DicomJsonConfig {
+        store_encapsulated_pixel_data: true,
+    };
+
+    let ds_json = ds.to_json(json_config).unwrap();
+    println!("{}", ds_json);
 }

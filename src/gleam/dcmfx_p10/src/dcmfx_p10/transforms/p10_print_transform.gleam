@@ -11,10 +11,10 @@ import gleam/option.{type Option, None, Some}
 import gleam/result
 
 /// This transform converts a stream of DICOM P10 parts into printable text
-/// that outlines the structure and content of the contained DICOM data.
+/// that describes the structure and content of the contained DICOM data.
 ///
-/// This is used for printing data sets on the command line, and includes the
-/// ability to style the output via `DataSetPrintOptions`.
+/// This is used for printing data sets on the command line, and the output can
+/// be styled via `DataSetPrintOptions`.
 ///
 pub type P10PrintTransform {
   P10PrintTransform(
@@ -45,7 +45,7 @@ pub fn new(print_options: DataSetPrintOptions) -> P10PrintTransform {
   )
 }
 
-/// Adds the next DICOM P10 part in the stream and returns the next piece of
+/// Adds the next DICOM P10 part to be printed and returns the next piece of
 /// text output to be displayed.
 ///
 pub fn add_part(

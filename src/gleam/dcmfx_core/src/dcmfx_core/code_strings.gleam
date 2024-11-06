@@ -3,8 +3,9 @@ import dcmfx_core/registry
 
 /// Converts a `CodeString` value to a descriptive string if one is available.
 ///
-/// This is not an exhaustive list, but rather aims to add value when printing
-/// data sets by describing commonly seen and non-obvious `CodeString`s.
+/// This conversion does not attempt to handle all known code strings, but
+/// rather aims to describe commonly seen code strings that don't have a clear
+/// and obvious meaning.
 ///
 pub fn describe(value: String, tag: DataElementTag) -> Result(String, Nil) {
   case tag {

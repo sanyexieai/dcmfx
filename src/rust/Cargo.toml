@@ -1,6 +1,24 @@
 [workspace]
 resolver = "2"
-members = ["dcmfx", "dcmfx_cli"]
+members = [
+  "dcmfx",
+  "dcmfx_anonymize",
+  "dcmfx_character_set",
+  "dcmfx_cli",
+  "dcmfx_core",
+  "dcmfx_json",
+  "dcmfx_p10",
+  "dcmfx_pixel_data",
+]
+
+[workspace.package]
+version = "0.0.0"
+license = "AGPL-3.0-only"
+edition = "2021"
+authors = ["Richard Viney <richard.viney@gmail.com>"]
+repository = "https://github.com/dcmfx/dcmfx"
+homepage = "https://dcmfx.github.io"
+keywords = ["dicom"]
 
 [profile.release]
 lto = true

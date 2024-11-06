@@ -10,17 +10,17 @@
 ////    undefined lengths.
 ////
 //// 2. The active specific character set that should be used to decode string
-////    values that aren't in UTF-8. This is set/updated by the '(0008,0005)
-////    SpecificCharacterSet' tag, most commonly in the root data set, but can
+////    values that aren't in UTF-8. This is set/updated by the *'(0008,0005)
+////    SpecificCharacterSet'* tag, most commonly in the root data set, but can
 ////    be overridden in a sequence item.
 ////
 //// 3. The value of data elements that have been read and which are needed in
 ////    order to determine the correct VR of subsequent data elements when the
 ////    transfer syntax is 'Implicit VR Little Endian'.
 ////
-////    E.g. the '(0028,0106) Smallest Image Pixel Value' data element uses
+////    E.g. the *'(0028,0106) Smallest Image Pixel Value'* data element uses
 ////    either the `UnsignedShort` or `SignedShort` VR, and determining which
-////    requires the '(0028,0103) Pixel Representation' data element's value.
+////    requires the *'(0028,0103) Pixel Representation'* data element's value.
 
 import dcmfx_character_set.{type SpecificCharacterSet}
 import dcmfx_character_set/string_type
@@ -274,8 +274,8 @@ fn active_clarifying_data_elements(
 /// Adds a clarifying data element to a location. The return value includes an
 /// updated location and updated value bytes.
 ///
-/// The only time that the value bytes are altered is the '(0008,0005)
-/// SpecificCharacterSet' data element.
+/// The only time that the value bytes are altered is the *'(0008,0005)
+/// SpecificCharacterSet'* data element.
 ///
 pub fn add_clarifying_data_element(
   location: P10Location,

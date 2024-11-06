@@ -1,6 +1,8 @@
 # Example: Read DICOM File
 
-The following code reads a DICOM P10 file and prints its contents to stdout.
+The following code reads a DICOM P10 file and prints its full contents to
+stdout, then extracts the patient ID and study date data elements and prints
+them individually.
 
 :::tabs key:code-example
 == Gleam

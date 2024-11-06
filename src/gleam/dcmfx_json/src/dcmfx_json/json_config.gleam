@@ -7,7 +7,7 @@
 /// This is done by encoding the encapsulated pixel data fragments to exactly
 /// match the DICOM P10 format, then storing it as an `InlineBinary`.
 ///
-/// Enabling this extension also causes the '(0002,0010) Transfer Syntax' data
+/// Enabling this extension also causes the *'(0002,0010) Transfer Syntax'* data
 /// element to be present in the DICOM JSON, as it's needed to interpret the
 /// encapsulated pixel data.
 ///

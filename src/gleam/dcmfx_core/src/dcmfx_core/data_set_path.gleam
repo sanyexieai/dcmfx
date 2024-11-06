@@ -14,12 +14,12 @@ import gleam/string
 /// Examples:
 ///
 /// - `""`: Path to the root data set.
-/// - `"00100010"`: Path to the '(0010,0010) Patient Name' data element.
-/// - `"00186011/[0]"`: Path to the first sequence item in the '(0018,6011)
-///   Sequence of Ultrasound Regions' data element.
-/// - `"00186011/[1]/00186014"`: Path to the '(0018,6014) Region Data Type' data
-///   element in the second item of the '(0018,6011) Sequence of Ultrasound
-///   Regions' sequence.
+/// - `"00100010"`: Path to the *'(0010,0010) Patient Name'* data element.
+/// - `"00186011/[0]"`: Path to the first sequence item in the *'(0018,6011)
+///   Sequence of Ultrasound Regions'* data element.
+/// - `"00186011/[1]/00186014"`: Path to the *'(0018,6014) Region Data Type'*
+///   data element in the second item of the *'(0018,6011) Sequence of
+///   Ultrasound Regions'* sequence.
 ///
 pub opaque type DataSetPath {
   DataSetPath(entries: List(DataSetPathEntry))

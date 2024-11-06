@@ -19,8 +19,8 @@ pub type P10Error {
   TransferSyntaxNotSupported(transfer_syntax_uid: String)
 
   /// This error occurs when a DICOM P10 read context is supplied data that
-  /// contains a '(0008,0005) SpecificCharacterSet' data element that is invalid
-  /// and unable to be decoded.
+  /// contains a *'(0008,0005) SpecificCharacterSet'* data element that is
+  /// invalid and unable to be decoded.
   ///
   /// This error will never occur on valid DICOM P10 data because all character
   /// sets defined by the DICOM standard are supported.

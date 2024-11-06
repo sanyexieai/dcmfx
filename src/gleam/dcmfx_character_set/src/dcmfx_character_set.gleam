@@ -12,8 +12,9 @@ import gleam/option.{type Option, None, Some}
 import gleam/result
 import gleam/string
 
-/// A specific character set as defined by the `SpecificCharacterSet` DICOM tag.
-/// This is a list of one or more individual character sets.
+/// A specific character set as defined by the *'(0008,0005) Specific Character
+/// Set)'* data element. This is a list of one or more individual character
+/// sets.
 ///
 /// When there are multiple character sets in a specific character set it means
 /// that Code Extension techniques are being used and that escape sequences may

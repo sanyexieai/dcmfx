@@ -1,0 +1,15 @@
+[package]
+name = "dcmfx_pixel_data"
+description = "DCMfx pixel data library"
+
+repository.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+version.workspace = true
+homepage.workspace = true
+keywords.workspace = true
+
+[dependencies]
+byteorder = "1.5.0"
+dcmfx_core = { path = "../dcmfx_core", version = "0.0.0" }

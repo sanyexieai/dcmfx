@@ -5,6 +5,8 @@
 /// Anonymization of data sets by removing data elements that identify the
 /// patient, or potentially contribute to identification of the patient.
 ///
+/// This module is a re-export of the `dcmfx_anonymize` crate.
+///
 pub mod anonymize {
   pub use dcmfx_anonymize::*;
 }
@@ -13,11 +15,15 @@ pub mod anonymize {
 /// representations, transfer syntaxes, and a registry of the data elements
 /// defined in DICOM Part 6.
 ///
+/// This module is a re-export of the `dcmfx_core` crate.
+///
 pub mod core {
   pub use dcmfx_core::*;
 }
 
 /// Converts between DICOM data sets and DICOM JSON.
+///
+/// This module is a re-export of the `dcmfx_json` crate.
 ///
 pub mod json {
   pub use dcmfx_json::*;
@@ -26,11 +32,15 @@ pub mod json {
 /// Reads and writes the DICOM Part 10 (P10) binary format used to store and
 /// transmit DICOM-based medical imaging information.
 ///
+/// This module is a re-export of the `dcmfx_p10` crate.
+///
 pub mod p10 {
   pub use dcmfx_p10::*;
 }
 
 /// Extracts frames of pixel data present in a data set.
+///
+/// This module is a re-export of the `dcmfx_pixel_data` crate.
 ///
 pub mod pixel_data {
   pub use dcmfx_pixel_data::*;

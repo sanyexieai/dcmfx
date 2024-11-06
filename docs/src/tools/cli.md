@@ -103,7 +103,7 @@ Options:
    Note that this does not remove any identifying information baked into pixel
    data or other binary data elements.
 
-8. Remove the top-level '(7FE0,0010) Pixel Data' data element from a DICOM P10
+8. Remove the top-level *'(7FE0,0010) Pixel Data'* data element from a DICOM P10
    file:
 
    ```sh
