@@ -105,7 +105,11 @@ pub fn format_data_element_prefix(
     Some(length) ->
       "["
       <> { length |> int.to_string |> utils.pad_start(6, " ") }
-      <> " bytes] "
+      <> " bytes]"
+      <> case option.is_some(vr) {
+        True -> " "
+        False -> ""
+      }
     None -> ""
   }
 

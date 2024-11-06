@@ -223,7 +223,11 @@ pub fn format_data_element_prefix(
   let has_length = length.is_some();
 
   let length = if let Some(length) = length {
-    format!("[{length:6} bytes] ")
+    let mut s = format!("[{length:6} bytes]");
+    if vr.is_some() {
+      s.push(' ');
+    }
+    s
   } else {
     "".to_string()
   };
