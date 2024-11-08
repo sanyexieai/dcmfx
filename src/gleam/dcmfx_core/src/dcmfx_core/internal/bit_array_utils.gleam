@@ -1,8 +1,6 @@
 import bigi.{type BigInt}
 import gleam/bit_array
-import gleam/bool
 import gleam/int
-import gleam/iterator
 import gleam/result
 import ieee_float.{type IEEEFloat}
 
@@ -129,20 +127,42 @@ fn to_list(
 ) -> Result(List(a), Nil) {
   let byte_count = bit_array.byte_size(bytes)
 
-  use <- bool.guard(byte_count == 0, Ok([]))
-
   case byte_count % item_size {
-    0 ->
-      iterator.range(0, byte_count / item_size - 1)
-      |> iterator.map(fn(i) {
+    0 -> {
+      let item_count = byte_count / item_size
+      do_to_list(bytes, item_size, read_item, item_count - 1, item_count, [])
+    }
+
+    _ -> Error(Nil)
+  }
+}
+
+fn do_to_list(
+  bytes: BitArray,
+  item_size: Int,
+  read_item: fn(BitArray) -> Result(a, Nil),
+  i: Int,
+  item_count: Int,
+  acc: List(a),
+) -> Result(List(a), Nil) {
+  case i {
+    -1 -> Ok(acc)
+
+    _ -> {
+      let item =
         bytes
         |> bit_array.slice(i * item_size, item_size)
         |> result.try(read_item)
-      })
-      |> iterator.to_list
-      |> result.all
 
-    _ -> Error(Nil)
+      case item {
+        Ok(item) ->
+          do_to_list(bytes, item_size, read_item, i - 1, item_count, [
+            item,
+            ..acc
+          ])
+        Error(Nil) -> Error(Nil)
+      }
+    }
   }
 }
 

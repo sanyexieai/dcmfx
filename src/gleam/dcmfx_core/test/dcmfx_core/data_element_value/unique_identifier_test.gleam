@@ -1,6 +1,6 @@
 import dcmfx_core/data_element_value/unique_identifier
 import dcmfx_core/data_error
-import gleam/iterator
+import gleam/list
 import gleam/result
 import gleam/string
 import gleeunit/should
@@ -35,8 +35,8 @@ pub fn to_bytes_test() {
 }
 
 pub fn new_test() {
-  iterator.range(0, 1000)
-  |> iterator.each(fn(_) {
+  list.range(0, 1000)
+  |> list.each(fn(_) {
     unique_identifier.new("")
     |> result.map(unique_identifier.is_valid)
     |> should.equal(Ok(True))
