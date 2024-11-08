@@ -65,14 +65,14 @@ pub fn main() {
         }
       })
 
-      exit(1)
+      exit_with_status(1)
     }
   }
 }
 
 @external(erlang, "erlang", "halt")
 @external(javascript, "node:process", "exit")
-fn exit(status: Int) -> Nil
+fn exit_with_status(status: Int) -> Nil
 
 type DicomValidationError {
   LoadError(error: P10Error)

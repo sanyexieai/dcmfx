@@ -1,7 +1,6 @@
 import dcmfx_anonymize
 import dcmfx_core/data_set
 import dcmfx_p10
-import gleam/option.{None}
 
 const input_file = "../../example.dcm"
 

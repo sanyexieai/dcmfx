@@ -3,6 +3,7 @@ import dcmfx_json/json_error
 import dcmfx_p10
 import dcmfx_p10/p10_error
 import gleam/option.{None}
+import gleam/string
 import glint
 import simplifile
 
@@ -43,7 +44,7 @@ pub fn run() {
 
     Error(e) -> {
       p10_error.print(
-        p10_error.FileError("Reading file", e),
+        p10_error.OtherError("File read failed", string.inspect(e)),
         "reading file \"" <> input_filename <> "\"",
       )
       Error(Nil)

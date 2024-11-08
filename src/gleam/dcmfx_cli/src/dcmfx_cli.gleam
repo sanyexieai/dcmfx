@@ -67,6 +67,7 @@ pub fn main() {
 }
 
 @external(erlang, "erlang", "halt")
+@external(javascript, "node:process", "exit")
 fn exit_with_status(status: Int) -> Nil
 
 // TODO: determine if the `maximum` value mentioned in the docs can be made to
@@ -76,4 +77,6 @@ type MemoryType {
 }
 
 @external(erlang, "erlang", "memory")
-fn memory(memory_type: MemoryType) -> Int
+fn memory(_memory_type: MemoryType) -> Int {
+  0
+}

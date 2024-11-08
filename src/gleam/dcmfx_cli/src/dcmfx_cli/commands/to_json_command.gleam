@@ -4,6 +4,7 @@ import dcmfx_json/json_config.{DicomJsonConfig}
 import dcmfx_json/json_error
 import dcmfx_p10
 import dcmfx_p10/p10_error
+import gleam/string
 import glint
 import simplifile
 
@@ -45,7 +46,7 @@ pub fn run() {
             Ok(Nil) -> Ok(Nil)
             Error(e) -> {
               p10_error.print(
-                p10_error.FileError("writing output file", e),
+                p10_error.OtherError("File write failed", string.inspect(e)),
                 "writing file \"" <> output_filename <> "\"",
               )
 

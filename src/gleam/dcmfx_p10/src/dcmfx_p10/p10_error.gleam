@@ -9,7 +9,6 @@ import gleam/io
 import gleam/list
 import gleam/option.{type Option, Some}
 import gleam/string
-import simplifile
 
 /// An error that occurred when reading or writing DICOM P10 data.
 ///
@@ -63,9 +62,6 @@ pub type P10Error {
   /// its final bytes have already been written.
   WriteAfterCompletion
 
-  /// This error occurs when there is an error with an underlying file.
-  FileError(when: String, error: simplifile.FileError)
-
   /// This error occurs when there is an error with an underlying file stream.
   FileStreamError(when: String, error: file_stream_error.FileStreamError)
 
@@ -98,7 +94,6 @@ pub fn name(error: P10Error) -> String {
     MaximumExceeded(..) -> "Maximum exceeded"
     PartStreamInvalid(..) -> "P10 part stream invalid"
     WriteAfterCompletion(..) -> "Write after completion"
-    FileError(..) -> "File I/O failure"
     FileStreamError(..) -> "File stream I/O failure"
     OtherError(error_type: error_type, ..) -> error_type
   }
@@ -118,7 +113,6 @@ pub fn to_lines(error: P10Error, task_description: String) -> List(String) {
     | DataEndedUnexpectedly(when: when, ..)
     | DataInvalid(when: when, ..)
     | PartStreamInvalid(when: when, ..)
-    | FileError(when: when, ..)
     | FileStreamError(when: when, ..) -> ["  When: " <> when, ..lines]
     _ -> lines
   }
@@ -139,11 +133,6 @@ pub fn to_lines(error: P10Error, task_description: String) -> List(String) {
     PartStreamInvalid(details: details, part: part, ..) -> [
       "  Part: " <> p10_part.to_string(part),
       "  Details: " <> details,
-      ..lines
-    ]
-
-    FileError(error: error, ..) -> [
-      "  Details: " <> string.inspect(error),
       ..lines
     ]
 
