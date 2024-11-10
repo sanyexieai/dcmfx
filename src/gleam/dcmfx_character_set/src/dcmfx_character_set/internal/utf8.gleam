@@ -1,20 +1,34 @@
+@target(javascript)
 import gleam/int
 import gleam/string
 
+@target(erlang)
 /// Decodes the next codepoint from the given UTF-8 bytes.
 ///
 pub fn decode_next_codepoint(
   bytes: BitArray,
 ) -> Result(#(UtfCodepoint, BitArray), Nil) {
-  // The following case patterns can be implemented much more succinctly using
-  // pure bit array syntax, but as of Gleam 1.5.1 this syntax isn't supported
-  // on the JavaScript target.
-  //
-  // The preferred code (that works on the Erlang target) is:
-  //
-  // <<codepoint:utf8_codepoint, rest:bytes>> ->
-  //   Ok(#(string.utf_codepoint_to_int(codepoint), rest))
+  case bytes {
+    <<codepoint:utf8_codepoint, rest:bytes>> -> Ok(#(codepoint, rest))
 
+    <<_, rest:bytes>> -> {
+      let assert Ok(codepoint) = string.utf_codepoint(0xFFFD)
+
+      Ok(#(codepoint, rest))
+    }
+
+    _ -> Error(Nil)
+  }
+}
+
+// The above implementation that uses `utf8_codepoint` isn't supported on the
+// JavaScript target as of Gleam 1.6.0, so the equivalent pattern match is
+// implemented manually on that platform.
+
+@target(javascript)
+pub fn decode_next_codepoint(
+  bytes: BitArray,
+) -> Result(#(UtfCodepoint, BitArray), Nil) {
   case bytes {
     // 1-byte UTF-8 character
     <<b0, rest:bytes>> if b0 <= 0x7F -> {

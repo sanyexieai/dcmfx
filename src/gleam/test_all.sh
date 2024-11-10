@@ -9,7 +9,7 @@ for dir in dcmfx_*; do
   echo "Testing $dir ..."
 
   cd "$dir"
-  gleam format --check .
+  gleam format --check
 
   if [ "$dir" != "dcmfx_registry_codegen" ]; then
     gleam test --target erlang

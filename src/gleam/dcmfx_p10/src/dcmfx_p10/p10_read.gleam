@@ -779,7 +779,7 @@ fn read_data_element_header_part(
     | tag, Some(value_representation.OtherWordString), 0xFFFFFFFF
       if tag == registry.pixel_data.tag
     -> {
-      let assert Some(vr) = vr
+      let Some(vr) = vr
       let part = p10_part.SequenceStart(tag, vr)
 
       let new_location =

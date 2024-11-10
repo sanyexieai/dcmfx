@@ -14993,7 +14993,8 @@ pub const gray_lookup_table_data = Item(
   DataElementTag(0x0028, 0x1200),
   "Gray Lookup Table Data",
   [
-    value_representation.UnsignedShort, value_representation.SignedShort,
+    value_representation.UnsignedShort,
+    value_representation.SignedShort,
     value_representation.OtherWordString,
   ],
   vm_1_to_n,
