@@ -11,9 +11,7 @@ for dir in */; do
   cd "$dir"/gleam
   gleam format --check .
   gleam run --target erlang
-  if [ "$dir" != "dicom_stream/" ]; then
-    gleam run --target javascript
-  fi
+  gleam run --target javascript
 
   cd ../rust
   cargo fmt --check
