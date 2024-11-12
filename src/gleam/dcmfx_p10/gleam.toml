@@ -1,8 +1,13 @@
 name = "dcmfx_p10"
 description = "DCMfx Part 10 library"
 licences = ["AGPL-3.0-only"]
-repository = { type = "github", user = "dcmfx", repo = "dcmfx" }
 gleam = ">= 1.5.0"
+
+[repository]
+type = "github"
+user = "dcmfx"
+repo = "dcmfx"
+path = "src/gleam/dcmfx_p10"
 
 [dependencies]
 dcmfx_character_set = { path = "../dcmfx_character_set" }
