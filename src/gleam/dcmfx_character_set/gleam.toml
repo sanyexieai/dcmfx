@@ -17,3 +17,4 @@ gleeunit = ">= 1.2.0 and < 2.0.0"
 
 [javascript]
 typescript_declarations = true
+deno = { allow_read = true }

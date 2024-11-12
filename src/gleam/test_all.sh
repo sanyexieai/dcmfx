@@ -13,11 +13,11 @@ for dir in dcmfx_*; do
 
   if [ "$dir" != "dcmfx_registry_codegen" ]; then
     gleam test --target erlang
+    gleam test --target javascript --runtime node
+    gleam test --target javascript --runtime deno
 
-    # The CLI doesn't support the JavaScript target
-    if [ "$dir" != "dcmfx_cli" ]; then
-      gleam test --target javascript
-    fi
+    # The Bun JavaScript runtime will be supported once the crash described in
+    # https://github.com/oven-sh/bun/issues/13233 is fixed.
   fi
 
   cd ..
