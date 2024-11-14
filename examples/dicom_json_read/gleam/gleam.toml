@@ -6,3 +6,6 @@ dcmfx_json = { path = "../../../src/gleam/dcmfx_json" }
 dcmfx_p10 = { path = "../../../src/gleam/dcmfx_p10" }
 gleam_stdlib = ">= 0.41.0 and < 2.0.0"
 simplifile = ">= 2.2.0 and < 3.0.0"
+
+[javascript]
+deno = { allow_env = true, allow_read = true }

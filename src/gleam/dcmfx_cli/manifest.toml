@@ -12,7 +12,7 @@ packages = [
   { name = "dcmfx_p10", version = "0.1.0", build_tools = ["gleam"], requirements = ["dcmfx_character_set", "dcmfx_core", "file_streams", "gleam_stdlib"], source = "local", path = "../dcmfx_p10" },
   { name = "dcmfx_pixel_data", version = "0.1.0", build_tools = ["gleam"], requirements = ["bigi", "dcmfx_core", "gleam_stdlib"], source = "local", path = "../dcmfx_pixel_data" },
   { name = "envoy", version = "1.0.2", build_tools = ["gleam"], requirements = ["gleam_stdlib"], otp_app = "envoy", source = "hex", outer_checksum = "95FD059345AA982E89A0B6E2A3BF1CF43E17A7048DCD85B5B65D3B9E4E39D359" },
-  { name = "file_streams", version = "1.2.1", build_tools = ["gleam"], requirements = ["gleam_stdlib"], otp_app = "file_streams", source = "hex", outer_checksum = "E6437CB7B4D1212E1B624C6A60DD673F6063F481C82EEE7DCA8AD66E79204B0D" },
+  { name = "file_streams", version = "1.2.2", build_tools = ["gleam"], requirements = ["gleam_stdlib"], otp_app = "file_streams", source = "hex", outer_checksum = "E8659E84092A720CB8D737FE6E529B9B7597E92B4B2A70A917E8590FBEAD0AE6" },
   { name = "filepath", version = "1.0.0", build_tools = ["gleam"], requirements = ["gleam_stdlib"], otp_app = "filepath", source = "hex", outer_checksum = "EFB6FF65C98B2A16378ABC3EE2B14124168C0CE5201553DE652E2644DCFDB594" },
   { name = "gleam_community_ansi", version = "1.4.1", build_tools = ["gleam"], requirements = ["gleam_community_colour", "gleam_stdlib"], otp_app = "gleam_community_ansi", source = "hex", outer_checksum = "4CD513FC62523053E62ED7BAC2F36136EC17D6A8942728250A9A00A15E340E4B" },
   { name = "gleam_community_colour", version = "1.3.0", build_tools = ["gleam"], requirements = ["gleam_stdlib"], otp_app = "gleam_community_colour", source = "hex", outer_checksum = "A49A5E3AE8B637A5ACBA80ECB9B1AFE89FD3D5351FF6410A42B84F666D40D7D5" },
@@ -37,7 +37,7 @@ dcmfx_core = { path = "../dcmfx_core" }
 dcmfx_json = { path = "../dcmfx_json" }
 dcmfx_p10 = { path = "../dcmfx_p10" }
 dcmfx_pixel_data = { path = "../dcmfx_pixel_data" }
-file_streams = { version = ">= 1.2.1 and < 2.0.0" }
+file_streams = { version = ">= 1.2.2 and < 2.0.0" }
 gleam_stdlib = { version = ">= 0.41.0 and < 2.0.0" }
 gleeunit = { version = ">= 1.2.0 and < 2.0.0" }
 glint = { version = ">= 1.1.0 and < 2.0.0" }

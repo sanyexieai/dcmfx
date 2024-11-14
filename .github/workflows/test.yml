@@ -38,7 +38,7 @@ jobs:
         uses: denoland/setup-deno@v2
         with:
           deno-version: 2.0
-  
+
       - name: Run tests
         working-directory: src/gleam
         run: ./test_all.sh
@@ -107,7 +107,12 @@ jobs:
         with:
           node-version: 22.11
 
-      - name: Run tests
+      - name: Setup Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: 2.0
+
+      - name: Run all examples
         working-directory: examples
         run: ./test_all.sh
 

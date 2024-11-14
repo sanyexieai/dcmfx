@@ -11,7 +11,8 @@ for dir in */; do
   cd "$dir"/gleam
   gleam format --check .
   gleam run --target erlang
-  gleam run --target javascript
+  gleam run --target javascript --runtime node
+  gleam run --target javascript --runtime deno
 
   cd ../rust
   cargo fmt --check

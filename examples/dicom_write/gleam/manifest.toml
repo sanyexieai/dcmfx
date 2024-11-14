@@ -5,14 +5,12 @@ packages = [
   { name = "bigi", version = "3.2.0", build_tools = ["gleam"], requirements = ["gleam_stdlib"], otp_app = "bigi", source = "hex", outer_checksum = "FB1263FCF052C8A8331965C91688D91D79C158ED01549B9E6F1FD866DA90EAA4" },
   { name = "dcmfx_character_set", version = "0.1.0", build_tools = ["gleam"], requirements = ["gleam_stdlib"], source = "local", path = "../../../src/gleam/dcmfx_character_set" },
   { name = "dcmfx_core", version = "0.1.0", build_tools = ["gleam"], requirements = ["bigi", "envoy", "gleam_stdlib", "ieee_float", "term_size"], source = "local", path = "../../../src/gleam/dcmfx_core" },
-  { name = "dcmfx_p10", version = "0.1.0", build_tools = ["gleam"], requirements = ["dcmfx_character_set", "dcmfx_core", "file_streams", "gleam_stdlib", "simplifile"], source = "local", path = "../../../src/gleam/dcmfx_p10" },
+  { name = "dcmfx_p10", version = "0.1.0", build_tools = ["gleam"], requirements = ["dcmfx_character_set", "dcmfx_core", "file_streams", "gleam_stdlib"], source = "local", path = "../../../src/gleam/dcmfx_p10" },
   { name = "envoy", version = "1.0.2", build_tools = ["gleam"], requirements = ["gleam_stdlib"], otp_app = "envoy", source = "hex", outer_checksum = "95FD059345AA982E89A0B6E2A3BF1CF43E17A7048DCD85B5B65D3B9E4E39D359" },
-  { name = "file_streams", version = "1.2.0", build_tools = ["gleam"], requirements = ["gleam_stdlib"], otp_app = "file_streams", source = "hex", outer_checksum = "AAB9536D3553345D87D2761C2DE7B0480BD4BF2D24DFE8D7E75ADEC5BB5A5B4C" },
-  { name = "filepath", version = "1.0.0", build_tools = ["gleam"], requirements = ["gleam_stdlib"], otp_app = "filepath", source = "hex", outer_checksum = "EFB6FF65C98B2A16378ABC3EE2B14124168C0CE5201553DE652E2644DCFDB594" },
-  { name = "gleam_erlang", version = "0.28.0", build_tools = ["gleam"], requirements = ["gleam_stdlib"], otp_app = "gleam_erlang", source = "hex", outer_checksum = "BE551521F708DCE5CB954AFBBDF08519C1C44986521FD40753608825F48FFA9E" },
+  { name = "file_streams", version = "1.2.2", build_tools = ["gleam"], requirements = ["gleam_stdlib"], otp_app = "file_streams", source = "hex", outer_checksum = "E8659E84092A720CB8D737FE6E529B9B7597E92B4B2A70A917E8590FBEAD0AE6" },
+  { name = "gleam_erlang", version = "0.30.0", build_tools = ["gleam"], requirements = ["gleam_stdlib"], otp_app = "gleam_erlang", source = "hex", outer_checksum = "760618870AE4A497B10C73548E6E44F43B76292A54F0207B3771CBB599C675B4" },
   { name = "gleam_stdlib", version = "0.41.0", build_tools = ["gleam"], requirements = [], otp_app = "gleam_stdlib", source = "hex", outer_checksum = "1B2F80CB1B66B027E3198A2FF71EF3F2F31DF89ED97AD606F25FD387A4C3C1EF" },
   { name = "ieee_float", version = "1.0.3", build_tools = ["gleam"], requirements = ["gleam_erlang", "gleam_stdlib"], otp_app = "ieee_float", source = "hex", outer_checksum = "0E9B6233343BD8EDBF813B50D5480139A3E318D257EA206D5C500984A829C515" },
-  { name = "simplifile", version = "2.2.0", build_tools = ["gleam"], requirements = ["filepath", "gleam_stdlib"], otp_app = "simplifile", source = "hex", outer_checksum = "0DFABEF7DC7A9E2FF4BB27B108034E60C81BEBFCB7AB816B9E7E18ED4503ACD8" },
   { name = "term_size", version = "1.0.1", build_tools = ["gleam"], requirements = ["gleam_stdlib"], otp_app = "term_size", source = "hex", outer_checksum = "D00BD2BC8FB3EBB7E6AE076F3F1FF2AC9D5ED1805F004D0896C784D06C6645F1" },
 ]
 
