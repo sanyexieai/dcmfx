@@ -86,7 +86,7 @@ fn write_frame_data_files(
     let filename =
       output_prefix
       <> "."
-      <> string.pad_left(int.to_string(index), 4, "0")
+      <> string.pad_start(int.to_string(index), 4, "0")
       <> dcmfx_pixel_data.file_extension_for_transfer_syntax(transfer_syntax)
 
     io.print("Writing file \"" <> filename <> "\" ... ")

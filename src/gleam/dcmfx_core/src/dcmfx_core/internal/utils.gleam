@@ -28,7 +28,7 @@ pub fn string_fast_length(s: String) -> Int {
 ///
 @external(javascript, "../../dcmfx_core_ffi.mjs", "utils__pad_start")
 pub fn pad_start(s: String, desired_length: Int, pad_string: String) -> String {
-  string.pad_left(s, desired_length, pad_string)
+  string.pad_start(s, desired_length, pad_string)
 }
 
 /// Helper function that parses a string to a float, handling the case where the
@@ -36,7 +36,7 @@ pub fn pad_start(s: String, desired_length: Int, pad_string: String) -> String {
 /// digits following the decimal point.
 ///
 pub fn smart_parse_float(input: String) -> Result(Float, Nil) {
-  let input = trim_right_codepoints(input, [0x2E])
+  let input = trim_end_codepoints(input, [0x2E])
 
   input
   |> float.parse
@@ -46,35 +46,35 @@ pub fn smart_parse_float(input: String) -> Result(Float, Nil) {
 /// Removes all occurrences of the specified characters from the end of a
 /// string.
 ///
-pub fn trim_right(s: String, chars: String) -> String {
+pub fn trim_end(s: String, chars: String) -> String {
   let codepoints =
     chars
     |> string.to_utf_codepoints
     |> list.map(string.utf_codepoint_to_int)
 
-  trim_right_codepoints(s, codepoints)
+  trim_end_codepoints(s, codepoints)
 }
 
 /// Removes all whitespace from the end of the passed string. Whitespace is
 /// defined as the following Unicode codepoints: U+0000, U+0009, U+000A, U+000D,
 /// U+0020.
 ///
-pub fn trim_right_whitespace(s: String) -> String {
-  trim_right_codepoints(s, [0x00, 0x09, 0x0A, 0x0D, 0x20])
+pub fn trim_end_whitespace(s: String) -> String {
+  trim_end_codepoints(s, [0x00, 0x09, 0x0A, 0x0D, 0x20])
 }
 
 /// Removes all occurrences of the specified codepoints from the end of a
 /// string. This function can only remove ASCII codepoints, i.e. those with
 /// values <= `0x7F`.
 ///
-pub fn trim_right_codepoints(s: String, codepoints: List(Int)) -> String {
+pub fn trim_end_codepoints(s: String, codepoints: List(Int)) -> String {
   let s = bit_array.from_string(s)
   let len = bit_array.byte_size(s)
 
-  do_trim_right_codepoints(s, len, codepoints)
+  do_trim_end_codepoints(s, len, codepoints)
 }
 
-fn do_trim_right_codepoints(
+fn do_trim_end_codepoints(
   s: BitArray,
   length: Int,
   codepoints: List(Int),
@@ -86,7 +86,7 @@ fn do_trim_right_codepoints(
       let assert Ok(<<x>>) = bit_array.slice(s, length - 1, 1)
 
       case list.contains(codepoints, x) {
-        True -> do_trim_right_codepoints(s, length - 1, codepoints)
+        True -> do_trim_end_codepoints(s, length - 1, codepoints)
         False -> {
           let assert Ok(s) = bit_array.slice(s, 0, length)
           let assert Ok(s) = bit_array.to_string(s)
@@ -139,9 +139,7 @@ fn do_inspect_bit_array(input: BitArray, accumulator: String) -> String {
       }
 
       let accumulator =
-        accumulator
-        <> { x |> int.to_base16 |> string.pad_left(2, "0") }
-        <> suffix
+        accumulator <> { x |> int.to_base16 |> pad_start(2, "0") } <> suffix
 
       do_inspect_bit_array(rest, accumulator)
     }

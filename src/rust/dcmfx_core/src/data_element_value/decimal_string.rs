@@ -9,7 +9,7 @@ pub fn from_bytes(bytes: &[u8]) -> Result<Vec<f64>, DataError> {
     DataError::new_value_invalid("DecimalString is invalid UTF-8".to_string())
   })?;
 
-  let decimal_string = utils::trim_right_whitespace(decimal_string);
+  let decimal_string = utils::trim_end_whitespace(decimal_string);
 
   decimal_string
     .split('\\')

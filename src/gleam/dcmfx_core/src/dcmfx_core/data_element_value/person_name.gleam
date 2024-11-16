@@ -44,7 +44,7 @@ pub fn from_bytes(
   let person_name_string =
     bytes
     |> bit_array.to_string
-    |> result.map(utils.trim_right_whitespace)
+    |> result.map(utils.trim_end_whitespace)
     |> result.replace_error(data_error.new_value_invalid(
       "PersonName is invalid UTF-8",
     ))
@@ -97,7 +97,7 @@ fn parse_person_name_component_group(
 ) -> Result(Option(PersonNameComponents), DataError) {
   let components =
     string.split(component_group, "^")
-    |> list.map(string.trim_right)
+    |> list.map(string.trim_end)
 
   let component_count = list.length(components)
   let is_valid = component_count > 0 && component_count <= 5
@@ -145,7 +145,7 @@ pub fn to_bytes(
       })
       |> result.all
       |> result.map(string.join(_, "="))
-      |> result.map(utils.trim_right(_, "="))
+      |> result.map(utils.trim_end(_, "="))
     })
     |> result.all
 
@@ -193,5 +193,5 @@ fn components_to_string(
   })
   |> result.all
   |> result.map(string.join(_, "^"))
-  |> result.map(utils.trim_right(_, "^"))
+  |> result.map(utils.trim_end(_, "^"))
 }

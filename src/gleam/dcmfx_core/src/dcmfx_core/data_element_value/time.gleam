@@ -22,7 +22,7 @@ pub fn from_bytes(bytes: BitArray) -> Result(StructuredTime, DataError) {
   let time_string =
     bytes
     |> bit_array.to_string
-    |> result.map(utils.trim_right_whitespace)
+    |> result.map(utils.trim_end_whitespace)
     |> result.replace_error(data_error.new_value_invalid(
       "Time is invalid UTF-8",
     ))
@@ -180,7 +180,7 @@ fn format_second(seconds: Float) -> String {
       let fractional_seconds =
         fractional_seconds
         |> int.to_string
-        |> utils.trim_right("0")
+        |> utils.trim_end("0")
 
       whole_seconds <> "." <> fractional_seconds
     }

@@ -157,7 +157,7 @@ impl DataElementValue {
             // Add a descriptive suffix for known UIDs and CodeStrings
             let suffix = match vr {
               ValueRepresentation::UniqueIdentifier => {
-                match registry::uid_name(utils::trim_right_whitespace(value)) {
+                match registry::uid_name(utils::trim_end_whitespace(value)) {
                   Ok(uid_name) => Some(format!(" ({})", uid_name)),
                   Err(()) => None,
                 }

@@ -396,7 +396,7 @@ fn update_private_creator_clarifying_data_element(
 ) -> #(BitArray, P10Location) {
   let assert Ok(private_creator) =
     bit_array.to_string(value_bytes)
-    |> result.map(utils.trim_right_whitespace)
+    |> result.map(utils.trim_end_whitespace)
 
   let location =
     location

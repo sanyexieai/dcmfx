@@ -50,7 +50,7 @@ impl StructuredAge {
       DataError::new_value_invalid("AgeString is invalid UTF-8".to_string())
     })?;
 
-    let age_string = utils::trim_right_whitespace(age_string);
+    let age_string = utils::trim_end_whitespace(age_string);
 
     match PARSE_AGE_STRING_REGEX.captures(age_string) {
       Some(caps) => {

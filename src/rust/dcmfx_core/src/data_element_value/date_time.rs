@@ -31,7 +31,7 @@ impl StructuredDateTime {
       DataError::new_value_invalid("DateTime is invalid UTF-8".to_string())
     })?;
 
-    let date_time_string = utils::trim_right_whitespace(date_time_string);
+    let date_time_string = utils::trim_end_whitespace(date_time_string);
 
     match PARSE_DATE_TIME_REGEX.captures(date_time_string) {
       Some(caps) => {

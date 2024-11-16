@@ -26,7 +26,7 @@ impl StructuredTime {
       DataError::new_value_invalid("Time is invalid UTF-8".to_string())
     })?;
 
-    let time_string = utils::trim_right_whitespace(time_string);
+    let time_string = utils::trim_end_whitespace(time_string);
 
     match PARSE_TIME_REGEX.captures(time_string) {
       Some(caps) => {

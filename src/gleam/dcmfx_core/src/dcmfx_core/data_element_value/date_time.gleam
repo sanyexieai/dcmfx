@@ -34,7 +34,7 @@ pub fn from_bytes(bytes: BitArray) -> Result(StructuredDateTime, DataError) {
   let date_time_string =
     bytes
     |> bit_array.to_string
-    |> result.map(utils.trim_right_whitespace)
+    |> result.map(utils.trim_end_whitespace)
     |> result.replace_error(data_error.new_value_invalid(
       "DateTime is invalid UTF-8",
     ))

@@ -9,7 +9,7 @@ pub fn from_bytes(bytes: &[u8]) -> Result<Vec<i32>, DataError> {
     DataError::new_value_invalid("IntegerString is invalid UTF-8".to_string())
   })?;
 
-  let integer_string = utils::trim_right_whitespace(integer_string);
+  let integer_string = utils::trim_end_whitespace(integer_string);
 
   integer_string
     .split('\\')

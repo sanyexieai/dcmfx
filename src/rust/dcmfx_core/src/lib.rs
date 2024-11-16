@@ -7,7 +7,7 @@ pub mod data_set_path;
 pub mod error;
 pub mod registry;
 pub mod transfer_syntax;
-pub mod utils;
+pub(crate) mod utils;
 pub mod value_multiplicity;
 pub mod value_representation;
 

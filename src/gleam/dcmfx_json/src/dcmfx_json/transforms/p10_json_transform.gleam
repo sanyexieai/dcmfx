@@ -598,7 +598,7 @@ fn convert_binary_value_to_json(
         let component_groups: List(String) =
           raw_name
           |> string.split("=")
-          |> list.map(string.trim_right)
+          |> list.map(string.trim_end)
 
         use <- bool.guard(
           list.length(component_groups) > 3,
@@ -674,7 +674,7 @@ fn convert_binary_value_to_json(
       |> result.map_error(fn(_) {
         data_error.new_value_invalid("String bytes are not valid UTF-8")
       })
-      |> result.map(utils.trim_right_codepoints(_, [0x00, 0x20]))
+      |> result.map(utils.trim_end_codepoints(_, [0x00, 0x20]))
       |> result.map(prepare_json_string)
       |> result.map(fn(s) { [s] })
 

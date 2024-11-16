@@ -15,7 +15,7 @@ pub fn from_bytes(bytes: BitArray) -> Result(List(Float), DataError) {
   let decimal_string =
     bytes
     |> bit_array.to_string
-    |> result.map(utils.trim_right_whitespace)
+    |> result.map(utils.trim_end_whitespace)
     |> result.replace_error(data_error.new_value_invalid(
       "DecimalString is invalid UTF-8",
     ))
@@ -47,8 +47,8 @@ pub fn to_bytes(values: List(Float)) -> BitArray {
         True -> value
         False ->
           value
-          |> utils.trim_right("0")
-          |> utils.trim_right(".")
+          |> utils.trim_end("0")
+          |> utils.trim_end(".")
           |> string.slice(0, 16)
       }
     })

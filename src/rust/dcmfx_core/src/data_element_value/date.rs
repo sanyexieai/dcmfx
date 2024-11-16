@@ -26,7 +26,7 @@ impl StructuredDate {
       DataError::new_value_invalid("Date is invalid UTF-8".to_string())
     })?;
 
-    let date_string = utils::trim_right_whitespace(date_string);
+    let date_string = utils::trim_end_whitespace(date_string);
 
     match PARSE_DATE_REGEX.captures(date_string) {
       Some(caps) => {

@@ -34,7 +34,7 @@ pub fn from_bytes(
     DataError::new_value_invalid("PersonName is invalid UTF-8".to_string())
   })?;
 
-  let person_name_string = utils::trim_right_whitespace(person_name_string);
+  let person_name_string = utils::trim_end_whitespace(person_name_string);
 
   let person_names = person_name_string
     .split('\\')
