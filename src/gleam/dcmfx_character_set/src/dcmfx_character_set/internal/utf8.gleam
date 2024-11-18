@@ -21,9 +21,9 @@ pub fn decode_next_codepoint(
   }
 }
 
-// The above implementation that uses `utf8_codepoint` isn't supported on the
-// JavaScript target as of Gleam 1.6.0, so the equivalent pattern match is
-// implemented manually on that platform.
+// The above implementation that uses a `utf8_codepoint` segment isn't supported
+// on the JavaScript target as of Gleam 1.6.1, so the equivalent pattern match
+// is implemented manually on that platform.
 
 @target(javascript)
 pub fn decode_next_codepoint(
