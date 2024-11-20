@@ -2,7 +2,7 @@
   "editor.rulers": [80],
   "editor.tabSize": 2,
 
-  "cSpell.enableFiletypes": ["gleam"],
+  "cSpell.enabledFileTypes": { "gleam": true },
   "cSpell.words": [
     "anonymization",
     "bigi",
@@ -12,6 +12,7 @@
     "codepoint",
     "codepoints",
     "concat",
+    "deque",
     "DICOM",
     "endianness",
     "dcmfx",

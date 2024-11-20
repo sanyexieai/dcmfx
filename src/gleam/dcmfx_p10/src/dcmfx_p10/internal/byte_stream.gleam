@@ -2,9 +2,9 @@ import dcmfx_p10/internal/zlib.{type ZlibStream}
 import dcmfx_p10/internal/zlib/inflate_result
 import gleam/bit_array
 import gleam/bool
+import gleam/deque.{type Deque}
 import gleam/list
 import gleam/option.{type Option, None, Some}
-import gleam/queue.{type Queue}
 import gleam/result
 
 /// A byte stream that takes incoming chunks of binary data of any size and
@@ -16,7 +16,7 @@ import gleam/result
 ///
 pub opaque type ByteStream {
   ByteStream(
-    bytes_queue: Queue(BitArray),
+    bytes_queue: Deque(BitArray),
     bytes_queue_size: Int,
     bytes_read: Int,
     max_read_size: Int,
@@ -54,7 +54,7 @@ pub type ByteStreamError {
 ///
 pub fn new(max_read_size: Int) -> ByteStream {
   ByteStream(
-    bytes_queue: queue.new(),
+    bytes_queue: deque.new(),
     bytes_queue_size: 0,
     bytes_read: 0,
     max_read_size: max_read_size,
@@ -111,7 +111,7 @@ pub fn write(
   // Add the new bytes to the back of the queue
   let bytes_queue = case new_bytes {
     <<>> -> stream.bytes_queue
-    _ -> queue.push_back(stream.bytes_queue, new_bytes)
+    _ -> deque.push_back(stream.bytes_queue, new_bytes)
   }
 
   // Increase the count of available bytes in the queue
@@ -169,12 +169,12 @@ pub fn read(
 }
 
 fn do_read(
-  bytes_queue: Queue(BitArray),
+  bytes_queue: Deque(BitArray),
   byte_count: Int,
   acc: List(BitArray),
-) -> #(BitArray, Queue(BitArray)) {
+) -> #(BitArray, Deque(BitArray)) {
   // Pop the next item off the front of the bytes queue
-  let assert Ok(#(queue_item, bytes_queue)) = queue.pop_front(bytes_queue)
+  let assert Ok(#(queue_item, bytes_queue)) = deque.pop_front(bytes_queue)
   let queue_item_size = bit_array.byte_size(queue_item)
 
   case byte_count <= queue_item_size {
@@ -198,7 +198,7 @@ fn do_read(
           let assert Ok(unread_bytes) =
             bit_array.slice(queue_item, byte_count, unread_bytes_count)
 
-          queue.push_front(bytes_queue, unread_bytes)
+          deque.push_front(bytes_queue, unread_bytes)
         }
       }
 
@@ -233,12 +233,12 @@ pub fn peek(
 }
 
 fn do_peek(
-  bytes_queue: Queue(BitArray),
+  bytes_queue: Deque(BitArray),
   byte_count: Int,
   acc: List(BitArray),
 ) -> BitArray {
   // Pop the next item off the front of the bytes queue
-  let assert Ok(#(queue_item, bytes_queue)) = queue.pop_front(bytes_queue)
+  let assert Ok(#(queue_item, bytes_queue)) = deque.pop_front(bytes_queue)
   let queue_item_size = bit_array.byte_size(queue_item)
 
   case byte_count <= queue_item_size {
@@ -279,7 +279,7 @@ pub fn start_zlib_inflate(
   // Store all current bytes so they can be re-written as zlib bytes
   let available_bytes =
     stream.bytes_queue
-    |> queue.to_list
+    |> deque.to_list
     |> bit_array.concat
   let is_writing_finished = stream.is_writing_finished
 
@@ -287,7 +287,7 @@ pub fn start_zlib_inflate(
   let stream =
     ByteStream(
       ..stream,
-      bytes_queue: queue.new(),
+      bytes_queue: deque.new(),
       bytes_queue_size: 0,
       is_writing_finished: False,
       zlib_stream: Some(zlib_stream),
@@ -329,7 +329,7 @@ fn inflate_up_to_max_read_size(
             bytes ->
               ByteStream(
                 ..stream,
-                bytes_queue: queue.push_back(stream.bytes_queue, bytes),
+                bytes_queue: deque.push_back(stream.bytes_queue, bytes),
                 bytes_queue_size: stream.bytes_queue_size
                   + bit_array.byte_size(bytes),
               )
