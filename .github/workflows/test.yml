@@ -25,9 +25,9 @@ jobs:
       - name: Setup Gleam
         uses: erlef/setup-beam@v1
         with:
-          otp-version: "27.1.2"
-          gleam-version: "1.6.1"
-          rebar3-version: "3"
+          otp-version: 27.1.2
+          gleam-version: 1.6.2
+          version-type: strict
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -87,9 +87,9 @@ jobs:
       - name: Setup Gleam
         uses: erlef/setup-beam@v1
         with:
-          otp-version: "27.1.2"
-          gleam-version: "1.6.1"
-          rebar3-version: "3"
+          otp-version: 27.1.2
+          gleam-version: 1.6.2
+          version-type: strict
 
       - name: Setup Rust
         uses: actions-rust-lang/setup-rust-toolchain@v1
