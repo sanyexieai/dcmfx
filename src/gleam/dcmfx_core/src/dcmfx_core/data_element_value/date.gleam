@@ -6,7 +6,7 @@ import gleam/bit_array
 import gleam/bool
 import gleam/int
 import gleam/option.{type Option, None, Some}
-import gleam/regex
+import gleam/regexp
 import gleam/result
 
 /// A structured date that can be converted to/from a `Date` value.
@@ -27,10 +27,10 @@ pub fn from_bytes(bytes: BitArray) -> Result(StructuredDate, DataError) {
     ))
   use date_string <- result.try(date_string)
 
-  let assert Ok(re) = regex.from_string("^(\\d{4})(\\d\\d)(\\d\\d)$")
+  let assert Ok(re) = regexp.from_string("^(\\d{4})(\\d\\d)(\\d\\d)$")
 
-  case regex.scan(re, date_string) {
-    [regex.Match(submatches: [Some(year), Some(month), Some(day)], ..)] -> {
+  case regexp.scan(re, date_string) {
+    [regexp.Match(submatches: [Some(year), Some(month), Some(day)], ..)] -> {
       let assert Ok(year) = int.parse(year)
       let assert Ok(month) = int.parse(month)
       let assert Ok(day) = int.parse(day)

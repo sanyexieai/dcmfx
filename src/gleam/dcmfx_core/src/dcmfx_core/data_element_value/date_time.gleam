@@ -10,7 +10,7 @@ import gleam/bool
 import gleam/int
 import gleam/list
 import gleam/option.{type Option, None, Some}
-import gleam/regex
+import gleam/regexp
 import gleam/result
 import gleam/string
 
@@ -41,11 +41,11 @@ pub fn from_bytes(bytes: BitArray) -> Result(StructuredDateTime, DataError) {
   use date_time_string <- result.try(date_time_string)
 
   let assert Ok(re) =
-    regex.from_string(
+    regexp.from_string(
       "^(\\d{4})((\\d{2})((\\d{2})((\\d{2})((\\d{2})((\\d{2})(\\.\\d{1,6})?)?)?)?)?)?([\\+\\-]\\d{4})?$",
     )
 
-  case regex.scan(re, date_time_string) {
+  case regexp.scan(re, date_time_string) {
     [match, ..] -> {
       // Pad the submatches list to a length of 13 so that all the relevant
       // ones can be more easily matched against and extracted

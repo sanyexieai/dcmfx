@@ -7,7 +7,7 @@ import gleam/bool
 import gleam/float
 import gleam/int
 import gleam/option.{type Option, None, Some}
-import gleam/regex
+import gleam/regexp
 import gleam/result
 
 /// A structured time that can be converted from/to a `Time` data element value.
@@ -29,9 +29,9 @@ pub fn from_bytes(bytes: BitArray) -> Result(StructuredTime, DataError) {
   use time_string <- result.try(time_string)
 
   let assert Ok(re) =
-    regex.from_string("^(\\d\\d)((\\d\\d)((\\d\\d)(\\.\\d{1,6})?)?)?$")
+    regexp.from_string("^(\\d\\d)((\\d\\d)((\\d\\d)(\\.\\d{1,6})?)?)?$")
 
-  case regex.scan(re, time_string) {
+  case regexp.scan(re, time_string) {
     [match] -> {
       let #(hour, minute, second) = case match.submatches {
         [Some(hour), _, minute, second, ..] -> #(hour, minute, second)

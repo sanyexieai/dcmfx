@@ -4,7 +4,7 @@ import gleam/bool
 import gleam/int
 import gleam/list
 import gleam/option.{None, Some}
-import gleam/regex
+import gleam/regexp
 import gleam/string
 
 /// A path in a data set that specifies the precise location of a specific data
@@ -132,10 +132,10 @@ pub fn from_string(s: String) -> Result(DataSetPath, String) {
     case data_element_tag.from_hex_string(entry) {
       Ok(tag) -> add_data_element(path, tag)
       Error(Nil) -> {
-        let assert Ok(re) = regex.from_string("^\\[(\\d+)\\]$")
+        let assert Ok(re) = regexp.from_string("^\\[(\\d+)\\]$")
 
-        case regex.scan(re, entry) {
-          [regex.Match(submatches: [Some(index)], ..)] -> {
+        case regexp.scan(re, entry) {
+          [regexp.Match(submatches: [Some(index)], ..)] -> {
             let assert Ok(index) = int.parse(index)
             add_sequence_item(path, index)
           }

@@ -7,7 +7,7 @@ import gleam/bit_array
 import gleam/bool
 import gleam/int
 import gleam/option.{Some}
-import gleam/regex
+import gleam/regexp
 import gleam/result
 import gleam/string
 
@@ -56,10 +56,10 @@ pub fn from_bytes(bytes: BitArray) -> Result(StructuredAge, DataError) {
     ))
   use age_string <- result.try(age_string)
 
-  let assert Ok(re) = regex.from_string("^(\\d\\d\\d)([DWMY])$")
+  let assert Ok(re) = regexp.from_string("^(\\d\\d\\d)([DWMY])$")
 
-  case regex.scan(re, age_string) {
-    [regex.Match(submatches: [Some(number), Some(unit)], ..)] -> {
+  case regexp.scan(re, age_string) {
+    [regexp.Match(submatches: [Some(number), Some(unit)], ..)] -> {
       let assert Ok(number) = int.parse(number)
 
       let unit = case unit {

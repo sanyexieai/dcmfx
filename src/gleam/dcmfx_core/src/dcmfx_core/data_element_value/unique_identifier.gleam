@@ -7,7 +7,7 @@ import gleam/bit_array
 import gleam/bool
 import gleam/int
 import gleam/list
-import gleam/regex
+import gleam/regexp
 import gleam/result
 import gleam/string
 
@@ -40,9 +40,9 @@ pub fn is_valid(uid: String) -> Bool {
   use <- bool.guard(length == 0 || length > 64, False)
 
   let assert Ok(re) =
-    regex.from_string("^(0|[1-9][0-9]*)(\\.(0|[1-9][0-9]*))*$")
+    regexp.from_string("^(0|[1-9][0-9]*)(\\.(0|[1-9][0-9]*))*$")
 
-  regex.check(re, uid)
+  regexp.check(re, uid)
 }
 
 /// Generates a new random UID with the given prefix. The new UID will have a
