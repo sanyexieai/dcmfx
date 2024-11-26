@@ -2,6 +2,25 @@
   "editor.rulers": [80],
   "editor.tabSize": 2,
 
+  "files.exclude": {
+    "**/build/": true,
+    "**/cache/": true,
+    "**/dist/": true,
+    "**/node_modules/": true,
+    "**/target/": true
+  },
+
+  "rust-analyzer.linkedProjects": [
+    "src/rust/Cargo.toml",
+    "examples/data_set_anonymize/rust/Cargo.toml",
+    "examples/dicom_json_read/rust/Cargo.toml",
+    "examples/dicom_json_write/rust/Cargo.toml",
+    "examples/dicom_read/rust/Cargo.toml",
+    "examples/dicom_stream/rust/Cargo.toml",
+    "examples/dicom_write/rust/Cargo.toml",
+    "examples/pixel_data_read/rust/Cargo.toml"
+  ],
+
   "cSpell.enabledFileTypes": { "gleam": true },
   "cSpell.words": [
     "anonymization",
@@ -23,15 +42,5 @@
     "simplifile",
     "submatches",
     "uids"
-  ],
-
-  "files.exclude": {
-    "**/build/": true,
-    "**/cache/": true,
-    "**/dist/": true,
-    "**/node_modules/": true,
-    "**/target/": true
-  },
-
-  "debug.allowBreakpointsEverywhere": true
+  ]
 }

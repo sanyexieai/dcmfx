@@ -129,7 +129,7 @@ pub fn read_parts_from_stream(
       // If the read context needs more data then read bytes from the stream,
       // write them to the read context, and try again
       Err(P10Error::DataRequired { .. }) => {
-        let mut buffer = vec![0; 256 * 1024];
+        let mut buffer = vec![0u8; 256 * 1024];
         match stream.read(&mut buffer) {
           Ok(0) => context.write_bytes(vec![], true)?,
 

@@ -151,7 +151,7 @@ impl P10WriteContext {
       P10Part::End => {
         if let Some(zlib_stream) = self.zlib_stream.as_mut() {
           loop {
-            let mut output = vec![0; ZLIB_DEFLATE_CHUNK_SIZE];
+            let mut output = vec![0u8; ZLIB_DEFLATE_CHUNK_SIZE];
 
             let total_out = zlib_stream.total_out();
             let status = zlib_stream
@@ -233,7 +233,7 @@ impl P10WriteContext {
           let mut part_bytes_remaining = &part_bytes[..];
 
           while !part_bytes_remaining.is_empty() {
-            let mut output = vec![0; ZLIB_DEFLATE_CHUNK_SIZE];
+            let mut output = vec![0u8; ZLIB_DEFLATE_CHUNK_SIZE];
 
             // Add bytes to the zlib compressor and read back any compressed
             // data

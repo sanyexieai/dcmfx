@@ -184,7 +184,8 @@ fn do_get_pixel_data(
           "Encapsulated pixel data basic offset table is invalid".to_string(),
         ));
       }
-      let mut basic_offset_table_values = vec![0; basic_offset_table.len() / 4];
+      let mut basic_offset_table_values =
+        vec![0u32; basic_offset_table.len() / 4];
       byteorder::LittleEndian::read_u32_into(
         basic_offset_table.as_slice(),
         basic_offset_table_values.as_mut_slice(),

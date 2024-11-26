@@ -540,7 +540,7 @@ impl DataElementValue {
   /// Creates a new `FloatingPointDouble` data element value.
   ///
   pub fn new_floating_point_double(value: &[f64]) -> Result<Self, DataError> {
-    let mut bytes = vec![0; value.len() * 8];
+    let mut bytes = vec![0u8; value.len() * 8];
     byteorder::LittleEndian::write_f64_into(value, &mut bytes);
 
     Self::new_binary(ValueRepresentation::FloatingPointDouble, Rc::new(bytes))
@@ -549,7 +549,7 @@ impl DataElementValue {
   /// Creates a new `FloatingPointSingle` data element value.
   ///
   pub fn new_floating_point_single(value: &[f32]) -> Result<Self, DataError> {
-    let mut bytes = vec![0; value.len() * 4];
+    let mut bytes = vec![0u8; value.len() * 4];
     byteorder::LittleEndian::write_f32_into(value, &mut bytes);
 
     Self::new_binary(ValueRepresentation::FloatingPointSingle, Rc::new(bytes))
@@ -592,7 +592,7 @@ impl DataElementValue {
   /// Creates a new `OtherDoubleString` data element value.
   ///
   pub fn new_other_double_string(value: &[f64]) -> Result<Self, DataError> {
-    let mut bytes = vec![0; value.len() * 8];
+    let mut bytes = vec![0u8; value.len() * 8];
     byteorder::LittleEndian::write_f64_into(value, &mut bytes);
 
     Self::new_binary(ValueRepresentation::OtherDoubleString, Rc::new(bytes))
@@ -601,7 +601,7 @@ impl DataElementValue {
   /// Creates a new `OtherFloatString` data element value.
   ///
   pub fn new_other_float_string(value: &[f32]) -> Result<Self, DataError> {
-    let mut bytes = vec![0; value.len() * 4];
+    let mut bytes = vec![0u8; value.len() * 4];
     byteorder::LittleEndian::write_f32_into(value, &mut bytes);
 
     Self::new_binary(ValueRepresentation::OtherFloatString, Rc::new(bytes))
@@ -666,7 +666,7 @@ impl DataElementValue {
   /// Creates a new `SignedLong` data element value.
   ///
   pub fn new_signed_long(value: &[i32]) -> Result<Self, DataError> {
-    let mut bytes = vec![0; value.len() * 4];
+    let mut bytes = vec![0u8; value.len() * 4];
     byteorder::LittleEndian::write_i32_into(value, &mut bytes);
 
     Self::new_binary(ValueRepresentation::SignedLong, Rc::new(bytes))
@@ -675,7 +675,7 @@ impl DataElementValue {
   /// Creates a new `SignedShort` data element value.
   ///
   pub fn new_signed_short(value: &[i16]) -> Result<Self, DataError> {
-    let mut bytes = vec![0; value.len() * 2];
+    let mut bytes = vec![0u8; value.len() * 2];
     byteorder::LittleEndian::write_i16_into(value, &mut bytes);
 
     Self::new_binary(ValueRepresentation::SignedShort, Rc::new(bytes))
@@ -684,7 +684,7 @@ impl DataElementValue {
   /// Creates a new `SignedVeryLong` data element value.
   ///
   pub fn new_signed_very_long(value: &[i64]) -> Result<Self, DataError> {
-    let mut bytes = vec![0; value.len() * 8];
+    let mut bytes = vec![0u8; value.len() * 8];
     byteorder::LittleEndian::write_i64_into(value, &mut bytes);
 
     Self::new_binary(ValueRepresentation::SignedVeryLong, Rc::new(bytes))
@@ -751,7 +751,7 @@ impl DataElementValue {
   /// Creates a new `UnsignedLong` data element value.
   ///
   pub fn new_unsigned_long(value: &[u32]) -> Result<Self, DataError> {
-    let mut bytes = vec![0; value.len() * 4];
+    let mut bytes = vec![0u8; value.len() * 4];
     byteorder::LittleEndian::write_u32_into(value, &mut bytes);
 
     Self::new_binary(ValueRepresentation::UnsignedLong, Rc::new(bytes))
@@ -760,7 +760,7 @@ impl DataElementValue {
   /// Creates a new `UnsignedShort` data element value.
   ///
   pub fn new_unsigned_short(value: &[u16]) -> Result<Self, DataError> {
-    let mut bytes = vec![0; value.len() * 2];
+    let mut bytes = vec![0u8; value.len() * 2];
     byteorder::LittleEndian::write_u16_into(value, &mut bytes);
 
     Self::new_binary(ValueRepresentation::UnsignedShort, Rc::new(bytes))
@@ -769,7 +769,7 @@ impl DataElementValue {
   /// Creates a new `UnsignedVeryLong` data element value.
   ///
   pub fn new_unsigned_very_long(value: &[u64]) -> Result<Self, DataError> {
-    let mut bytes = vec![0; value.len() * 8];
+    let mut bytes = vec![0u8; value.len() * 8];
     byteorder::LittleEndian::write_u64_into(value, &mut bytes);
 
     Self::new_binary(ValueRepresentation::UnsignedVeryLong, Rc::new(bytes))
@@ -1406,7 +1406,7 @@ mod tests {
     assert_eq!(
       DataElementValue::new_lookup_table_descriptor_unchecked(
         ValueRepresentation::UnsignedShort,
-        Rc::new(vec![0; 6])
+        Rc::new(vec![0u8; 6])
       )
       .value_representation(),
       ValueRepresentation::UnsignedShort
@@ -2209,7 +2209,7 @@ mod tests {
     );
 
     assert_eq!(
-      DataElementValue::new_other_byte_string(vec![0; 128])
+      DataElementValue::new_other_byte_string(vec![0u8; 128])
         .unwrap()
         .to_string(tag, 80),
       "[00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 \
@@ -2271,7 +2271,7 @@ mod tests {
     assert_eq!(
       DataElementValue::new_lookup_table_descriptor_unchecked(
         ValueRepresentation::SignedShort,
-        Rc::new(vec![0; 6])
+        Rc::new(vec![0u8; 6])
       )
       .validate_length(),
       Ok(())
@@ -2280,7 +2280,7 @@ mod tests {
     assert_eq!(
       DataElementValue::new_lookup_table_descriptor_unchecked(
         ValueRepresentation::SignedShort,
-        Rc::new(vec![0; 4])
+        Rc::new(vec![0u8; 4])
       )
       .validate_length(),
       Err(DataError::new_value_length_invalid(
@@ -2293,7 +2293,7 @@ mod tests {
     assert_eq!(
       DataElementValue::new_binary_unchecked(
         ValueRepresentation::ShortText,
-        Rc::new(vec![0; 0x10000])
+        Rc::new(vec![0u8; 0x10000])
       )
       .validate_length(),
       Err(DataError::new_value_length_invalid(
@@ -2306,7 +2306,7 @@ mod tests {
     assert_eq!(
       DataElementValue::new_binary_unchecked(
         ValueRepresentation::UnsignedVeryLong,
-        Rc::new(vec![0; 7])
+        Rc::new(vec![0u8; 7])
       )
       .validate_length(),
       Err(DataError::new_value_length_invalid(
@@ -2319,7 +2319,7 @@ mod tests {
     assert_eq!(
       DataElementValue::new_encapsulated_pixel_data_unchecked(
         ValueRepresentation::OtherWordString,
-        vec![Rc::new(vec![0; 2])]
+        vec![Rc::new(vec![0u8; 2])]
       )
       .validate_length(),
       Ok(())
@@ -2328,7 +2328,7 @@ mod tests {
     assert_eq!(
       DataElementValue::new_encapsulated_pixel_data_unchecked(
         ValueRepresentation::OtherWordString,
-        vec![Rc::new(vec![0; 3])]
+        vec![Rc::new(vec![0u8; 3])]
       )
       .validate_length(),
       Err(DataError::new_value_length_invalid(
@@ -2341,7 +2341,7 @@ mod tests {
     assert_eq!(
       DataElementValue::new_encapsulated_pixel_data_unchecked(
         ValueRepresentation::OtherWordString,
-        vec![Rc::new(vec![0; 0xFFFFFFFF])]
+        vec![Rc::new(vec![0u8; 0xFFFFFFFF])]
       )
       .validate_length(),
       Err(DataError::new_value_length_invalid(
