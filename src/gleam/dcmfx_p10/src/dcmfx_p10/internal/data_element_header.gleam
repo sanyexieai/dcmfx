@@ -1,6 +1,7 @@
 import dcmfx_core/data_element_tag.{type DataElementTag, DataElementTag}
 import dcmfx_core/registry
 import dcmfx_core/value_representation.{type ValueRepresentation}
+import dcmfx_p10/internal/value_length.{type ValueLength}
 import gleam/option.{type Option, None, Some}
 
 /// Describes the header for a single DICOM data element, specifically its tag,
@@ -11,7 +12,7 @@ pub type DataElementHeader {
   DataElementHeader(
     tag: DataElementTag,
     vr: Option(ValueRepresentation),
-    length: Int,
+    length: ValueLength,
   )
 }
 

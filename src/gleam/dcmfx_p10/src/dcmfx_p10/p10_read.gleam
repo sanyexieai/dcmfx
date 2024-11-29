@@ -28,6 +28,7 @@ import dcmfx_p10/internal/data_element_header.{
   type DataElementHeader, DataElementHeader,
 }
 import dcmfx_p10/internal/p10_location.{type P10Location}
+import dcmfx_p10/internal/value_length
 import dcmfx_p10/p10_error.{type P10Error}
 import dcmfx_p10/p10_part.{type P10Part}
 import gleam/bit_array
@@ -673,13 +674,14 @@ fn read_data_element_header_part(
   case header.tag, vr, header.length {
     // If this is the start of a new sequence then add it to the location
     tag, Some(value_representation.Sequence), _
-    | tag, Some(value_representation.Unknown), 0xFFFFFFFF
+    | tag, Some(value_representation.Unknown), value_length.Undefined
     -> {
       let part = p10_part.SequenceStart(tag, value_representation.Sequence)
 
-      let ends_at = case header.length == 0xFFFFFFFF {
-        True -> None
-        False -> Some(byte_stream.bytes_read(new_stream) + header.length)
+      let ends_at = case header.length {
+        value_length.Defined(length) ->
+          Some(byte_stream.bytes_read(new_stream) + length)
+        value_length.Undefined -> None
       }
 
       // When the original VR was unknown and the length is undefined, as per
@@ -736,12 +738,13 @@ fn read_data_element_header_part(
     }
 
     // If this is the start of a new sequence item then add it to the location
-    tag, None, length if tag == registry.item.tag -> {
+    tag, None, _ if tag == registry.item.tag -> {
       let part = p10_part.SequenceItemStart
 
-      let ends_at = case header.length == 0xFFFFFFFF {
-        True -> None
-        False -> Some(byte_stream.bytes_read(new_stream) + length)
+      let ends_at = case header.length {
+        value_length.Defined(length) ->
+          Some(byte_stream.bytes_read(new_stream) + length)
+        value_length.Undefined -> None
       }
 
       let new_location =
@@ -775,8 +778,8 @@ fn read_data_element_header_part(
 
     // If this is an encapsulated pixel data sequence then add it to the current
     // location and update the next action to read its items
-    tag, Some(value_representation.OtherByteString), 0xFFFFFFFF
-    | tag, Some(value_representation.OtherWordString), 0xFFFFFFFF
+    tag, Some(value_representation.OtherByteString), value_length.Undefined
+    | tag, Some(value_representation.OtherWordString), value_length.Undefined
       if tag == registry.pixel_data.tag
     -> {
       let Some(vr) = vr
@@ -807,7 +810,9 @@ fn read_data_element_header_part(
 
     // If this is a sequence delimitation item then remove the current sequence
     // from the current location
-    tag, None, 0 if tag == registry.sequence_delimitation_item.tag -> {
+    tag, None, value_length.Defined(0)
+      if tag == registry.sequence_delimitation_item.tag
+    -> {
       let #(parts, new_path, new_location, new_sequence_depth) = case
         p10_location.end_sequence(context.location)
       {
@@ -850,7 +855,9 @@ fn read_data_element_header_part(
 
     // If this is an item delimitation item then remove the latest item from the
     // location
-    tag, None, 0 if tag == registry.item_delimitation_item.tag -> {
+    tag, None, value_length.Defined(0)
+      if tag == registry.item_delimitation_item.tag
+    -> {
       let part = p10_part.SequenceItemDelimiter
 
       let new_location =
@@ -880,15 +887,14 @@ fn read_data_element_header_part(
 
     // For all other cases this is a standard data element that needs to have
     // its value bytes read
-    tag, Some(vr), _ -> {
+    tag, Some(vr), value_length.Defined(length) -> {
       let materialized_value_required =
         is_materialized_value_required(context, header.tag, vr)
 
       // If this data element needs to be fully materialized then check it
       // doesn't exceed the max string size
       let max_size_check_result = case
-        materialized_value_required
-        && header.length > context.config.max_string_size
+        materialized_value_required && length > context.config.max_string_size
       {
         True ->
           Error(p10_error.MaximumExceeded(
@@ -897,9 +903,9 @@ fn read_data_element_header_part(
               <> "' with VR "
               <> value_representation.to_string(vr)
               <> " and length "
-              <> int.to_string(header.length)
+              <> int.to_string(length)
               <> " bytes exceeds the maximum allowed string size of "
-              <> int.to_string(header.length)
+              <> int.to_string(context.config.max_string_size)
               <> " bytes",
             context.path,
             byte_stream.bytes_read(context.stream),
@@ -907,16 +913,6 @@ fn read_data_element_header_part(
         False -> Ok(Nil)
       }
       use _ <- result.try(max_size_check_result)
-
-      // If the whole value is being materialized then the DataElementHeader
-      // part is only emitted once all the data is available. This is necessary
-      // because in the case of string values that are being converted to UTF-8
-      // the length of the final string value following UTF-8 conversion is not
-      // yet known.
-      let parts = case materialized_value_required {
-        True -> []
-        False -> [p10_part.DataElementHeader(header.tag, vr, header.length)]
-      }
 
       // Swallow the '(FFFC,FFFC) Data Set Trailing Padding' data element. No
       // parts for it are emitted. Ref: PS3.10 7.2.
@@ -926,19 +922,18 @@ fn read_data_element_header_part(
         header.tag != registry.data_set_trailing_padding.tag
         && header.tag.element != 0x0000
 
-      let parts = case emit_parts {
-        True -> parts
+      // If the whole value is being materialized then the DataElementHeader
+      // part is only emitted once all the data is available. This is necessary
+      // because in the case of string values that are being converted to UTF-8
+      // the length of the final string value following UTF-8 conversion is not
+      // yet known.
+      let parts = case emit_parts && !materialized_value_required {
+        True -> [p10_part.DataElementHeader(header.tag, vr, length)]
         False -> []
       }
 
       let next_action =
-        ReadDataElementValueBytes(
-          header.tag,
-          vr,
-          header.length,
-          header.length,
-          emit_parts,
-        )
+        ReadDataElementValueBytes(header.tag, vr, length, length, emit_parts)
 
       // Add data element to the path
       let assert Ok(new_path) =
@@ -955,7 +950,7 @@ fn read_data_element_header_part(
       Ok(#(parts, new_context))
     }
 
-    _, None, _ ->
+    _, _, _ ->
       Error(p10_error.DataInvalid(
         "Reading data element header",
         "Invalid data element '" <> data_element_header.to_string(header) <> "'",
@@ -1048,7 +1043,7 @@ fn read_implicit_vr_and_length(
       }
 
       // Return the VR as `None` for those tags that don't support one. All
-      // other tags are returned as UN (Unknown) for now and will have their VR
+      // other tags are returned as UN (Unknown) and will have their VR
       // inferred in due course.
       let vr = case
         tag == registry.item.tag
@@ -1059,7 +1054,7 @@ fn read_implicit_vr_and_length(
         False -> Some(value_representation.Unknown)
       }
 
-      let header = DataElementHeader(tag, vr, value_length)
+      let header = DataElementHeader(tag, vr, value_length.new(value_length))
 
       Ok(#(header, new_stream))
     }
@@ -1154,7 +1149,7 @@ fn read_explicit_vr_and_length(
           }
       }
 
-      let header = DataElementHeader(tag, Some(vr), length)
+      let header = DataElementHeader(tag, Some(vr), value_length.new(length))
       Ok(#(header, new_stream))
     }
 
@@ -1203,22 +1198,31 @@ fn read_data_element_value_bytes_part(
       }
       use #(data, new_location) <- result.try(materialized_value_result)
 
-      // If this is a materialized value then the data element header for it
-      // needs to be emitted, along with its final value bytes
-      let parts = case materialized_value_required {
-        True -> [
-          p10_part.DataElementHeader(tag, vr, bit_array.byte_size(data)),
-          p10_part.DataElementValueBytes(vr, data, bytes_remaining),
-        ]
-        False -> [p10_part.DataElementValueBytes(vr, data, bytes_remaining)]
+      let parts = case emit_parts {
+        True -> {
+          let value_bytes_part =
+            p10_part.DataElementValueBytes(vr, data, bytes_remaining)
+
+          // If this is a materialized value then the data element header for it
+          // needs to be emitted, along with its final value bytes
+          case materialized_value_required {
+            True -> [
+              p10_part.DataElementHeader(tag, vr, bit_array.byte_size(data)),
+              value_bytes_part,
+            ]
+            False -> [value_bytes_part]
+          }
+        }
+
+        False -> []
       }
 
       let next_action = case bytes_remaining {
         // This data element is complete, so the next action is either to read
-        // the next pixel data item if currently reading encapsulated pixel
-        // data, or to read the header for the next data element
+        // the next pixel data item if currently reading pixel data items, or to
+        // read the header for the next data element
         0 ->
-          case tag == registry.pixel_data.tag && value_length == 0xFFFFFFFF {
+          case tag == registry.item.tag {
             True -> ReadPixelDataItem(vr)
             False -> ReadDataElementHeader
           }
@@ -1247,11 +1251,6 @@ fn read_data_element_value_bytes_part(
           path: new_path,
           location: new_location,
         )
-
-      let parts = case emit_parts {
-        True -> parts
-        False -> []
-      }
 
       Ok(#(parts, new_context))
     }
@@ -1325,18 +1324,17 @@ fn read_pixel_data_item_part(
   case read_data_element_header(context) {
     Ok(#(header, new_stream)) ->
       case header {
-        // Pixel data items should have no VR and aren't allowed to have
-        // undefined length
-        DataElementHeader(tag, None, length)
+        // Pixel data items must have no VR and a defined length
+        DataElementHeader(tag, None, value_length.Defined(length))
           if tag == registry.item.tag && length != 0xFFFFFFFF
         -> {
           let part = p10_part.PixelDataItem(length)
 
           let next_action =
             ReadDataElementValueBytes(
-              registry.pixel_data.tag,
+              registry.item.tag,
               vr,
-              0xFFFFFFFF,
+              length,
               length,
               True,
             )
@@ -1351,7 +1349,7 @@ fn read_pixel_data_item_part(
           Ok(#([part], new_context))
         }
 
-        DataElementHeader(tag, None, 0)
+        DataElementHeader(tag, None, value_length.Defined(0))
           if tag == registry.sequence_delimitation_item.tag
         -> {
           let part = p10_part.SequenceDelimiter

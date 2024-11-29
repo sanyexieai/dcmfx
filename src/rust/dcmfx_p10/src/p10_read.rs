@@ -28,7 +28,7 @@ use crate::internal::data_element_header::{
   DataElementHeader, ValueLengthSize,
 };
 use crate::internal::p10_location::{self, P10Location};
-use crate::{P10Error, P10Part};
+use crate::{internal::value_length::ValueLength, P10Error, P10Part};
 
 /// Configuration used when reading DICOM P10 data.
 ///
@@ -591,16 +591,17 @@ impl P10ReadContext {
     match (header.tag, vr, header.length) {
       // If this is the start of a new sequence then add it to the location
       (tag, Some(ValueRepresentation::Sequence), _)
-      | (tag, Some(ValueRepresentation::Unknown), 0xFFFFFFFF) => {
+      | (tag, Some(ValueRepresentation::Unknown), ValueLength::Undefined) => {
         let part = P10Part::SequenceStart {
           tag,
           vr: ValueRepresentation::Sequence,
         };
 
-        let ends_at = if header.length == 0xFFFFFFFF {
-          None
-        } else {
-          Some(self.stream.bytes_read() + header.length as u64)
+        let ends_at = match header.length {
+          ValueLength::Defined { length } => {
+            Some(self.stream.bytes_read() + length as u64)
+          }
+          ValueLength::Undefined => None,
         };
 
         // When the original VR was unknown and the length is undefined, as per
@@ -637,13 +638,14 @@ impl P10ReadContext {
       }
 
       // If this is the start of a new sequence item then add it to the location
-      (tag, None, length) if tag == registry::ITEM.tag => {
+      (tag, None, _) if tag == registry::ITEM.tag => {
         let part = P10Part::SequenceItemStart;
 
-        let ends_at = if header.length == 0xFFFFFFFF {
-          None
-        } else {
-          Some(self.stream.bytes_read() + length as u64)
+        let ends_at = match header.length {
+          ValueLength::Defined { length } => {
+            Some(self.stream.bytes_read() + length as u64)
+          }
+          ValueLength::Undefined => None,
         };
 
         self
@@ -665,11 +667,11 @@ impl P10ReadContext {
 
       // If this is an encapsulated pixel data sequence then add it to the
       // current location and update the next action to read its items
-      (tag, Some(ValueRepresentation::OtherByteString), 0xFFFFFFFF)
-      | (tag, Some(ValueRepresentation::OtherWordString), 0xFFFFFFFF)
-        if tag == registry::PIXEL_DATA.tag =>
+      (tag, Some(vr), ValueLength::Undefined)
+        if tag == registry::PIXEL_DATA.tag
+          && (vr == ValueRepresentation::OtherByteString
+            || vr == ValueRepresentation::OtherWordString) =>
       {
-        let vr = vr.unwrap();
         let part = P10Part::SequenceStart { tag, vr };
 
         self
@@ -689,7 +691,9 @@ impl P10ReadContext {
 
       // If this is a sequence delimitation item then remove the current
       // sequence from the current location
-      (tag, None, 0) if tag == registry::SEQUENCE_DELIMITATION_ITEM.tag => {
+      (tag, None, ValueLength::ZERO)
+        if tag == registry::SEQUENCE_DELIMITATION_ITEM.tag =>
+      {
         let parts = match self.location.end_sequence() {
           Ok(()) => {
             self.path.pop();
@@ -711,7 +715,9 @@ impl P10ReadContext {
 
       // If this is an item delimitation item then remove the latest item from
       // the location
-      (tag, None, 0) if tag == registry::ITEM_DELIMITATION_ITEM.tag => {
+      (tag, None, ValueLength::ZERO)
+        if tag == registry::ITEM_DELIMITATION_ITEM.tag =>
+      {
         let part = P10Part::SequenceItemDelimiter;
 
         self
@@ -731,43 +737,26 @@ impl P10ReadContext {
 
       // For all other cases this is a standard data element that needs to have
       // its value bytes read
-      (tag, Some(vr), _) => {
+      (tag, Some(vr), ValueLength::Defined { length }) => {
         let materialized_value_required =
           self.is_materialized_value_required(header.tag, vr);
 
         // If this data element needs to be fully materialized then check it
         // doesn't exceed the max string size
-        if materialized_value_required
-          && header.length > self.config.max_string_size
-        {
+        if materialized_value_required && length > self.config.max_string_size {
           return Err(P10Error::MaximumExceeded {
             details: format!(
               "Value for '{}' with VR {} and length {} bytes exceeds the \
               maximum allowed string size of {} bytes",
               registry::tag_with_name(header.tag, None),
               vr,
-              header.length,
+              length,
               self.config.max_string_size
             ),
             path: self.path.clone(),
             offset: self.stream.bytes_read(),
           });
         }
-
-        // If the whole value is being materialized then the DataElementHeader
-        // part is only emitted once all the data is available. This is
-        // necessary because in the case of string values that are being
-        // converted to UTF-8 the length of the final string value following
-        // UTF-8 conversion is not yet known.
-        let mut parts = if materialized_value_required {
-          vec![]
-        } else {
-          vec![P10Part::DataElementHeader {
-            tag: header.tag,
-            vr,
-            length: header.length,
-          }]
-        };
 
         // Swallow the '(FFFC,FFFC) Data Set Trailing Padding' data element. No
         // parts for it are emitted. Ref: PS3.10 7.2.
@@ -776,15 +765,26 @@ impl P10ReadContext {
         let emit_parts = header.tag != registry::DATA_SET_TRAILING_PADDING.tag
           && header.tag.element != 0x0000;
 
-        if !emit_parts {
-          parts.clear();
-        }
+        // If the whole value is being materialized then the DataElementHeader
+        // part is only emitted once all the data is available. This is
+        // necessary because in the case of string values that are being
+        // converted to UTF-8 the length of the final string value following
+        // UTF-8 conversion is not yet known.
+        let parts = if emit_parts && !materialized_value_required {
+          vec![P10Part::DataElementHeader {
+            tag: header.tag,
+            vr,
+            length,
+          }]
+        } else {
+          vec![]
+        };
 
         self.next_action = NextAction::ReadDataElementValueBytes {
           tag: header.tag,
           vr,
-          length: header.length,
-          bytes_remaining: header.length,
+          length,
+          bytes_remaining: length,
           emit_parts,
         };
 
@@ -794,7 +794,7 @@ impl P10ReadContext {
         Ok(parts)
       }
 
-      (_, None, _) => Err(P10Error::DataInvalid {
+      (_, _, _) => Err(P10Error::DataInvalid {
         when: "Reading data element header".to_string(),
         details: format!("Invalid data element '{}'", header),
         path: Some(self.path.clone()),
@@ -889,8 +889,8 @@ impl P10ReadContext {
         };
 
         // Return the VR as `None` for those tags that don't support one. All
-        // other tags are returned as UN (Unknown) for now and will have their
-        // VR inferred in due course.
+        // other tags are returned as UN (Unknown) and will have their VR
+        // inferred in due course.
         let vr = if tag == registry::ITEM.tag
           || tag == registry::ITEM_DELIMITATION_ITEM.tag
           || tag == registry::SEQUENCE_DELIMITATION_ITEM.tag
@@ -903,7 +903,7 @@ impl P10ReadContext {
         let header = DataElementHeader {
           tag,
           vr,
-          length: value_length,
+          length: ValueLength::new(value_length),
         };
 
         Ok(header)
@@ -991,7 +991,7 @@ impl P10ReadContext {
         let header = DataElementHeader {
           tag,
           vr: Some(vr),
-          length,
+          length: ValueLength::new(length),
         };
 
         Ok(header)
@@ -1044,34 +1044,32 @@ impl P10ReadContext {
 
         let data = Rc::new(data);
 
-        // If this is a materialized value then the data element header for it
-        // needs to be emitted, along with its final value bytes
-        let parts = if materialized_value_required {
-          vec![
-            P10Part::DataElementHeader {
+        let mut parts = Vec::with_capacity(2);
+
+        if emit_parts {
+          // If this is a materialized value then the data element header for it
+          // is emitted now. It was not emitted when it was read due to the
+          // possibility of the Value and Value Length being altered above.
+          if materialized_value_required {
+            parts.push(P10Part::DataElementHeader {
               tag,
               vr,
               length: bytes_to_read,
-            },
-            P10Part::DataElementValueBytes {
-              vr,
-              data,
-              bytes_remaining,
-            },
-          ]
-        } else {
-          vec![P10Part::DataElementValueBytes {
+            });
+          }
+
+          parts.push(P10Part::DataElementValueBytes {
             vr,
             data,
             bytes_remaining,
-          }]
-        };
+          });
+        }
 
         let next_action = if bytes_remaining == 0 {
           // This data element is complete, so the next action is either to read
-          // the next pixel data item if currently reading encapsulated pixel
-          // data, or to read the header for the next data element
-          if tag == registry::PIXEL_DATA.tag && value_length == 0xFFFFFFFF {
+          // the next pixel data item if currently reading pixel data items, or
+          // to read the header for the next data element
+          if tag == registry::ITEM.tag {
             NextAction::ReadPixelDataItem { vr }
           } else {
             NextAction::ReadDataElementHeader
@@ -1093,7 +1091,7 @@ impl P10ReadContext {
 
         self.next_action = next_action;
 
-        Ok(if emit_parts { parts } else { vec![] })
+        Ok(parts)
       }
 
       Err(e) => {
@@ -1167,19 +1165,18 @@ impl P10ReadContext {
   ) -> Result<Vec<P10Part>, P10Error> {
     match self.read_data_element_header() {
       Ok(header) => match header {
-        // Pixel data items should have no VR and aren't allowed to have
-        // undefined length
+        // Pixel data items must have no VR and a defined length
         DataElementHeader {
           tag,
           vr: None,
-          length,
-        } if tag == registry::ITEM.tag && length != 0xFFFFFFFF => {
+          length: ValueLength::Defined { length },
+        } if tag == registry::ITEM.tag => {
           let part = P10Part::PixelDataItem { length };
 
           self.next_action = NextAction::ReadDataElementValueBytes {
-            tag: registry::PIXEL_DATA.tag,
+            tag: registry::ITEM.tag,
             vr,
-            length: 0xFFFFFFFF,
+            length,
             bytes_remaining: length,
             emit_parts: true,
           };
@@ -1190,7 +1187,7 @@ impl P10ReadContext {
         DataElementHeader {
           tag,
           vr: None,
-          length: 0,
+          length: ValueLength::ZERO,
         } if tag == registry::SEQUENCE_DELIMITATION_ITEM.tag => {
           let part = P10Part::SequenceDelimiter;
 

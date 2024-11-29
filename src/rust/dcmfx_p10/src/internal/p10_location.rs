@@ -27,7 +27,7 @@ use std::collections::HashMap;
 use dcmfx_character_set::{self, SpecificCharacterSet, StringType};
 use dcmfx_core::{registry, DataElementTag, ValueRepresentation};
 
-use crate::{P10Error, P10Part};
+use crate::{internal::value_length::ValueLength, P10Error, P10Part};
 
 /// A P10 location is a list of location entries, with the current/most recently
 /// added one at the end of the vector.
@@ -262,7 +262,7 @@ impl P10Location {
   pub fn add_item(
     &mut self,
     ends_at: Option<u64>,
-    length: u32,
+    length: ValueLength,
   ) -> Result<(), String> {
     match self.entries.last_mut() {
       // Carry across the current clarifying data elements as the initial state

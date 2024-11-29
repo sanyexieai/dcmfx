@@ -7,7 +7,9 @@ use dcmfx_core::{
   registry, DataElementTag, DataElementValue, DataSet, ValueRepresentation,
 };
 
-use crate::internal::data_element_header::DataElementHeader;
+use crate::internal::{
+  data_element_header::DataElementHeader, value_length::ValueLength,
+};
 
 /// A DICOM P10 part is the smallest piece of structured DICOM P10 data, and a
 /// stream of these parts is most commonly the result of progressive reading of
@@ -97,7 +99,7 @@ impl std::fmt::Display for P10Part {
                 DataElementHeader {
                   tag: *tag,
                   vr: Some(value.value_representation()),
-                  length: 0,
+                  length: ValueLength::ZERO,
                 },
                 value.to_string(*tag, 80)
               )
@@ -173,14 +175,13 @@ pub fn data_element_to_parts<E>(
 ) -> Result<(), E> {
   let vr = value.value_representation();
 
-  let length = match value.bytes() {
-    Ok(bytes) => bytes.len(),
-    Err(_) => 0xFFFFFFFF,
-  } as u32;
-
   // For values that have their bytes directly available write them out as-is
   if let Ok(bytes) = value.bytes() {
-    let header_part = P10Part::DataElementHeader { tag, vr, length };
+    let header_part = P10Part::DataElementHeader {
+      tag,
+      vr,
+      length: bytes.len() as u32,
+    };
     part_callback(&header_part)?;
 
     part_callback(&P10Part::DataElementValueBytes {

@@ -268,8 +268,10 @@ impl ByteStream {
 
       let mut output_buffer = vec![0u8; ZLIB_INFLATE_CHUNK_SIZE];
 
+      let input_slice = &queue_item.data[queue_item.bytes_read..];
+
       match zlib_stream.decompress(
-        &queue_item.data[queue_item.bytes_read..],
+        input_slice,
         output_buffer.as_mut_slice(),
         flate2::FlushDecompress::None,
       ) {
@@ -280,9 +282,7 @@ impl ByteStream {
           // If not all the supplied input bytes were consumed, e.g. because
           // they result in more data than can be held in the output buffer,
           // then keep the remaining bytes for the next decompression call
-          if bytes_consumed
-            < (queue_item.data.len() - queue_item.bytes_read) as u64
-          {
+          if bytes_consumed < input_slice.len() as u64 {
             self.zlib_input_queue.push_front(QueueItem {
               data: queue_item.data,
               bytes_read: queue_item.bytes_read + bytes_consumed as usize,

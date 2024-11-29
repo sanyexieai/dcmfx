@@ -1,13 +1,15 @@
 use dcmfx_core::{registry, DataElementTag, ValueRepresentation};
 
+use crate::internal::value_length::ValueLength;
+
 /// Describes the header for a single DICOM data element, specifically its tag,
-/// VR, and length in bytes. The VR is optional because some data elements, e.g.
-/// sequence delimiters and sequence item delimiters, don't have a VR.
+/// VR, and length. The VR is optional because some data elements, e.g. sequence
+/// delimiters and sequence item delimiters, don't have a VR.
 ///
 pub struct DataElementHeader {
   pub tag: DataElementTag,
   pub vr: Option<ValueRepresentation>,
-  pub length: u32,
+  pub length: ValueLength,
 }
 
 impl std::fmt::Display for DataElementHeader {
@@ -87,7 +89,7 @@ mod tests {
       DataElementHeader {
         tag: registry::PATIENT_AGE.tag,
         vr: Some(ValueRepresentation::AgeString),
-        length: 0
+        length: ValueLength::ZERO,
       }
       .to_string(),
       "(0010,1010) AS Patient's Age".to_string()
@@ -97,7 +99,7 @@ mod tests {
       DataElementHeader {
         tag: registry::ITEM.tag,
         vr: None,
-        length: 0
+        length: ValueLength::ZERO,
       }
       .to_string(),
       "(FFFE,E000) Item".to_string()

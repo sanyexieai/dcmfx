@@ -13,6 +13,7 @@ import dcmfx_core/value_representation
 import dcmfx_p10/internal/data_element_header.{
   type DataElementHeader, DataElementHeader,
 }
+import dcmfx_p10/internal/value_length
 import dcmfx_p10/internal/zlib.{type ZlibStream}
 import dcmfx_p10/internal/zlib/flush_command
 import dcmfx_p10/p10_error.{type P10Error}
@@ -371,7 +372,7 @@ fn part_to_bytes(
           let value_length = bit_array.byte_size(value_bytes)
 
           let header_bytes =
-            DataElementHeader(tag, Some(vr), value_length)
+            DataElementHeader(tag, Some(vr), value_length.new(value_length))
             |> data_element_header_to_bytes(LittleEndian)
           use header_bytes <- result.try(header_bytes)
 
@@ -401,7 +402,7 @@ fn part_to_bytes(
         transfer_syntax.VrImplicit -> None
       }
 
-      DataElementHeader(tag, vr, length)
+      DataElementHeader(tag, vr, value_length.new(length))
       |> data_element_header_to_bytes(transfer_syntax.endianness)
     }
 
@@ -418,26 +419,32 @@ fn part_to_bytes(
         transfer_syntax.VrImplicit -> None
       }
 
-      let length = 0xFFFFFFFF
-
-      DataElementHeader(tag, vr, length)
+      DataElementHeader(tag, vr, value_length.Undefined)
       |> data_element_header_to_bytes(transfer_syntax.endianness)
     }
 
     p10_part.SequenceDelimiter ->
-      DataElementHeader(registry.sequence_delimitation_item.tag, None, 0)
+      DataElementHeader(
+        registry.sequence_delimitation_item.tag,
+        None,
+        value_length.zero,
+      )
       |> data_element_header_to_bytes(transfer_syntax.endianness)
 
     p10_part.SequenceItemStart ->
-      DataElementHeader(registry.item.tag, None, 0xFFFFFFFF)
+      DataElementHeader(registry.item.tag, None, value_length.Undefined)
       |> data_element_header_to_bytes(transfer_syntax.endianness)
 
     p10_part.SequenceItemDelimiter ->
-      DataElementHeader(registry.item_delimitation_item.tag, None, 0)
+      DataElementHeader(
+        registry.item_delimitation_item.tag,
+        None,
+        value_length.zero,
+      )
       |> data_element_header_to_bytes(transfer_syntax.endianness)
 
     p10_part.PixelDataItem(length) ->
-      DataElementHeader(registry.item.tag, None, length)
+      DataElementHeader(registry.item.tag, None, value_length.new(length))
       |> data_element_header_to_bytes(transfer_syntax.endianness)
 
     p10_part.End -> Ok(<<>>)
@@ -582,18 +589,15 @@ fn prepare_file_meta_information_part_data_set(file_meta_information: DataSet) {
 /// Serializes a data element header to a `BitArray`. If the VR is not specified
 /// then the transfer syntax is assumed to use implicit VRs.
 ///
-/// The tag length must be inclusive of any necessary padding. As per the DICOM
-/// specification, a length of `0xFFFFFFFF` indicates an undefined length, which
-/// is only allowed in the case of sequences, sequence items, and encapsulated
-/// pixel data.
-///
 @internal
 pub fn data_element_header_to_bytes(
   header: DataElementHeader,
   endianness: Endianness,
 ) -> Result(BitArray, P10Error) {
+  let length = value_length.to_int(header.length)
+
   use <- bool.guard(
-    header.length < 0,
+    length < 0,
     Error(p10_error.DataInvalid(
       "Serializing data element header",
       "Length is negative",
@@ -611,16 +615,18 @@ pub fn data_element_header_to_bytes(
     // Write with implicit VR
     None ->
       case endianness {
-        LittleEndian -> Ok(<<tag_bytes:bits, header.length:32-little>>)
-        BigEndian -> Ok(<<tag_bytes:bits, header.length:32-big>>)
+        LittleEndian -> Ok(<<tag_bytes:bits, length:32-little>>)
+        BigEndian -> Ok(<<tag_bytes:bits, length:32-big>>)
       }
 
     // Write with explicit VR
     Some(vr) -> {
+      let length = value_length.to_int(header.length)
+
       let length_bytes = case data_element_header.value_length_size(vr) {
         data_element_header.ValueLengthU16 ->
-          case header.length {
-            length if length > 0xFFFF ->
+          case length > 0xFFFF {
+            True ->
               p10_error.DataInvalid(
                 "Serializing data element header",
                 "Length 0x"
@@ -631,16 +637,16 @@ pub fn data_element_header_to_bytes(
               )
               |> Error
 
-            _ ->
+            False ->
               case endianness {
-                LittleEndian -> Ok(<<header.length:16-little>>)
-                BigEndian -> Ok(<<header.length:16-big>>)
+                LittleEndian -> Ok(<<length:16-little>>)
+                BigEndian -> Ok(<<length:16-big>>)
               }
           }
 
         data_element_header.ValueLengthU32 ->
-          case header.length {
-            length if length > 0xFFFFFFFF ->
+          case length > 0xFFFFFFFF {
+            True ->
               p10_error.DataInvalid(
                 "Serializing data element header",
                 "Length 0x"
@@ -651,10 +657,10 @@ pub fn data_element_header_to_bytes(
               )
               |> Error
 
-            _ ->
+            False ->
               case endianness {
-                LittleEndian -> Ok(<<0, 0, header.length:32-little>>)
-                BigEndian -> Ok(<<0, 0, header.length:32-big>>)
+                LittleEndian -> Ok(<<0, 0, length:32-little>>)
+                BigEndian -> Ok(<<0, 0, length:32-big>>)
               }
           }
       }

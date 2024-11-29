@@ -28,6 +28,7 @@ import dcmfx_core/data_element_tag.{type DataElementTag, DataElementTag}
 import dcmfx_core/internal/utils
 import dcmfx_core/registry
 import dcmfx_core/value_representation.{type ValueRepresentation}
+import dcmfx_p10/internal/value_length.{type ValueLength}
 import dcmfx_p10/p10_error.{type P10Error}
 import dcmfx_p10/p10_part.{type P10Part}
 import gleam/bit_array
@@ -225,7 +226,7 @@ pub fn sequence_item_count(location: P10Location) -> Result(Int, Nil) {
 pub fn add_item(
   location: P10Location,
   ends_at: Option(Int),
-  length: Int,
+  length: ValueLength,
 ) -> Result(P10Location, String) {
   case location {
     // Carry across the current clarifying data elements as the initial state
@@ -240,7 +241,7 @@ pub fn add_item(
     _ ->
       Error(
         "Item encountered outside of a sequence, length: "
-        <> int.to_string(length)
+        <> value_length.to_string(length)
         <> " bytes",
       )
   }

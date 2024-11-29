@@ -7,6 +7,7 @@ import dcmfx_core/data_set.{type DataSet}
 import dcmfx_core/registry
 import dcmfx_core/value_representation.{type ValueRepresentation}
 import dcmfx_p10/internal/data_element_header
+import dcmfx_p10/internal/value_length
 import gleam/bit_array
 import gleam/int
 import gleam/list
@@ -85,7 +86,7 @@ pub fn to_string(part: P10Part) -> String {
         data_element_header.DataElementHeader(
           tag,
           Some(data_element_value.value_representation(value)),
-          0,
+          value_length.zero,
         )
         |> data_element_header.to_string
         <> ": "
@@ -157,16 +158,10 @@ pub fn data_element_to_parts(
 ) -> Result(a, b) {
   let vr = data_element_value.value_representation(value)
 
-  let length =
-    value
-    |> data_element_value.bytes
-    |> result.map(bit_array.byte_size)
-    |> result.unwrap(0xFFFFFFFF)
-
   case data_element_value.bytes(value) {
     // For values that have their bytes directly available write them out as-is
     Ok(bytes) -> {
-      let header_part = DataElementHeader(tag, vr, length)
+      let header_part = DataElementHeader(tag, vr, bit_array.byte_size(bytes))
       use context <- result.try(part_callback(context, header_part))
 
       DataElementValueBytes(vr, bytes, bytes_remaining: 0)

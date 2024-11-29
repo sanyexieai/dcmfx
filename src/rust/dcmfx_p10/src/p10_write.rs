@@ -15,7 +15,8 @@ use crate::internal::data_element_header::{
   DataElementHeader, ValueLengthSize,
 };
 use crate::{
-  p10_part, uids, P10Error, P10FilterTransform, P10InsertTransform, P10Part,
+  internal::value_length::ValueLength, p10_part, uids, P10Error,
+  P10FilterTransform, P10InsertTransform, P10Part,
 };
 
 /// Data is compressed into chunks of this size when writing deflated transfer
@@ -326,7 +327,7 @@ fn part_to_bytes(
           &DataElementHeader {
             tag,
             vr: Some(vr),
-            length: value_bytes.len() as u32,
+            length: ValueLength::new(value_bytes.len() as u32),
           },
           transfer_syntax::Endianness::LittleEndian,
         )?;
@@ -355,7 +356,7 @@ fn part_to_bytes(
         &DataElementHeader {
           tag: *tag,
           vr,
-          length: *length,
+          length: ValueLength::new(*length),
         },
         transfer_syntax.endianness,
       )
@@ -379,13 +380,11 @@ fn part_to_bytes(
         transfer_syntax::VrSerialization::VrImplicit => None,
       };
 
-      let length = 0xFFFFFFFF;
-
       data_element_header_to_bytes(
         &DataElementHeader {
           tag: *tag,
           vr,
-          length,
+          length: ValueLength::Undefined,
         },
         transfer_syntax.endianness,
       )
@@ -395,7 +394,7 @@ fn part_to_bytes(
       &DataElementHeader {
         tag: registry::SEQUENCE_DELIMITATION_ITEM.tag,
         vr: None,
-        length: 0,
+        length: ValueLength::ZERO,
       },
       transfer_syntax.endianness,
     ),
@@ -404,7 +403,7 @@ fn part_to_bytes(
       &DataElementHeader {
         tag: registry::ITEM.tag,
         vr: None,
-        length: 0xFFFFFFFF,
+        length: ValueLength::Undefined,
       },
       transfer_syntax.endianness,
     ),
@@ -413,7 +412,7 @@ fn part_to_bytes(
       &DataElementHeader {
         tag: registry::ITEM_DELIMITATION_ITEM.tag,
         vr: None,
-        length: 0,
+        length: ValueLength::ZERO,
       },
       transfer_syntax.endianness,
     ),
@@ -422,7 +421,7 @@ fn part_to_bytes(
       &DataElementHeader {
         tag: registry::ITEM.tag,
         vr: None,
-        length: *length,
+        length: ValueLength::new(*length),
       },
       transfer_syntax.endianness,
     ),
@@ -549,15 +548,12 @@ fn prepare_file_meta_information_part_data_set(
 /// Serializes a data element header to a `Vec<u8>`. If the VR is not
 /// specified then the transfer syntax is assumed to use implicit VRs.
 ///
-/// The tag length must be inclusive of any necessary padding. As per the
-/// DICOM specification, a length of `0xFFFFFFFF` indicates an undefined
-/// length, which is only allowed in the case of sequences, sequence items,
-/// and encapsulated pixel data.
-///
 fn data_element_header_to_bytes(
   header: &DataElementHeader,
   endianness: Endianness,
 ) -> Result<Rc<Vec<u8>>, P10Error> {
+  let length = header.length.to_u32();
+
   let mut bytes = Vec::with_capacity(12);
 
   match endianness {
@@ -575,10 +571,10 @@ fn data_element_header_to_bytes(
     // Write with implicit VR
     None => match endianness {
       Endianness::LittleEndian => {
-        bytes.extend_from_slice(header.length.to_le_bytes().as_slice())
+        bytes.extend_from_slice(length.to_le_bytes().as_slice())
       }
       Endianness::BigEndian => {
-        bytes.extend_from_slice(header.length.to_be_bytes().as_slice())
+        bytes.extend_from_slice(length.to_be_bytes().as_slice())
       }
     },
 
@@ -587,29 +583,15 @@ fn data_element_header_to_bytes(
       bytes.extend_from_slice(vr.to_string().as_bytes());
 
       match DataElementHeader::value_length_size(vr) {
-        // The following VRs use a 32-bit length preceded by two padding bytes
-        ValueLengthSize::U32 => {
-          bytes.extend_from_slice([0, 0].as_slice());
-
-          match endianness {
-            Endianness::LittleEndian => {
-              bytes.extend_from_slice(header.length.to_le_bytes().as_slice())
-            }
-            Endianness::BigEndian => {
-              bytes.extend_from_slice(header.length.to_be_bytes().as_slice())
-            }
-          }
-        }
-
         // All other VRs use a 16-bit length. Check that the data length fits
         // inside this constraint.
         ValueLengthSize::U16 => {
-          if header.length > 0xFFFF {
+          if length > u16::MAX as u32 {
             return Err(P10Error::DataInvalid {
               when: "Serializing data element header".to_string(),
               details: format!(
                 "Length 0x{:X} exceeds the maximum of 0xFFFF",
-                header.length,
+                header.length.to_u32(),
               ),
               path: None,
               offset: None,
@@ -617,12 +599,26 @@ fn data_element_header_to_bytes(
           }
 
           match endianness {
-            Endianness::LittleEndian => bytes.extend_from_slice(
-              (header.length as u16).to_le_bytes().as_slice(),
-            ),
-            Endianness::BigEndian => bytes.extend_from_slice(
-              (header.length as u16).to_be_bytes().as_slice(),
-            ),
+            Endianness::LittleEndian => {
+              bytes.extend_from_slice((length as u16).to_le_bytes().as_slice())
+            }
+            Endianness::BigEndian => {
+              bytes.extend_from_slice((length as u16).to_be_bytes().as_slice())
+            }
+          }
+        }
+
+        // The following VRs use a 32-bit length preceded by two padding bytes
+        ValueLengthSize::U32 => {
+          bytes.extend_from_slice([0, 0].as_slice());
+
+          match endianness {
+            Endianness::LittleEndian => {
+              bytes.extend_from_slice(length.to_le_bytes().as_slice())
+            }
+            Endianness::BigEndian => {
+              bytes.extend_from_slice(length.to_be_bytes().as_slice())
+            }
           }
         }
       };
@@ -645,7 +641,7 @@ mod tests {
         &DataElementHeader {
           tag: registry::WAVEFORM_DATA.tag,
           vr: None,
-          length: 0x12345678
+          length: ValueLength::new(0x12345678),
         },
         Endianness::LittleEndian,
       ),
@@ -657,7 +653,7 @@ mod tests {
         &DataElementHeader {
           tag: registry::WAVEFORM_DATA.tag,
           vr: None,
-          length: 0x12345678
+          length: ValueLength::new(0x12345678),
         },
         Endianness::BigEndian,
       ),
@@ -669,7 +665,7 @@ mod tests {
         &DataElementHeader {
           tag: registry::PATIENT_AGE.tag,
           vr: Some(ValueRepresentation::UnlimitedText),
-          length: 0x1234
+          length: ValueLength::new(0x1234),
         },
         Endianness::LittleEndian,
       ),
@@ -681,7 +677,7 @@ mod tests {
         &DataElementHeader {
           tag: registry::PIXEL_DATA.tag,
           vr: Some(ValueRepresentation::OtherWordString),
-          length: 0x12345678
+          length: ValueLength::new(0x12345678),
         },
         Endianness::LittleEndian,
       ),
@@ -695,7 +691,7 @@ mod tests {
         &DataElementHeader {
           tag: registry::PIXEL_DATA.tag,
           vr: Some(ValueRepresentation::OtherWordString),
-          length: 0x12345678
+          length: ValueLength::new(0x12345678),
         },
         Endianness::BigEndian,
       ),
@@ -709,7 +705,7 @@ mod tests {
         &DataElementHeader {
           tag: registry::PATIENT_AGE.tag,
           vr: Some(ValueRepresentation::AgeString),
-          length: 0x12345
+          length: ValueLength::new(0x12345),
         },
         Endianness::LittleEndian,
       ),
@@ -726,7 +722,7 @@ mod tests {
         &DataElementHeader {
           tag: registry::SMALLEST_IMAGE_PIXEL_VALUE.tag,
           vr: Some(ValueRepresentation::SignedShort),
-          length: 0x1234
+          length: ValueLength::new(0x1234),
         },
         Endianness::LittleEndian,
       ),
@@ -738,7 +734,7 @@ mod tests {
         &DataElementHeader {
           tag: registry::SMALLEST_IMAGE_PIXEL_VALUE.tag,
           vr: Some(ValueRepresentation::SignedShort),
-          length: 0x1234
+          length: ValueLength::new(0x1234),
         },
         Endianness::BigEndian,
       ),
