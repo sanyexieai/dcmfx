@@ -55,7 +55,7 @@ jobs:
       - name: Setup Rust
         uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
-          toolchain: 1.82.0
+          toolchain: 1.83.0
           components: clippy, rustfmt
 
       - name: Enable Rust dependency caching
@@ -94,7 +94,7 @@ jobs:
       - name: Setup Rust
         uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
-          toolchain: 1.82.0
+          toolchain: 1.83.0
           components: clippy, rustfmt
 
       - name: Enable Rust dependency caching
