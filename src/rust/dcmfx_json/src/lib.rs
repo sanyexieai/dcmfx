@@ -82,7 +82,7 @@ mod tests {
   use std::rc::Rc;
 
   use dcmfx_core::{
-    registry, transfer_syntax, DataElementTag, DataElementValue,
+    dictionary, transfer_syntax, DataElementTag, DataElementValue,
     PersonNameComponents, StructuredPersonName, ValueRepresentation,
   };
 
@@ -126,11 +126,11 @@ mod tests {
       (
         vec![
           (
-            registry::MANUFACTURER.tag,
+            dictionary::MANUFACTURER.tag,
             DataElementValue::new_long_string(&["123"]).unwrap(),
           ),
           (
-            registry::PATIENT_NAME.tag,
+            dictionary::PATIENT_NAME.tag,
             DataElementValue::new_person_name(&[StructuredPersonName {
               alphabetic: Some(PersonNameComponents {
                 last_name: "Jedi".to_string(),
@@ -145,7 +145,7 @@ mod tests {
             .unwrap(),
           ),
           (
-            registry::PATIENT_SEX.tag,
+            dictionary::PATIENT_SEX.tag,
             DataElementValue::new_code_string(&["O"]).unwrap(),
           ),
         ],
@@ -157,42 +157,42 @@ mod tests {
       ),
       (
         vec![(
-          registry::MANUFACTURER.tag,
+          dictionary::MANUFACTURER.tag,
           DataElementValue::new_long_string(&[""]).unwrap(),
         )],
         serde_json::json!({ "00080070": { "vr": "LO" } }),
       ),
       (
         vec![(
-          registry::MANUFACTURER.tag,
+          dictionary::MANUFACTURER.tag,
           DataElementValue::new_long_string(&["", ""]).unwrap(),
         )],
         serde_json::json!({ "00080070": { "vr": "LO", "Value": [null, null] } }),
       ),
       (
         vec![(
-          registry::STAGE_NUMBER.tag,
+          dictionary::STAGE_NUMBER.tag,
           DataElementValue::new_integer_string(&[1]).unwrap(),
         )],
         serde_json::json!({ "00082122": { "vr": "IS", "Value": [1] } }),
       ),
       (
         vec![(
-          registry::PATIENT_SIZE.tag,
+          dictionary::PATIENT_SIZE.tag,
           DataElementValue::new_decimal_string(&[1.2]).unwrap(),
         )],
         serde_json::json!({ "00101020": { "vr": "DS", "Value": [1.2] } }),
       ),
       (
         vec![(
-          registry::PIXEL_DATA.tag,
+          dictionary::PIXEL_DATA.tag,
           DataElementValue::new_other_byte_string(vec![1, 2]).unwrap(),
         )],
         serde_json::json!({ "7FE00010": { "vr": "OB", "InlineBinary": "AQI=" } }),
       ),
       (
         vec![(
-          registry::PIXEL_DATA.tag,
+          dictionary::PIXEL_DATA.tag,
           DataElementValue::new_other_word_string(vec![0x03, 0x04]).unwrap(),
         )],
         serde_json::json!({ "7FE00010": { "vr": "OW", "InlineBinary": "AwQ=" } }),
@@ -200,14 +200,14 @@ mod tests {
       (
         vec![
           (
-            registry::TRANSFER_SYNTAX_UID.tag,
+            dictionary::TRANSFER_SYNTAX_UID.tag,
             DataElementValue::new_unique_identifier(&[
               transfer_syntax::ENCAPSULATED_UNCOMPRESSED_EXPLICIT_VR_LITTLE_ENDIAN.uid
             ])
             .unwrap(),
           ),
           (
-            registry::PIXEL_DATA.tag,
+            dictionary::PIXEL_DATA.tag,
             DataElementValue::new_encapsulated_pixel_data(
               ValueRepresentation::OtherByteString,
               vec![Rc::new(vec![]), Rc::new(vec![1, 2])],
@@ -223,17 +223,17 @@ mod tests {
       (
         vec![
           (
-            registry::ENERGY_WEIGHTING_FACTOR.tag,
+            dictionary::ENERGY_WEIGHTING_FACTOR.tag,
             DataElementValue::new_floating_point_single(&[f32::INFINITY])
               .unwrap(),
           ),
           (
-            registry::DISTANCE_SOURCE_TO_ISOCENTER.tag,
+            dictionary::DISTANCE_SOURCE_TO_ISOCENTER.tag,
             DataElementValue::new_floating_point_single(&[-f32::INFINITY])
               .unwrap(),
           ),
           (
-            registry::DISTANCE_OBJECT_TO_TABLE_TOP.tag,
+            dictionary::DISTANCE_OBJECT_TO_TABLE_TOP.tag,
             DataElementValue::new_floating_point_single(&[f32::NAN]).unwrap(),
           ),
         ],
@@ -245,7 +245,7 @@ mod tests {
       ),
       (
         vec![(
-          registry::METADATA_SEQUENCE.tag,
+          dictionary::METADATA_SEQUENCE.tag,
           DataElementValue::new_sequence(vec![]),
         )],
         serde_json::json!({ "0008041D": { "vr": "SQ", "Value": [] } }),

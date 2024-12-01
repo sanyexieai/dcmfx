@@ -7,8 +7,8 @@
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPLv3-blue.svg)](https://dcmfx.github.io/license)
 
 Provides core DICOM concepts including data sets, data elements, value
-representations, transfer syntaxes, and a registry of the data elements defined
-in DICOM Part 6.
+representations, transfer syntaxes, and a dictionary of the data elements
+defined in DICOM PS3.6 as well as well-known private data elements.
 
 This library is part of the [DCMfx](https://dcmfx.github.io) project.
 

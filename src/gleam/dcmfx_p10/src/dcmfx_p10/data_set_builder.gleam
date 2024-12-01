@@ -7,7 +7,7 @@
 import dcmfx_core/data_element_tag.{type DataElementTag, DataElementTag}
 import dcmfx_core/data_element_value.{type DataElementValue}
 import dcmfx_core/data_set.{type DataSet}
-import dcmfx_core/registry
+import dcmfx_core/dictionary
 import dcmfx_core/value_representation.{type ValueRepresentation}
 import dcmfx_p10/internal/data_element_header.{
   type DataElementHeader, DataElementHeader,
@@ -226,7 +226,7 @@ fn add_part_in_encapsulated_pixel_data_sequence(
         ..builder,
         pending_data_element: Some(
           PendingDataElement(
-            registry.item.tag,
+            dictionary.item.tag,
             value_representation.OtherByteString,
             [],
           ),
@@ -245,7 +245,7 @@ fn add_part_in_encapsulated_pixel_data_sequence(
       let new_location =
         insert_data_element_at_current_location(
           sequence_location,
-          registry.pixel_data.tag,
+          dictionary.pixel_data.tag,
           value,
         )
 
@@ -440,7 +440,7 @@ fn build_final_data_element_value(
 
   // Lookup table descriptors are a special case due to the non-standard way
   // their VR applies to their underlying bytes
-  case registry.is_lut_descriptor_tag(tag) {
+  case dictionary.is_lut_descriptor_tag(tag) {
     True ->
       data_element_value.new_lookup_table_descriptor_unchecked(vr, final_bytes)
     False -> data_element_value.new_binary_unchecked(vr, final_bytes)

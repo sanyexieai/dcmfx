@@ -4,7 +4,7 @@
 use std::rc::Rc;
 
 use dcmfx_core::{
-  registry, DataElementTag, DataElementValue, DataSet, ValueRepresentation,
+  dictionary, DataElementTag, DataElementValue, DataSet, ValueRepresentation,
 };
 
 use crate::internal::{
@@ -112,7 +112,7 @@ impl std::fmt::Display for P10Part {
       P10Part::DataElementHeader { tag, vr, length } => format!(
         "DataElementHeader: {}, name: {}, vr: {}, length: {} bytes",
         tag,
-        registry::tag_name(*tag, None),
+        dictionary::tag_name(*tag, None),
         vr,
         length
       ),
@@ -130,7 +130,7 @@ impl std::fmt::Display for P10Part {
       P10Part::SequenceStart { tag, vr } => format!(
         "SequenceStart: {}, name: {}, vr: {}",
         tag,
-        registry::tag_name(*tag, None),
+        dictionary::tag_name(*tag, None),
         vr,
       ),
 

@@ -19,7 +19,7 @@ use std::rc::Rc;
 use byteorder::ByteOrder;
 
 use dcmfx_core::{
-  registry, transfer_syntax, DataElementTag, DataElementValue, DataSet,
+  dictionary, transfer_syntax, DataElementTag, DataElementValue, DataSet,
   DataSetPath, TransferSyntax, ValueRepresentation,
 };
 
@@ -489,7 +489,7 @@ impl P10ReadContext {
 
         // If this data element specifies the File Meta Information group's
         // length then use it to calculate its end offset
-        if tag == registry::FILE_META_INFORMATION_GROUP_LENGTH.tag {
+        if tag == dictionary::FILE_META_INFORMATION_GROUP_LENGTH.tag {
           if ends_at.is_none() && fmi_data_set.is_empty() {
             match value.get_int() {
               Ok(i) => *ends_at = Some(*starts_at + 12 + i as u64),
@@ -509,7 +509,7 @@ impl P10ReadContext {
 
         // If this data element specifies the transfer syntax to use then set it
         // in the read context
-        if tag == registry::TRANSFER_SYNTAX_UID.tag {
+        if tag == dictionary::TRANSFER_SYNTAX_UID.tag {
           self.transfer_syntax = match value.get_string() {
             Ok(uid) => TransferSyntax::from_uid(uid).map_err(|_| {
               P10Error::TransferSyntaxNotSupported {
@@ -556,7 +556,7 @@ impl P10ReadContext {
       if self.transfer_syntax != &transfer_syntax::IMPLICIT_VR_LITTLE_ENDIAN {
         fmi_data_set
           .insert_string_value(
-            &registry::TRANSFER_SYNTAX_UID,
+            &dictionary::TRANSFER_SYNTAX_UID,
             &[self.transfer_syntax.uid],
           )
           .unwrap();
@@ -638,7 +638,7 @@ impl P10ReadContext {
       }
 
       // If this is the start of a new sequence item then add it to the location
-      (tag, None, _) if tag == registry::ITEM.tag => {
+      (tag, None, _) if tag == dictionary::ITEM.tag => {
         let part = P10Part::SequenceItemStart;
 
         let ends_at = match header.length {
@@ -668,7 +668,7 @@ impl P10ReadContext {
       // If this is an encapsulated pixel data sequence then add it to the
       // current location and update the next action to read its items
       (tag, Some(vr), ValueLength::Undefined)
-        if tag == registry::PIXEL_DATA.tag
+        if tag == dictionary::PIXEL_DATA.tag
           && (vr == ValueRepresentation::OtherByteString
             || vr == ValueRepresentation::OtherWordString) =>
       {
@@ -692,7 +692,7 @@ impl P10ReadContext {
       // If this is a sequence delimitation item then remove the current
       // sequence from the current location
       (tag, None, ValueLength::ZERO)
-        if tag == registry::SEQUENCE_DELIMITATION_ITEM.tag =>
+        if tag == dictionary::SEQUENCE_DELIMITATION_ITEM.tag =>
       {
         let parts = match self.location.end_sequence() {
           Ok(()) => {
@@ -716,7 +716,7 @@ impl P10ReadContext {
       // If this is an item delimitation item then remove the latest item from
       // the location
       (tag, None, ValueLength::ZERO)
-        if tag == registry::ITEM_DELIMITATION_ITEM.tag =>
+        if tag == dictionary::ITEM_DELIMITATION_ITEM.tag =>
       {
         let part = P10Part::SequenceItemDelimiter;
 
@@ -748,7 +748,7 @@ impl P10ReadContext {
             details: format!(
               "Value for '{}' with VR {} and length {} bytes exceeds the \
               maximum allowed string size of {} bytes",
-              registry::tag_with_name(header.tag, None),
+              dictionary::tag_with_name(header.tag, None),
               vr,
               length,
               self.config.max_string_size
@@ -762,7 +762,8 @@ impl P10ReadContext {
         // parts for it are emitted. Ref: PS3.10 7.2.
         // Also swallow group length tags that have an element of 0x0000.
         // Ref: PS3.5 7.2.
-        let emit_parts = header.tag != registry::DATA_SET_TRAILING_PADDING.tag
+        let emit_parts = header.tag
+          != dictionary::DATA_SET_TRAILING_PADDING.tag
           && header.tag.element != 0x0000;
 
         // If the whole value is being materialized then the DataElementHeader
@@ -836,9 +837,9 @@ impl P10ReadContext {
     }?;
 
     // The item and delimitation tags always use implicit VRs
-    let vr_serialization = if tag == registry::ITEM.tag
-      || tag == registry::ITEM_DELIMITATION_ITEM.tag
-      || tag == registry::SEQUENCE_DELIMITATION_ITEM.tag
+    let vr_serialization = if tag == dictionary::ITEM.tag
+      || tag == dictionary::ITEM_DELIMITATION_ITEM.tag
+      || tag == dictionary::SEQUENCE_DELIMITATION_ITEM.tag
     {
       transfer_syntax::VrSerialization::VrImplicit
     } else {
@@ -891,9 +892,9 @@ impl P10ReadContext {
         // Return the VR as `None` for those tags that don't support one. All
         // other tags are returned as UN (Unknown) and will have their VR
         // inferred in due course.
-        let vr = if tag == registry::ITEM.tag
-          || tag == registry::ITEM_DELIMITATION_ITEM.tag
-          || tag == registry::SEQUENCE_DELIMITATION_ITEM.tag
+        let vr = if tag == dictionary::ITEM.tag
+          || tag == dictionary::ITEM_DELIMITATION_ITEM.tag
+          || tag == dictionary::SEQUENCE_DELIMITATION_ITEM.tag
         {
           None
         } else {
@@ -943,7 +944,7 @@ impl P10ReadContext {
               details: format!(
                 "Unrecognized VR {:?} for tag '{}'",
                 vr_bytes,
-                registry::tag_with_name(tag, None)
+                dictionary::tag_with_name(tag, None)
               ),
               path: Some(self.path.clone()),
               offset: Some(self.stream.bytes_read()),
@@ -1069,7 +1070,7 @@ impl P10ReadContext {
           // This data element is complete, so the next action is either to read
           // the next pixel data item if currently reading pixel data items, or
           // to read the header for the next data element
-          if tag == registry::ITEM.tag {
+          if tag == dictionary::ITEM.tag {
             NextAction::ReadPixelDataItem { vr }
           } else {
             NextAction::ReadDataElementHeader
@@ -1170,11 +1171,11 @@ impl P10ReadContext {
           tag,
           vr: None,
           length: ValueLength::Defined { length },
-        } if tag == registry::ITEM.tag => {
+        } if tag == dictionary::ITEM.tag => {
           let part = P10Part::PixelDataItem { length };
 
           self.next_action = NextAction::ReadDataElementValueBytes {
-            tag: registry::ITEM.tag,
+            tag: dictionary::ITEM.tag,
             vr,
             length,
             bytes_remaining: length,
@@ -1188,7 +1189,7 @@ impl P10ReadContext {
           tag,
           vr: None,
           length: ValueLength::ZERO,
-        } if tag == registry::SEQUENCE_DELIMITATION_ITEM.tag => {
+        } if tag == dictionary::SEQUENCE_DELIMITATION_ITEM.tag => {
           let part = P10Part::SequenceDelimiter;
 
           self.location.end_sequence().map_err(|details| {

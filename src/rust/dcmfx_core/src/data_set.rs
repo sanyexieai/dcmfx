@@ -8,7 +8,7 @@ use crate::data_element_value::{
 };
 use crate::data_set_path::DataSetPathEntry;
 use crate::{
-  registry, DataElementTag, DataElementValue, DataError, DataSetPath,
+  dictionary, DataElementTag, DataElementValue, DataError, DataSetPath,
   DataSetPrintOptions, TransferSyntax, ValueRepresentation,
 };
 
@@ -71,19 +71,21 @@ impl DataSet {
       .map(|(tag, value)| (*tag, value.clone()))
       .collect();
 
-    if let Ok(value) = self.get_value(registry::SOP_CLASS_UID.tag) {
+    if let Ok(value) = self.get_value(dictionary::SOP_CLASS_UID.tag) {
       file_meta_information
-        .insert(registry::MEDIA_STORAGE_SOP_CLASS_UID.tag, value.clone());
+        .insert(dictionary::MEDIA_STORAGE_SOP_CLASS_UID.tag, value.clone());
     } else {
-      file_meta_information.delete(registry::MEDIA_STORAGE_SOP_CLASS_UID.tag);
+      file_meta_information.delete(dictionary::MEDIA_STORAGE_SOP_CLASS_UID.tag);
     }
 
-    if let Ok(value) = self.get_value(registry::SOP_INSTANCE_UID.tag) {
-      file_meta_information
-        .insert(registry::MEDIA_STORAGE_SOP_INSTANCE_UID.tag, value.clone());
+    if let Ok(value) = self.get_value(dictionary::SOP_INSTANCE_UID.tag) {
+      file_meta_information.insert(
+        dictionary::MEDIA_STORAGE_SOP_INSTANCE_UID.tag,
+        value.clone(),
+      );
     } else {
       file_meta_information
-        .delete(registry::MEDIA_STORAGE_SOP_INSTANCE_UID.tag);
+        .delete(dictionary::MEDIA_STORAGE_SOP_INSTANCE_UID.tag);
     }
 
     file_meta_information
@@ -111,11 +113,11 @@ impl DataSet {
   }
 
   /// Inserts a data element with an age string value into a data set. The data
-  /// element being inserted must be referenced through its registry entry.
+  /// element being inserted must be referenced through its dictionary entry.
   ///
   pub fn insert_age_string_value(
     &mut self,
-    item: &registry::Item,
+    item: &dictionary::Item,
     value: &age_string::StructuredAge,
   ) -> Result<(), DataError> {
     let value = match item.vrs {
@@ -131,11 +133,11 @@ impl DataSet {
   }
 
   /// Inserts a data element with an attribute tag value into a data set. The
-  /// data element being inserted must be referenced through its registry entry.
+  /// data element being inserted must be referenced through its dictionary entry.
   ///
   pub fn insert_attribute_tag_value(
     &mut self,
-    item: &registry::Item,
+    item: &dictionary::Item,
     value: &[DataElementTag],
   ) -> Result<(), DataError> {
     let value = match item.vrs {
@@ -151,11 +153,11 @@ impl DataSet {
   }
 
   /// Inserts a data element with a date value into a data set. The data element
-  /// being inserted must be referenced through its registry entry.
+  /// being inserted must be referenced through its dictionary entry.
   ///
   pub fn insert_date_value(
     &mut self,
-    item: &registry::Item,
+    item: &dictionary::Item,
     value: &date::StructuredDate,
   ) -> Result<(), DataError> {
     let value = match item.vrs {
@@ -169,11 +171,11 @@ impl DataSet {
   }
 
   /// Inserts a data element with a date time value into a data set. The data
-  /// element being inserted must be referenced through its registry entry.
+  /// element being inserted must be referenced through its dictionary entry.
   ///
   pub fn insert_date_time_value(
     &mut self,
-    item: &registry::Item,
+    item: &dictionary::Item,
     value: &date_time::StructuredDateTime,
   ) -> Result<(), DataError> {
     let value = match item.vrs {
@@ -187,12 +189,12 @@ impl DataSet {
   }
 
   /// Inserts a data element with float values into a data set. The data element
-  /// being inserted must be referenced through its registry entry. This method
+  /// being inserted must be referenced through its dictionary entry. This method
   /// automatically determines the correct VR to use for the new data element.
   ///
   pub fn insert_float_value(
     &mut self,
-    item: &registry::Item,
+    item: &dictionary::Item,
     value: &[f64],
   ) -> Result<(), DataError> {
     let value = match item.vrs {
@@ -233,13 +235,13 @@ impl DataSet {
   }
 
   /// Inserts a data element with integer values into a data set. The data
-  /// element being inserted must be referenced through its registry entry. This
+  /// element being inserted must be referenced through its dictionary entry. This
   /// method automatically determines the correct VR to use for the new data
   /// element.
   ///
   pub fn insert_int_value(
     &mut self,
-    item: &registry::Item,
+    item: &dictionary::Item,
     value: &[i64],
   ) -> Result<(), DataError> {
     fn convert_and_build<U>(
@@ -309,13 +311,13 @@ impl DataSet {
   }
 
   /// Inserts a data element with big integer values into a data set. The data
-  /// element being inserted must be referenced through its registry entry. This
+  /// element being inserted must be referenced through its dictionary entry. This
   /// method automatically determines the correct VR to use for the new data
   /// element.
   ///
   pub fn insert_big_int_value(
     &mut self,
-    item: &registry::Item,
+    item: &dictionary::Item,
     value: &[i128],
   ) -> Result<(), DataError> {
     fn convert_and_build<U>(
@@ -368,11 +370,11 @@ impl DataSet {
   }
 
   /// Inserts a data element with a person name value into a data set. The data
-  /// element being inserted must be referenced through its registry entry.
+  /// element being inserted must be referenced through its dictionary entry.
   ///
   pub fn insert_person_name_value(
     &mut self,
-    item: &registry::Item,
+    item: &dictionary::Item,
     value: &[person_name::StructuredPersonName],
   ) -> Result<(), DataError> {
     let value = match item.vrs {
@@ -388,11 +390,11 @@ impl DataSet {
   }
 
   /// Inserts a data element with a sequence value into a data set. The data
-  /// element being inserted must be referenced through its registry entry.
+  /// element being inserted must be referenced through its dictionary entry.
   ///
   pub fn insert_sequence_value(
     &mut self,
-    item: &registry::Item,
+    item: &dictionary::Item,
     items: Vec<Self>,
   ) -> Result<(), DataError> {
     let value = match item.vrs {
@@ -408,13 +410,13 @@ impl DataSet {
   }
 
   /// Inserts a data element with a string value into a data set. The data
-  /// element being inserted must be referenced through its registry entry. This
+  /// element being inserted must be referenced through its dictionary entry. This
   /// method automatically determines the correct VR to use for the new data
   /// element.
   ///
   pub fn insert_string_value(
     &mut self,
-    item: &registry::Item,
+    item: &dictionary::Item,
     value: &[&str],
   ) -> Result<(), DataError> {
     let value = match (item.vrs, value) {
@@ -458,11 +460,11 @@ impl DataSet {
   }
 
   /// Inserts a data element with a time value into a data set. The data element
-  /// being inserted must be referenced through its registry entry.
+  /// being inserted must be referenced through its dictionary entry.
   ///
   pub fn insert_time_value(
     &mut self,
-    item: &registry::Item,
+    item: &dictionary::Item,
     value: &time::StructuredTime,
   ) -> Result<(), DataError> {
     let value = match item.vrs {
@@ -826,7 +828,7 @@ impl DataSet {
     &self,
   ) -> Result<&'static TransferSyntax, DataError> {
     let transfer_syntax_uid =
-      self.get_string(registry::TRANSFER_SYNTAX_UID.tag)?;
+      self.get_string(dictionary::TRANSFER_SYNTAX_UID.tag)?;
 
     TransferSyntax::from_uid(transfer_syntax_uid).map_err(|_| {
       DataError::new_value_invalid(format!(
@@ -853,7 +855,7 @@ impl DataSet {
   pub fn tag_name(&self, tag: DataElementTag) -> &'static str {
     let private_creator = self.private_creator_for_tag(tag).ok();
 
-    registry::tag_name(tag, private_creator)
+    dictionary::tag_name(tag, private_creator)
   }
 
   /// Formats a data element tag in a data set as `"(GROUP,ELEMENT) TAG_NAME"`,
@@ -863,7 +865,7 @@ impl DataSet {
   pub fn tag_with_name(&self, tag: DataElementTag) -> String {
     let private_creator = self.private_creator_for_tag(tag).ok();
 
-    registry::tag_with_name(tag, private_creator)
+    dictionary::tag_with_name(tag, private_creator)
   }
 
   /// Returns the value of the *'(gggg,00xx) Private Creator'* data element in
@@ -1000,7 +1002,7 @@ impl Extend<(DataElementTag, DataElementValue)> for DataSet {
 /// `insert_*_element` functions is called with invalid arguments.
 ///
 fn invalid_insert_error(
-  item: &registry::Item,
+  item: &dictionary::Item,
 ) -> Result<DataElementValue, DataError> {
   match item.vrs {
     [vr] => Err(DataError::new_value_invalid(format!(

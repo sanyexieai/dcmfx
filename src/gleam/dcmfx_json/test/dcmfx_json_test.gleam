@@ -3,7 +3,7 @@ import dcmfx_core/data_element_value/person_name.{
   PersonNameComponents, StructuredPersonName,
 }
 import dcmfx_core/data_set
-import dcmfx_core/registry
+import dcmfx_core/dictionary
 import dcmfx_core/transfer_syntax
 import dcmfx_core/value_representation
 import dcmfx_json
@@ -25,11 +25,11 @@ fn test_data_sets() {
     #(
       [
         #(
-          registry.manufacturer.tag,
+          dictionary.manufacturer.tag,
           data_element_value.new_long_string(["123"]),
         ),
         #(
-          registry.patient_name.tag,
+          dictionary.patient_name.tag,
           data_element_value.new_person_name([
             StructuredPersonName(
               Some(PersonNameComponents("Jedi", "Yoda", "", "", "")),
@@ -38,7 +38,7 @@ fn test_data_sets() {
             ),
           ]),
         ),
-        #(registry.patient_sex.tag, data_element_value.new_code_string(["O"])),
+        #(dictionary.patient_sex.tag, data_element_value.new_code_string(["O"])),
       ],
       "{"
         <> "\"00080070\":{\"vr\":\"LO\",\"Value\":[\"123\"]},"
@@ -47,26 +47,31 @@ fn test_data_sets() {
         <> "}",
     ),
     #(
-      [#(registry.manufacturer.tag, data_element_value.new_long_string([""]))],
+      [#(dictionary.manufacturer.tag, data_element_value.new_long_string([""]))],
       "{\"00080070\":{\"vr\":\"LO\"}}",
     ),
     #(
       [
         #(
-          registry.manufacturer.tag,
+          dictionary.manufacturer.tag,
           data_element_value.new_long_string(["", ""]),
         ),
       ],
       "{\"00080070\":{\"vr\":\"LO\",\"Value\":[null,null]}}",
     ),
     #(
-      [#(registry.stage_number.tag, data_element_value.new_integer_string([1]))],
+      [
+        #(
+          dictionary.stage_number.tag,
+          data_element_value.new_integer_string([1]),
+        ),
+      ],
       "{\"00082122\":{\"vr\":\"IS\",\"Value\":[1]}}",
     ),
     #(
       [
         #(
-          registry.patient_size.tag,
+          dictionary.patient_size.tag,
           data_element_value.new_decimal_string([1.2]),
         ),
       ],
@@ -75,7 +80,7 @@ fn test_data_sets() {
     #(
       [
         #(
-          registry.pixel_data.tag,
+          dictionary.pixel_data.tag,
           data_element_value.new_other_byte_string(<<1, 2>>),
         ),
       ],
@@ -84,7 +89,7 @@ fn test_data_sets() {
     #(
       [
         #(
-          registry.pixel_data.tag,
+          dictionary.pixel_data.tag,
           data_element_value.new_other_word_string(<<0x03, 0x04>>),
         ),
       ],
@@ -93,13 +98,13 @@ fn test_data_sets() {
     #(
       [
         #(
-          registry.transfer_syntax_uid.tag,
+          dictionary.transfer_syntax_uid.tag,
           data_element_value.new_unique_identifier([
             transfer_syntax.encapsulated_uncompressed_explicit_vr_little_endian.uid,
           ]),
         ),
         #(
-          registry.pixel_data.tag,
+          dictionary.pixel_data.tag,
           data_element_value.new_encapsulated_pixel_data(
             value_representation.OtherByteString,
             [<<>>, <<1, 2>>],
@@ -114,19 +119,19 @@ fn test_data_sets() {
     #(
       [
         #(
-          registry.energy_weighting_factor.tag,
+          dictionary.energy_weighting_factor.tag,
           data_element_value.new_floating_point_single([
             ieee_float.positive_infinity(),
           ]),
         ),
         #(
-          registry.distance_source_to_isocenter.tag,
+          dictionary.distance_source_to_isocenter.tag,
           data_element_value.new_floating_point_single([
             ieee_float.negative_infinity(),
           ]),
         ),
         #(
-          registry.distance_object_to_table_top.tag,
+          dictionary.distance_object_to_table_top.tag,
           data_element_value.new_floating_point_single([ieee_float.nan()]),
         ),
       ],

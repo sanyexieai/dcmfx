@@ -3,9 +3,9 @@
 The internal libraries that make up DCMfx are:
 
 - **`dcmfx_core` / `dcmfx::core`**. Provides core DICOM concepts such as data
-  sets, data elements, value representations, value multiplicity, and transfer
-  syntaxes. Defines a registry of the data elements defined in Part 6 of the
-  DICOM specification. as well as well-known private data elements.
+  sets, data elements, value representations, value multiplicity, transfer
+  syntaxes, and a dictionary of the data elements defined in DICOM PS3.6 as well
+  as well-known private data elements.
 
 - **`dcmfx_p10` / `dcmfx::p10`**. Reads, writes, and modifies the DICOM P10 file
   format. Uses a streaming design suited for highly concurrent and

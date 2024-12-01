@@ -249,7 +249,7 @@ mod tests {
     // elements which we don't want to be part of the rewrite comparison
     let data_set_filter =
       |(tag, _value): &(&DataElementTag, &DataElementValue)| {
-        tag.group != 0x0002 && **tag != registry::SPECIFIC_CHARACTER_SET.tag
+        tag.group != 0x0002 && **tag != dictionary::SPECIFIC_CHARACTER_SET.tag
       };
 
     let data_set: DataSet = data_set

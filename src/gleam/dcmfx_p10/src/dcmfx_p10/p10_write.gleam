@@ -5,7 +5,7 @@ import dcmfx_core/data_element_tag
 import dcmfx_core/data_element_value
 import dcmfx_core/data_set.{type DataSet}
 import dcmfx_core/data_set_path.{type DataSetPath}
-import dcmfx_core/registry
+import dcmfx_core/dictionary
 import dcmfx_core/transfer_syntax.{
   type Endianness, type TransferSyntax, BigEndian, LittleEndian,
 }
@@ -141,7 +141,7 @@ pub fn write_part(
       // Read the transfer syntax UID
       let transfer_syntax_uid =
         file_meta_information
-        |> data_set.get_string(registry.transfer_syntax_uid.tag)
+        |> data_set.get_string(dictionary.transfer_syntax_uid.tag)
         |> result.unwrap(transfer_syntax.implicit_vr_little_endian.uid)
 
       // Map UID to a known transfer syntax
@@ -425,26 +425,26 @@ fn part_to_bytes(
 
     p10_part.SequenceDelimiter ->
       DataElementHeader(
-        registry.sequence_delimitation_item.tag,
+        dictionary.sequence_delimitation_item.tag,
         None,
         value_length.zero,
       )
       |> data_element_header_to_bytes(transfer_syntax.endianness)
 
     p10_part.SequenceItemStart ->
-      DataElementHeader(registry.item.tag, None, value_length.Undefined)
+      DataElementHeader(dictionary.item.tag, None, value_length.Undefined)
       |> data_element_header_to_bytes(transfer_syntax.endianness)
 
     p10_part.SequenceItemDelimiter ->
       DataElementHeader(
-        registry.item_delimitation_item.tag,
+        dictionary.item_delimitation_item.tag,
         None,
         value_length.zero,
       )
       |> data_element_header_to_bytes(transfer_syntax.endianness)
 
     p10_part.PixelDataItem(length) ->
-      DataElementHeader(registry.item.tag, None, value_length.new(length))
+      DataElementHeader(dictionary.item.tag, None, value_length.new(length))
       |> data_element_header_to_bytes(transfer_syntax.endianness)
 
     p10_part.End -> Ok(<<>>)
@@ -468,7 +468,7 @@ pub fn data_set_to_parts(
   // element into the data set's part stream, specifying UTF-8 (ISO_IR 192)
   let assert Ok(data_elements_to_insert) =
     data_set.new()
-    |> data_set.insert_string_value(registry.specific_character_set, [
+    |> data_set.insert_string_value(dictionary.specific_character_set, [
       "ISO_IR 192",
     ])
   let insert_specific_character_set_transform =
@@ -573,15 +573,15 @@ fn prepare_file_meta_information_part_data_set(file_meta_information: DataSet) {
 
   file_meta_information
   |> data_set.insert(
-    registry.file_meta_information_version.tag,
+    dictionary.file_meta_information_version.tag,
     file_meta_information_version,
   )
   |> data_set.insert(
-    registry.implementation_class_uid.tag,
+    dictionary.implementation_class_uid.tag,
     implementation_class_uid,
   )
   |> data_set.insert(
-    registry.implementation_version_name.tag,
+    dictionary.implementation_version_name.tag,
     implementation_version_name,
   )
 }

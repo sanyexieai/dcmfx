@@ -7,7 +7,7 @@ use byteorder::ByteOrder;
 
 use dcmfx_core::DataSetPath;
 use dcmfx_core::{
-  registry, transfer_syntax, transfer_syntax::Endianness, DataElementTag,
+  dictionary, transfer_syntax, transfer_syntax::Endianness, DataElementTag,
   DataElementValue, DataSet, TransferSyntax,
 };
 
@@ -120,7 +120,7 @@ impl P10WriteContext {
       } => {
         // Read the transfer syntax UID
         let transfer_syntax_uid = file_meta_information
-          .get_string(registry::TRANSFER_SYNTAX_UID.tag)
+          .get_string(dictionary::TRANSFER_SYNTAX_UID.tag)
           .unwrap_or(transfer_syntax::IMPLICIT_VR_LITTLE_ENDIAN.uid);
 
         // Map UID to a known transfer syntax
@@ -392,7 +392,7 @@ fn part_to_bytes(
 
     P10Part::SequenceDelimiter => data_element_header_to_bytes(
       &DataElementHeader {
-        tag: registry::SEQUENCE_DELIMITATION_ITEM.tag,
+        tag: dictionary::SEQUENCE_DELIMITATION_ITEM.tag,
         vr: None,
         length: ValueLength::ZERO,
       },
@@ -401,7 +401,7 @@ fn part_to_bytes(
 
     P10Part::SequenceItemStart => data_element_header_to_bytes(
       &DataElementHeader {
-        tag: registry::ITEM.tag,
+        tag: dictionary::ITEM.tag,
         vr: None,
         length: ValueLength::Undefined,
       },
@@ -410,7 +410,7 @@ fn part_to_bytes(
 
     P10Part::SequenceItemDelimiter => data_element_header_to_bytes(
       &DataElementHeader {
-        tag: registry::ITEM_DELIMITATION_ITEM.tag,
+        tag: dictionary::ITEM_DELIMITATION_ITEM.tag,
         vr: None,
         length: ValueLength::ZERO,
       },
@@ -419,7 +419,7 @@ fn part_to_bytes(
 
     P10Part::PixelDataItem { length } => data_element_header_to_bytes(
       &DataElementHeader {
-        tag: registry::ITEM.tag,
+        tag: dictionary::ITEM.tag,
         vr: None,
         length: ValueLength::new(*length),
       },
@@ -448,7 +448,7 @@ pub fn data_set_to_parts<E>(
   // element into the data set's part stream, specifying UTF-8 (ISO_IR 192)
   let mut data_elements_to_insert = DataSet::new();
   data_elements_to_insert
-    .insert_string_value(&registry::SPECIFIC_CHARACTER_SET, &["ISO_IR 192"])
+    .insert_string_value(&dictionary::SPECIFIC_CHARACTER_SET, &["ISO_IR 192"])
     .unwrap();
   let mut insert_specific_character_set_transform =
     P10InsertTransform::new(data_elements_to_insert);
@@ -532,15 +532,15 @@ fn prepare_file_meta_information_part_data_set(
   .unwrap();
 
   file_meta_information.insert(
-    registry::FILE_META_INFORMATION_VERSION.tag,
+    dictionary::FILE_META_INFORMATION_VERSION.tag,
     file_meta_information_version,
   );
   file_meta_information.insert(
-    registry::IMPLEMENTATION_CLASS_UID.tag,
+    dictionary::IMPLEMENTATION_CLASS_UID.tag,
     implementation_class_uid,
   );
   file_meta_information.insert(
-    registry::IMPLEMENTATION_VERSION_NAME.tag,
+    dictionary::IMPLEMENTATION_VERSION_NAME.tag,
     implementation_version_name,
   )
 }
@@ -639,7 +639,7 @@ mod tests {
     assert_eq!(
       data_element_header_to_bytes(
         &DataElementHeader {
-          tag: registry::WAVEFORM_DATA.tag,
+          tag: dictionary::WAVEFORM_DATA.tag,
           vr: None,
           length: ValueLength::new(0x12345678),
         },
@@ -651,7 +651,7 @@ mod tests {
     assert_eq!(
       data_element_header_to_bytes(
         &DataElementHeader {
-          tag: registry::WAVEFORM_DATA.tag,
+          tag: dictionary::WAVEFORM_DATA.tag,
           vr: None,
           length: ValueLength::new(0x12345678),
         },
@@ -663,7 +663,7 @@ mod tests {
     assert_eq!(
       data_element_header_to_bytes(
         &DataElementHeader {
-          tag: registry::PATIENT_AGE.tag,
+          tag: dictionary::PATIENT_AGE.tag,
           vr: Some(ValueRepresentation::UnlimitedText),
           length: ValueLength::new(0x1234),
         },
@@ -675,7 +675,7 @@ mod tests {
     assert_eq!(
       data_element_header_to_bytes(
         &DataElementHeader {
-          tag: registry::PIXEL_DATA.tag,
+          tag: dictionary::PIXEL_DATA.tag,
           vr: Some(ValueRepresentation::OtherWordString),
           length: ValueLength::new(0x12345678),
         },
@@ -689,7 +689,7 @@ mod tests {
     assert_eq!(
       data_element_header_to_bytes(
         &DataElementHeader {
-          tag: registry::PIXEL_DATA.tag,
+          tag: dictionary::PIXEL_DATA.tag,
           vr: Some(ValueRepresentation::OtherWordString),
           length: ValueLength::new(0x12345678),
         },
@@ -703,7 +703,7 @@ mod tests {
     assert_eq!(
       data_element_header_to_bytes(
         &DataElementHeader {
-          tag: registry::PATIENT_AGE.tag,
+          tag: dictionary::PATIENT_AGE.tag,
           vr: Some(ValueRepresentation::AgeString),
           length: ValueLength::new(0x12345),
         },
@@ -720,7 +720,7 @@ mod tests {
     assert_eq!(
       data_element_header_to_bytes(
         &DataElementHeader {
-          tag: registry::SMALLEST_IMAGE_PIXEL_VALUE.tag,
+          tag: dictionary::SMALLEST_IMAGE_PIXEL_VALUE.tag,
           vr: Some(ValueRepresentation::SignedShort),
           length: ValueLength::new(0x1234),
         },
@@ -732,7 +732,7 @@ mod tests {
     assert_eq!(
       data_element_header_to_bytes(
         &DataElementHeader {
-          tag: registry::SMALLEST_IMAGE_PIXEL_VALUE.tag,
+          tag: dictionary::SMALLEST_IMAGE_PIXEL_VALUE.tag,
           vr: Some(ValueRepresentation::SignedShort),
           length: ValueLength::new(0x1234),
         },

@@ -1,4 +1,4 @@
-use dcmfx_core::{registry, DataElementTag, DataSet, ValueRepresentation};
+use dcmfx_core::{dictionary, DataElementTag, DataSet, ValueRepresentation};
 
 use crate::{DataSetBuilder, P10Error, P10Part};
 
@@ -105,7 +105,7 @@ impl P10FilterTransform {
         };
 
         self.location.push(LocationEntry {
-          tag: registry::ITEM.tag,
+          tag: dictionary::ITEM.tag,
           filter_result,
         });
 

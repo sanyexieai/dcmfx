@@ -4,7 +4,7 @@ use base64::prelude::*;
 use byteorder::ByteOrder;
 
 use dcmfx_core::{
-  registry, DataElementTag, DataElementValue, DataSet, DataSetPath,
+  dictionary, DataElementTag, DataElementValue, DataSet, DataSetPath,
   TransferSyntax, ValueRepresentation,
 };
 
@@ -51,7 +51,7 @@ pub fn convert_json_to_data_set(
     data_set.insert(tag, value);
 
     // Look up the transfer syntax if this is the relevant tag
-    if tag == registry::TRANSFER_SYNTAX_UID.tag {
+    if tag == dictionary::TRANSFER_SYNTAX_UID.tag {
       if let Ok(ts) = data_set.get_transfer_syntax() {
         transfer_syntax = Some(ts);
       }
@@ -261,7 +261,7 @@ fn read_dicom_json_primitive_value(
         });
       };
 
-      if registry::is_lut_descriptor_tag(tag) && ints.len() == 3 {
+      if dictionary::is_lut_descriptor_tag(tag) && ints.len() == 3 {
         let entry_count = ints[0];
         let first_input_value = ints[1];
         let bits_per_entry = ints[2];
@@ -594,7 +594,7 @@ fn read_dicom_json_inline_binary_value(
 
   // Look at the tag and the transfer syntax to see if this inline binary holds
   // encapsulated pixel data.
-  if tag == registry::PIXEL_DATA.tag
+  if tag == dictionary::PIXEL_DATA.tag
     && transfer_syntax.as_ref().map(|ts| ts.is_encapsulated) == Some(true)
   {
     read_encapsulated_pixel_data_items(&bytes, vr).map_err(|_| {
@@ -647,8 +647,8 @@ fn read_encapsulated_pixel_data_items(
     let element = byteorder::LittleEndian::read_u16(&bytes[2..4]);
     let length = byteorder::LittleEndian::read_u32(&bytes[4..8]) as usize;
 
-    if group != registry::ITEM.tag.group
-      || element != registry::ITEM.tag.element
+    if group != dictionary::ITEM.tag.group
+      || element != dictionary::ITEM.tag.element
     {
       return Err(());
     }

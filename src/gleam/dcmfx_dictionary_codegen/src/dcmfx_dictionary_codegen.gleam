@@ -10,18 +10,18 @@ import gleam/string
 import simplifile
 
 pub fn main() {
-  let registry_entries = read_attributes_json()
+  let dictionary_items = read_attributes_json()
   let private_tags = read_private_tags_json()
 
   // Generate code and print it to stdout
-  generate_constants(registry_entries)
-  generate_find_function(registry_entries)
+  generate_constants(dictionary_items)
+  generate_find_function(dictionary_items)
   generate_find_private_function(private_tags)
   generate_uid_name_function()
 }
 
-type RegistryItem {
-  RegistryItem(
+type DictionaryItem {
+  DictionaryItem(
     tag: String,
     name: String,
     keyword: String,
@@ -36,14 +36,14 @@ type RegistryItem {
 /// The latest file can be downloaded here:
 /// https://raw.githubusercontent.com/innolitics/dicom-standard/master/standard/attributes.json
 ///
-fn read_attributes_json() -> List(RegistryItem) {
+fn read_attributes_json() -> List(DictionaryItem) {
   let assert Ok(attributes_json) =
     simplifile.read("data/innolitics_attributes.json")
 
   // Decode the JSON content
-  let registry_entries_decoder =
+  let items_decoder =
     dynamic.list(of: dynamic.decode5(
-      RegistryItem,
+      DictionaryItem,
       field("tag", of: string),
       field("name", of: string),
       field("keyword", of: string),
@@ -51,12 +51,12 @@ fn read_attributes_json() -> List(RegistryItem) {
       field("valueMultiplicity", of: string),
     ))
 
-  let assert Ok(registry_entries) =
-    json.decode(from: attributes_json, using: registry_entries_decoder)
+  let assert Ok(dictionary_items) =
+    json.decode(from: attributes_json, using: items_decoder)
 
-  // Filter out entries that have no name, keyword, or VR
-  let registry_entries =
-    registry_entries
+  // Filter out items that have no name, keyword, or VR
+  let dictionary_items =
+    dictionary_items
     |> list.filter(fn(attribute) {
       attribute.name != ""
       && attribute.keyword != ""
@@ -64,8 +64,8 @@ fn read_attributes_json() -> List(RegistryItem) {
     })
 
   // Change keyword to use snake case. Some keywords require manual adjustment.
-  let registry_entries =
-    registry_entries
+  let dictionary_items =
+    dictionary_items
     |> list.map(fn(attribute) {
       let keyword =
         case attribute.keyword {
@@ -86,11 +86,11 @@ fn read_attributes_json() -> List(RegistryItem) {
         |> insert_underscores_in_keyword("")
         |> string.lowercase
 
-      RegistryItem(..attribute, keyword: keyword)
+      DictionaryItem(..attribute, keyword: keyword)
     })
 
   // Sort by tag
-  registry_entries
+  dictionary_items
   |> list.sort(fn(a, b) { string.compare(a.tag, b.tag) })
 }
 
@@ -153,44 +153,44 @@ fn read_private_tags_json() -> PrivateTags {
   private_tags
 }
 
-/// Prints code that defines constants for each registry entry.
+/// Prints code that defines constants for each dictionary item.
 ///
-fn generate_constants(registry_entries: List(RegistryItem)) -> Nil {
-  registry_entries
-  |> list.each(fn(registry_entry) {
-    let tag = string.replace(registry_entry.tag, "X", "0")
+fn generate_constants(dictionary_items: List(DictionaryItem)) -> Nil {
+  dictionary_items
+  |> list.each(fn(item) {
+    let tag = string.replace(item.tag, "X", "0")
 
     let group = string.slice(tag, 1, 4)
     let element = string.slice(tag, 6, 4)
 
-    let item =
+    let item_code =
       item_constructor(
         "DataElementTag(0x" <> group <> ", 0x" <> element <> ")",
-        registry_entry,
+        item,
       )
 
-    io.println("pub const " <> registry_entry.keyword <> " = " <> item)
+    io.println("pub const " <> item.keyword <> " = " <> item_code)
   })
 }
 
-fn item_constructor(tag: String, registry_entry: RegistryItem) -> String {
+fn item_constructor(tag: String, item: DictionaryItem) -> String {
   let args = [
     tag,
-    "\"" <> string.replace(registry_entry.name, "\\", "\\\\") <> "\"",
-    convert_value_representation(registry_entry.value_representation),
-    convert_value_multiplicity(registry_entry.value_multiplicity),
+    "\"" <> string.replace(item.name, "\\", "\\\\") <> "\"",
+    convert_value_representation(item.value_representation),
+    convert_value_multiplicity(item.value_multiplicity),
   ]
 
   "Item(" <> string.join(args, ", ") <> ")"
 }
 
-/// Prints code for the registry.find() function.
+/// Prints code for the dictionary.find() function.
 ///
-fn generate_find_function(registry_entries: List(RegistryItem)) -> Nil {
+fn generate_find_function(dictionary_items: List(DictionaryItem)) -> Nil {
   // Find all groups that don't specify a range
   let simple_groups =
-    registry_entries
-    |> list.map(fn(registry_entry) { string.slice(registry_entry.tag, 1, 4) })
+    dictionary_items
+    |> list.map(fn(item) { string.slice(item.tag, 1, 4) })
     |> set.from_list
     |> set.to_list
     |> list.filter(fn(tag) { !string.contains(tag, "X") })
@@ -206,14 +206,14 @@ fn find_element_in_group_" <> string.lowercase(group) <> "(element: Int) -> Resu
   case element {" }
     |> io.println
 
-    registry_entries
-    |> list.each(fn(registry_entry) {
-      use <- bool.guard(string.slice(registry_entry.tag, 1, 4) != group, Nil)
-      use <- bool.guard(string.contains(registry_entry.tag, "X"), Nil)
+    dictionary_items
+    |> list.each(fn(item) {
+      use <- bool.guard(string.slice(item.tag, 1, 4) != group, Nil)
+      use <- bool.guard(string.contains(item.tag, "X"), Nil)
 
-      let element = "0x" <> string.slice(registry_entry.tag, 6, 4)
+      let element = "0x" <> string.slice(item.tag, 6, 4)
 
-      { "    " <> element <> " -> Ok(" <> registry_entry.keyword <> ")" }
+      { "    " <> element <> " -> Ok(" <> item.keyword <> ")" }
       |> io.println
     })
 
@@ -246,33 +246,33 @@ pub fn find(tag: DataElementTag, private_creator: Option(String)) -> Result(Item
     |> io.println
   })
 
-  // Now handle remaining registry entries that specify a range of some kind
+  // Now handle remaining dictionary items that specify a range of some kind
   "
     _ ->  case tag.group, tag.element {"
   |> io.println
 
-  // Print cases for the registry entries with ranges simple enough to be
+  // Print cases for the dictionary items with ranges simple enough to be
   // handled as a single case
-  registry_entries
-  |> list.each(fn(registry_entry) {
-    use <- bool.guard(!string.contains(registry_entry.tag, "X"), Nil)
+  dictionary_items
+  |> list.each(fn(dictionary_item) {
+    use <- bool.guard(!string.contains(dictionary_item.tag, "X"), Nil)
 
-    use <- bool.guard(string.starts_with(registry_entry.tag, "(1000,XXX"), Nil)
+    use <- bool.guard(string.starts_with(dictionary_item.tag, "(1000,XXX"), Nil)
 
-    let group = "0x" <> string.slice(registry_entry.tag, 1, 4)
-    let element = "0x" <> string.slice(registry_entry.tag, 6, 4)
+    let group = "0x" <> string.slice(dictionary_item.tag, 1, 4)
+    let element = "0x" <> string.slice(dictionary_item.tag, 6, 4)
 
     {
       "\n    // Handle the '"
-      <> registry_entry.tag
+      <> dictionary_item.tag
       <> " "
-      <> registry_entry.name
+      <> dictionary_item.name
       <> "' range of data elements"
       <> "\n    "
     }
     |> io.print
 
-    case registry_entry.tag {
+    case dictionary_item.tag {
       "(0020,31XX)" ->
         "0x0020, element if element >= 0x3100 && element <= 0x31FF"
 
@@ -310,11 +310,11 @@ pub fn find(tag: DataElementTag, private_creator: Option(String)) -> Result(Item
         <> "FF"
       }
 
-      _ -> panic as { "Range not handled: " <> registry_entry.tag }
+      _ -> panic as { "Range not handled: " <> dictionary_item.tag }
     }
     |> io.print
 
-    io.println(" -> Ok(Item(.." <> registry_entry.keyword <> ", tag: tag))")
+    io.println(" -> Ok(Item(.." <> dictionary_item.keyword <> ", tag: tag))")
   })
 
   // Print custom handler for the (1000,XXXY) range
@@ -327,7 +327,7 @@ pub fn find(tag: DataElementTag, private_creator: Option(String)) -> Result(Item
   list.range(0, 5)
   |> list.map(fn(i) {
     let assert Ok(item) =
-      list.find(registry_entries, fn(e) {
+      list.find(dictionary_items, fn(e) {
         e.tag == "(1000,XXX" <> int.to_string(i) <> ")"
       })
 
@@ -359,7 +359,7 @@ pub fn find(tag: DataElementTag, private_creator: Option(String)) -> Result(Item
           "
   |> io.print
 
-  RegistryItem(
+  DictionaryItem(
     tag: "",
     name: "Private Creator",
     keyword: "",
@@ -384,7 +384,7 @@ pub fn find(tag: DataElementTag, private_creator: Option(String)) -> Result(Item
   |> io.print
 }
 
-/// Prints code for the registry.find_private() function.
+/// Prints code for the dictionary.find_private() function.
 ///
 fn generate_find_private_function(private_tags: PrivateTags) -> Nil {
   io.println(
@@ -434,7 +434,7 @@ fn find_private(tag: DataElementTag, private_creator: String) -> Result(Item, Ni
       let assert Ok([vrs, multiplicity, name, _private]) =
         dict.get(private_creator_tags, tag)
       io.print(" -> Ok(")
-      RegistryItem(
+      DictionaryItem(
         tag: "",
         name: name,
         keyword: "",

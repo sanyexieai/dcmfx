@@ -25,8 +25,8 @@
 import dcmfx_character_set.{type SpecificCharacterSet}
 import dcmfx_character_set/string_type
 import dcmfx_core/data_element_tag.{type DataElementTag, DataElementTag}
+import dcmfx_core/dictionary
 import dcmfx_core/internal/utils
-import dcmfx_core/registry
 import dcmfx_core/value_representation.{type ValueRepresentation}
 import dcmfx_p10/internal/value_length.{type ValueLength}
 import dcmfx_p10/p10_error.{type P10Error}
@@ -73,11 +73,11 @@ type ClarifyingDataElements {
 /// needs to be materialized by the read process and added to the location.
 ///
 pub fn is_clarifying_data_element(tag: DataElementTag) -> Bool {
-  tag == registry.specific_character_set.tag
-  || tag == registry.bits_allocated.tag
-  || tag == registry.pixel_representation.tag
-  || tag == registry.waveform_bits_stored.tag
-  || tag == registry.waveform_bits_allocated.tag
+  tag == dictionary.specific_character_set.tag
+  || tag == dictionary.bits_allocated.tag
+  || tag == dictionary.pixel_representation.tag
+  || tag == dictionary.waveform_bits_stored.tag
+  || tag == dictionary.waveform_bits_allocated.tag
   || data_element_tag.is_private_creator(tag)
 }
 
@@ -195,7 +195,7 @@ pub fn add_sequence(
 
       Error(
         "Sequence data element '"
-        <> registry.tag_with_name(tag, private_creator)
+        <> dictionary.tag_with_name(tag, private_creator)
         <> "' encountered outside of the root data set or an item",
       )
     }
@@ -285,7 +285,7 @@ pub fn add_clarifying_data_element(
   value_bytes: BitArray,
 ) -> Result(#(BitArray, P10Location), P10Error) {
   case tag, vr, value_bytes {
-    tag, _, _ if tag == registry.specific_character_set.tag ->
+    tag, _, _ if tag == dictionary.specific_character_set.tag ->
       update_specific_character_set_clarifying_data_element(
         location,
         value_bytes,
@@ -350,7 +350,7 @@ fn update_unsigned_short_clarifying_data_element(
   value: Int,
 ) -> P10Location {
   case tag {
-    tag if tag == registry.bits_allocated.tag ->
+    tag if tag == dictionary.bits_allocated.tag ->
       location
       |> map_clarifying_data_elements(fn(clarifying_data_elements) {
         ClarifyingDataElements(
@@ -359,7 +359,7 @@ fn update_unsigned_short_clarifying_data_element(
         )
       })
 
-    tag if tag == registry.pixel_representation.tag ->
+    tag if tag == dictionary.pixel_representation.tag ->
       location
       |> map_clarifying_data_elements(fn(clarifying_data_elements) {
         ClarifyingDataElements(
@@ -368,7 +368,7 @@ fn update_unsigned_short_clarifying_data_element(
         )
       })
 
-    tag if tag == registry.waveform_bits_stored.tag ->
+    tag if tag == dictionary.waveform_bits_stored.tag ->
       location
       |> map_clarifying_data_elements(fn(clarifying_data_elements) {
         ClarifyingDataElements(
@@ -377,7 +377,7 @@ fn update_unsigned_short_clarifying_data_element(
         )
       })
 
-    tag if tag == registry.waveform_bits_allocated.tag ->
+    tag if tag == dictionary.waveform_bits_allocated.tag ->
       location
       |> map_clarifying_data_elements(fn(clarifying_data_elements) {
         ClarifyingDataElements(
@@ -475,7 +475,7 @@ pub fn decode_string_bytes(
 /// syntax, returns the VR for the data element, or `Unknown` if it can't be
 /// determined.
 ///
-/// The vast majority of VRs can be determined by looking in the registry as
+/// The vast majority of VRs can be determined by looking in the dictionary as
 /// they only have one valid VR. Data elements that can use different VRs
 /// depending on the context require additional logic, which isn't guaranteed
 /// to succeed.
@@ -490,8 +490,8 @@ pub fn infer_vr_for_tag(
 
   let private_creator = private_creator_for_tag(clarifying_data_elements, tag)
 
-  let allowed_vrs = case registry.find(tag, private_creator) {
-    Ok(registry.Item(vrs: vrs, ..)) -> vrs
+  let allowed_vrs = case dictionary.find(tag, private_creator) {
+    Ok(dictionary.Item(vrs: vrs, ..)) -> vrs
     Error(Nil) -> []
   }
 
@@ -501,32 +501,32 @@ pub fn infer_vr_for_tag(
     // For '(7FE0, 0010) Pixel Data', OB is not usable when in an implicit VR
     // transfer syntax. Ref: PS3.5 8.2.
     [value_representation.OtherByteString, value_representation.OtherWordString]
-      if tag == registry.pixel_data.tag
+      if tag == dictionary.pixel_data.tag
     -> value_representation.OtherWordString
 
     // Use '(0028,0103) PixelRepresentation' to determine a US/SS VR on relevant
     // values
     [value_representation.UnsignedShort, value_representation.SignedShort]
-      if tag == registry.zero_velocity_pixel_value.tag
-      || tag == registry.mapped_pixel_value.tag
-      || tag == registry.smallest_valid_pixel_value.tag
-      || tag == registry.largest_valid_pixel_value.tag
-      || tag == registry.smallest_image_pixel_value.tag
-      || tag == registry.largest_image_pixel_value.tag
-      || tag == registry.smallest_pixel_value_in_series.tag
-      || tag == registry.largest_pixel_value_in_series.tag
-      || tag == registry.smallest_image_pixel_value_in_plane.tag
-      || tag == registry.largest_image_pixel_value_in_plane.tag
-      || tag == registry.pixel_padding_value.tag
-      || tag == registry.pixel_padding_range_limit.tag
-      || tag == registry.red_palette_color_lookup_table_descriptor.tag
-      || tag == registry.green_palette_color_lookup_table_descriptor.tag
-      || tag == registry.blue_palette_color_lookup_table_descriptor.tag
-      || tag == registry.lut_descriptor.tag
-      || tag == registry.real_world_value_last_value_mapped.tag
-      || tag == registry.real_world_value_first_value_mapped.tag
-      || tag == registry.histogram_first_bin_value.tag
-      || tag == registry.histogram_last_bin_value.tag
+      if tag == dictionary.zero_velocity_pixel_value.tag
+      || tag == dictionary.mapped_pixel_value.tag
+      || tag == dictionary.smallest_valid_pixel_value.tag
+      || tag == dictionary.largest_valid_pixel_value.tag
+      || tag == dictionary.smallest_image_pixel_value.tag
+      || tag == dictionary.largest_image_pixel_value.tag
+      || tag == dictionary.smallest_pixel_value_in_series.tag
+      || tag == dictionary.largest_pixel_value_in_series.tag
+      || tag == dictionary.smallest_image_pixel_value_in_plane.tag
+      || tag == dictionary.largest_image_pixel_value_in_plane.tag
+      || tag == dictionary.pixel_padding_value.tag
+      || tag == dictionary.pixel_padding_range_limit.tag
+      || tag == dictionary.red_palette_color_lookup_table_descriptor.tag
+      || tag == dictionary.green_palette_color_lookup_table_descriptor.tag
+      || tag == dictionary.blue_palette_color_lookup_table_descriptor.tag
+      || tag == dictionary.lut_descriptor.tag
+      || tag == dictionary.real_world_value_last_value_mapped.tag
+      || tag == dictionary.real_world_value_first_value_mapped.tag
+      || tag == dictionary.histogram_first_bin_value.tag
+      || tag == dictionary.histogram_last_bin_value.tag
     ->
       case clarifying_data_elements.pixel_representation {
         Some(0) -> value_representation.UnsignedShort
@@ -536,8 +536,8 @@ pub fn infer_vr_for_tag(
     // Use '(003A,021A) WaveformBitsStored' to determine an OB/OW VR on relevant
     // values
     [value_representation.OtherByteString, value_representation.OtherWordString]
-      if tag == registry.channel_minimum_value.tag
-      || tag == registry.channel_maximum_value.tag
+      if tag == dictionary.channel_minimum_value.tag
+      || tag == dictionary.channel_maximum_value.tag
     ->
       case clarifying_data_elements.waveform_bits_stored {
         Some(16) -> value_representation.OtherWordString
@@ -548,8 +548,8 @@ pub fn infer_vr_for_tag(
     // Use '(5400,1004) WaveformBitsAllocated' to determine an OB/OW VR on
     // relevant values
     [value_representation.OtherByteString, value_representation.OtherWordString]
-      if tag == registry.waveform_padding_value.tag
-      || tag == registry.waveform_data.tag
+      if tag == dictionary.waveform_padding_value.tag
+      || tag == dictionary.waveform_data.tag
     ->
       case clarifying_data_elements.waveform_bits_allocated {
         Some(16) -> value_representation.OtherWordString
@@ -564,7 +564,7 @@ pub fn infer_vr_for_tag(
     // (Ref: PS3.3 C.11.1.1.1), even though there is no VR that correctly
     // expresses this, i.e. OB is not a valid VR for LUTData.
     [value_representation.UnsignedShort, value_representation.OtherWordString]
-      if tag == registry.lut_data.tag
+      if tag == dictionary.lut_data.tag
     -> value_representation.OtherWordString
 
     // The VR for '(60xx,3000) Overlay Data' doesn't need to be determined as

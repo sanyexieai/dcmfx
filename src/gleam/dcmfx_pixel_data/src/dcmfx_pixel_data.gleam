@@ -4,8 +4,8 @@ import bigi.{type BigInt}
 import dcmfx_core/data_element_value.{type DataElementValue}
 import dcmfx_core/data_error.{type DataError}
 import dcmfx_core/data_set.{type DataSet}
+import dcmfx_core/dictionary
 import dcmfx_core/internal/bit_array_utils
-import dcmfx_core/registry
 import dcmfx_core/transfer_syntax.{type TransferSyntax}
 import dcmfx_core/value_representation.{type ValueRepresentation}
 import gleam/bit_array
@@ -28,7 +28,7 @@ pub fn get_pixel_data(
   data_set: DataSet,
 ) -> Result(#(ValueRepresentation, List(List(BitArray))), DataError) {
   // Get the pixel data value
-  let pixel_data = data_set.get_value(data_set, registry.pixel_data.tag)
+  let pixel_data = data_set.get_value(data_set, dictionary.pixel_data.tag)
   use pixel_data <- result.try(pixel_data)
 
   // Get the extended offset table value, if present
@@ -44,7 +44,7 @@ pub fn get_pixel_data(
 
   // Get the number of frames value, if present
   let number_of_frames =
-    data_set.get_int(data_set, registry.number_of_frames.tag)
+    data_set.get_int(data_set, dictionary.number_of_frames.tag)
 
   // Validate the number of frames value
   let number_of_frames = case number_of_frames {
@@ -329,7 +329,7 @@ fn parse_extended_offset_table(
   let extended_offset_table =
     data_set.get_value_bytes(
       data_set,
-      registry.extended_offset_table.tag,
+      dictionary.extended_offset_table.tag,
       value_representation.OtherVeryLongString,
     )
     |> result.try(fn(bytes) {
@@ -346,7 +346,7 @@ fn parse_extended_offset_table(
   let extended_offset_table_lengths =
     data_set.get_value_bytes(
       data_set,
-      registry.extended_offset_table_lengths.tag,
+      dictionary.extended_offset_table_lengths.tag,
       value_representation.OtherVeryLongString,
     )
     |> result.try(fn(bytes) {

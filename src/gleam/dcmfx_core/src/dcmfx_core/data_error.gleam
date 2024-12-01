@@ -1,6 +1,6 @@
 import dcmfx_core/data_element_tag
 import dcmfx_core/data_set_path.{type DataSetPath}
-import dcmfx_core/registry
+import dcmfx_core/dictionary
 import dcmfx_core/value_representation.{type ValueRepresentation}
 import gleam/int
 import gleam/io
@@ -177,7 +177,7 @@ pub fn to_lines(error: DataError, task_description: String) -> List(String) {
       case data_set_path.final_data_element(path) {
         Ok(tag) -> [
           "  Tag: " <> data_element_tag.to_string(tag),
-          "  Name: " <> registry.tag_name(tag, None),
+          "  Name: " <> dictionary.tag_name(tag, None),
           path_line,
         ]
         _ -> [path_line]

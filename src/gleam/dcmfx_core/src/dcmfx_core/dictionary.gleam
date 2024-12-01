@@ -21,7 +21,7 @@ import gleam/bool
 import gleam/int
 import gleam/option.{type Option, None, Some}
 
-/// An item in the data element registry.
+/// An item in the data element dictionary.
 ///
 pub type Item {
   Item(
@@ -35,7 +35,7 @@ pub type Item {
 /// Returns the human-readable name for a data element tag. The private creator
 /// is required in order to look up well-known privately defined data elements.
 ///
-/// If the tag isn't in the registry then `unknown_tag` is returned, or
+/// If the tag isn't in the dictionary then `unknown_tag` is returned, or
 /// `unknown_private_tag` if it is a private tag.
 ///
 pub fn tag_name(tag: DataElementTag, private_creator: Option(String)) -> String {
@@ -53,8 +53,8 @@ pub fn tag_name(tag: DataElementTag, private_creator: Option(String)) -> String 
 /// "(0008,0020) StudyDate"`. The private creator is required in order to look
 /// up well-known privately defined data elements.
 ///
-/// If the tag isn't in the registry then `unknown_tag` is used as the tag name,
-/// or `unknown_private_tag` if it is a private tag.
+/// If the tag isn't in the dictionary then `unknown_tag` is used as the tag
+/// name, or `unknown_private_tag` if it is a private tag.
 ///
 pub fn tag_with_name(
   tag: DataElementTag,
@@ -75,7 +75,7 @@ pub fn is_lut_descriptor_tag(tag: DataElementTag) -> Bool {
 }
 
 // The following constants reduce bloat/repetition of ValueMultiplicity
-// specifications in the generated registry code.
+// specifications in the generated dictionary code
 
 const vm_1 = ValueMultiplicity(1, Some(1))
 
@@ -97,8 +97,8 @@ const vm_2_to_n = ValueMultiplicity(2, None)
 
 const vm_3_to_n = ValueMultiplicity(3, None)
 
-// Everything below this line is auto-generated from the DICOM specification
-// using the accompanying registry_codegen.gleam script.
+// Everything below this line is auto-generated from the DICOM specification by
+// dcmfx_dictionary_codegen
 
 pub const file_meta_information_group_length = Item(
   DataElementTag(0x0002, 0x0000),

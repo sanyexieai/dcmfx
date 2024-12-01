@@ -7,7 +7,7 @@
 use std::rc::Rc;
 
 use dcmfx_core::{
-  registry, DataElementTag, DataElementValue, DataSet, ValueRepresentation,
+  dictionary, DataElementTag, DataElementValue, DataSet, ValueRepresentation,
 };
 
 use crate::{P10Error, P10Part};
@@ -244,7 +244,7 @@ impl DataSetBuilder {
     match (&part, self.location.last()) {
       (P10Part::PixelDataItem { .. }, _) => {
         self.pending_data_element = Some(PendingDataElement {
-          tag: registry::ITEM.tag,
+          tag: dictionary::ITEM.tag,
           vr: ValueRepresentation::OtherByteString,
           data: vec![],
         });
@@ -262,7 +262,7 @@ impl DataSetBuilder {
         }) = self.location.pop()
         {
           self.insert_data_element_at_current_location(
-            registry::PIXEL_DATA.tag,
+            dictionary::PIXEL_DATA.tag,
             DataElementValue::new_encapsulated_pixel_data_unchecked(vr, items),
           );
         }
@@ -462,7 +462,7 @@ fn build_final_data_element_value(
 
   // Lookup table descriptors are a special case due to the non-standard way
   // their VR applies to their underlying bytes
-  if registry::is_lut_descriptor_tag(tag) {
+  if dictionary::is_lut_descriptor_tag(tag) {
     DataElementValue::new_lookup_table_descriptor_unchecked(vr, bytes)
   } else {
     DataElementValue::new_binary_unchecked(vr, bytes)

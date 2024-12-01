@@ -12,8 +12,8 @@ import dcmfx_core/data_element_value/time
 import dcmfx_core/data_error.{type DataError}
 import dcmfx_core/data_set_path.{type DataSetPath}
 import dcmfx_core/data_set_print.{type DataSetPrintOptions}
+import dcmfx_core/dictionary
 import dcmfx_core/internal/utils
-import dcmfx_core/registry
 import dcmfx_core/transfer_syntax.{type TransferSyntax}
 import dcmfx_core/value_multiplicity
 import dcmfx_core/value_representation.{type ValueRepresentation}
@@ -86,24 +86,24 @@ pub fn file_meta_information(data_set: DataSet) -> DataSet {
     |> dict.filter(fn(tag, _value) { tag.group == 2 })
 
   let file_meta_information = case
-    get_value(data_set, registry.sop_class_uid.tag)
+    get_value(data_set, dictionary.sop_class_uid.tag)
   {
     Ok(value) ->
       dict.insert(
         file_meta_information,
-        registry.media_storage_sop_class_uid.tag,
+        dictionary.media_storage_sop_class_uid.tag,
         value,
       )
     Error(_) -> file_meta_information
   }
 
   let file_meta_information = case
-    get_value(data_set, registry.sop_instance_uid.tag)
+    get_value(data_set, dictionary.sop_instance_uid.tag)
   {
     Ok(value) ->
       dict.insert(
         file_meta_information,
-        registry.media_storage_sop_instance_uid.tag,
+        dictionary.media_storage_sop_instance_uid.tag,
         value,
       )
     Error(_) -> file_meta_information
@@ -138,11 +138,11 @@ pub fn insert_binary_value(
 }
 
 /// Inserts a data element with an age string value into a data set. The data
-/// element being inserted must be referenced through its registry entry.
+/// element being inserted must be referenced through its dictionary entry.
 ///
 pub fn insert_age_string(
   data_set: DataSet,
-  item: registry.Item,
+  item: dictionary.Item,
   value: age_string.StructuredAge,
 ) -> Result(DataSet, DataError) {
   case item.vrs {
@@ -153,11 +153,11 @@ pub fn insert_age_string(
 }
 
 /// Inserts a data element with an attribute tag value into a data set. The data
-/// element being inserted must be referenced through its registry entry.
+/// element being inserted must be referenced through its dictionary entry.
 ///
 pub fn insert_attribute_tag_value(
   data_set: DataSet,
-  item: registry.Item,
+  item: dictionary.Item,
   value: List(DataElementTag),
 ) -> Result(DataSet, DataError) {
   case item.vrs {
@@ -169,11 +169,11 @@ pub fn insert_attribute_tag_value(
 }
 
 /// Inserts a data element with a date value into a data set. The data element
-/// being inserted must be referenced through its registry entry.
+/// being inserted must be referenced through its dictionary entry.
 ///
 pub fn insert_date_value(
   data_set: DataSet,
-  item: registry.Item,
+  item: dictionary.Item,
   value: date.StructuredDate,
 ) -> Result(DataSet, DataError) {
   case item.vrs {
@@ -184,11 +184,11 @@ pub fn insert_date_value(
 }
 
 /// Inserts a data element with a date time value into a data set. The data
-/// element being inserted must be referenced through its registry entry.
+/// element being inserted must be referenced through its dictionary entry.
 ///
 pub fn insert_date_time_value(
   data_set: DataSet,
-  item: registry.Item,
+  item: dictionary.Item,
   value: date_time.StructuredDateTime,
 ) -> Result(DataSet, DataError) {
   case item.vrs {
@@ -199,12 +199,12 @@ pub fn insert_date_time_value(
 }
 
 /// Inserts a data element with float values into a data set. The data element
-/// being inserted must be referenced through its registry entry. This method
+/// being inserted must be referenced through its dictionary entry. This method
 /// automatically determines the correct VR to use for the new data element.
 ///
 pub fn insert_float_value(
   data_set: DataSet,
-  item: registry.Item,
+  item: dictionary.Item,
   value: List(IEEEFloat),
 ) -> Result(DataSet, DataError) {
   case item.vrs {
@@ -232,13 +232,13 @@ pub fn insert_float_value(
 }
 
 /// Inserts a data element with integer values into a data set. The data
-/// element being inserted must be referenced through its registry entry. This
+/// element being inserted must be referenced through its dictionary entry. This
 /// method automatically determines the correct VR to use for the new data
 /// element.
 ///
 pub fn insert_int_value(
   data_set: DataSet,
-  item: registry.Item,
+  item: dictionary.Item,
   value: List(Int),
 ) -> Result(DataSet, DataError) {
   case item.vrs {
@@ -259,13 +259,13 @@ pub fn insert_int_value(
 }
 
 /// Inserts a data element with big integer values into a data set. The data
-/// element being inserted must be referenced through its registry entry. This
+/// element being inserted must be referenced through its dictionary entry. This
 /// method automatically determines the correct VR to use for the new data
 /// element.
 ///
 pub fn insert_big_int_value(
   data_set: DataSet,
-  item: registry.Item,
+  item: dictionary.Item,
   value: List(BigInt),
 ) -> Result(DataSet, DataError) {
   case item.vrs {
@@ -280,11 +280,11 @@ pub fn insert_big_int_value(
 }
 
 /// Inserts a data element with a person name value into a data set. The data
-/// element being inserted must be referenced through its registry entry.
+/// element being inserted must be referenced through its dictionary entry.
 ///
 pub fn insert_person_name_value(
   data_set: DataSet,
-  item: registry.Item,
+  item: dictionary.Item,
   value: List(person_name.StructuredPersonName),
 ) -> Result(DataSet, DataError) {
   case item.vrs {
@@ -296,11 +296,11 @@ pub fn insert_person_name_value(
 }
 
 /// Inserts a data element with a sequence value into a data set. The data
-/// element being inserted must be referenced through its registry entry.
+/// element being inserted must be referenced through its dictionary entry.
 ///
 pub fn insert_sequence(
   data_set: DataSet,
-  item: registry.Item,
+  item: dictionary.Item,
   value: List(DataSet),
 ) -> Result(DataSet, DataError) {
   case item.vrs {
@@ -312,13 +312,13 @@ pub fn insert_sequence(
 }
 
 /// Inserts a data element with a string value into a data set. The data
-/// element being inserted must be referenced through its registry entry. This
+/// element being inserted must be referenced through its dictionary entry. This
 /// method automatically determines the correct VR to use for the new data
 /// element.
 ///
 pub fn insert_string_value(
   data_set: DataSet,
-  item: registry.Item,
+  item: dictionary.Item,
   value: List(String),
 ) -> Result(DataSet, DataError) {
   case item.vrs, value {
@@ -349,11 +349,11 @@ pub fn insert_string_value(
 }
 
 /// Inserts a data element with a time value into a data set. The data element
-/// being inserted must be referenced through its registry entry.
+/// being inserted must be referenced through its dictionary entry.
 ///
 pub fn insert_time_value(
   data_set: DataSet,
-  item: registry.Item,
+  item: dictionary.Item,
   value: time.StructuredTime,
 ) -> Result(DataSet, DataError) {
   case item.vrs {
@@ -589,8 +589,8 @@ fn do_to_lines(
               callback(
                 context,
                 data_set_print.format_data_element_prefix(
-                  registry.item.tag,
-                  registry.item.name,
+                  dictionary.item.tag,
+                  dictionary.item.name,
                   None,
                   None,
                   indent + 1,
@@ -604,8 +604,8 @@ fn do_to_lines(
             callback(
               context,
               data_set_print.format_data_element_prefix(
-                registry.item_delimitation_item.tag,
-                registry.item_delimitation_item.name,
+                dictionary.item_delimitation_item.tag,
+                dictionary.item_delimitation_item.name,
                 None,
                 None,
                 indent + 1,
@@ -617,8 +617,8 @@ fn do_to_lines(
         callback(
           context,
           data_set_print.format_data_element_prefix(
-            registry.sequence_delimitation_item.tag,
-            registry.sequence_delimitation_item.name,
+            dictionary.sequence_delimitation_item.tag,
+            dictionary.sequence_delimitation_item.name,
             None,
             None,
             indent,
@@ -636,8 +636,8 @@ fn do_to_lines(
             callback(
               context,
               data_set_print.format_data_element_prefix(
-                registry.item.tag,
-                registry.item.name,
+                dictionary.item.tag,
+                dictionary.item.name,
                 None,
                 Some(bit_array.byte_size(item)),
                 indent + 1,
@@ -649,8 +649,8 @@ fn do_to_lines(
         callback(
           context,
           data_set_print.format_data_element_prefix(
-            registry.sequence_delimitation_item.tag,
-            registry.sequence_delimitation_item.name,
+            dictionary.sequence_delimitation_item.tag,
+            dictionary.sequence_delimitation_item.name,
             None,
             None,
             indent,
@@ -1011,7 +1011,7 @@ pub fn get_transfer_syntax(
   data_set: DataSet,
 ) -> Result(TransferSyntax, DataError) {
   let transfer_syntax_uid =
-    get_string(data_set, registry.transfer_syntax_uid.tag)
+    get_string(data_set, dictionary.transfer_syntax_uid.tag)
   use transfer_syntax_uid <- result.try(transfer_syntax_uid)
 
   transfer_syntax.from_uid(transfer_syntax_uid)
@@ -1043,7 +1043,7 @@ pub fn tag_name(data_set: DataSet, tag: DataElementTag) -> String {
     |> private_creator_for_tag(tag)
     |> option.from_result
 
-  registry.tag_name(tag, private_creator)
+  dictionary.tag_name(tag, private_creator)
 }
 
 /// Formats a data element tag in a data set as `"(GROUP,ELEMENT) TAG_NAME"`,
@@ -1056,7 +1056,7 @@ pub fn tag_with_name(data_set: DataSet, tag: DataElementTag) -> String {
     |> private_creator_for_tag(tag)
     |> option.from_result
 
-  registry.tag_with_name(tag, private_creator)
+  dictionary.tag_with_name(tag, private_creator)
 }
 
 /// Returns the value of the `(gggg,00xx) Private Creator` data element in this
@@ -1155,7 +1155,7 @@ pub fn private_block(
 /// Helper function that returns an error message when one of the
 /// `insert_*_element` functions is called with invalid arguments.
 ///
-fn invalid_insert_error(item: registry.Item) -> Result(a, DataError) {
+fn invalid_insert_error(item: dictionary.Item) -> Result(a, DataError) {
   case item.vrs {
     [vr] ->
       Error(data_error.new_value_invalid(

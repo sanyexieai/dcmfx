@@ -1,5 +1,5 @@
 import dcmfx_core/data_element_tag.{type DataElementTag}
-import dcmfx_core/registry
+import dcmfx_core/dictionary
 import gleam/bool
 import gleam/int
 import gleam/list
@@ -155,7 +155,7 @@ pub fn to_detailed_string(path: DataSetPath) -> String {
   path.entries
   |> list.map(fn(entry) {
     case entry {
-      DataElement(tag) -> registry.tag_with_name(tag, None)
+      DataElement(tag) -> dictionary.tag_with_name(tag, None)
       SequenceItem(index) -> "Item " <> int.to_string(index)
     }
   })

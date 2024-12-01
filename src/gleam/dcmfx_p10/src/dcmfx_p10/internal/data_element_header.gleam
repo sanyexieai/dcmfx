@@ -1,5 +1,5 @@
 import dcmfx_core/data_element_tag.{type DataElementTag, DataElementTag}
-import dcmfx_core/registry
+import dcmfx_core/dictionary
 import dcmfx_core/value_representation.{type ValueRepresentation}
 import dcmfx_p10/internal/value_length.{type ValueLength}
 import gleam/option.{type Option, None, Some}
@@ -29,7 +29,7 @@ pub fn to_string(header: DataElementHeader) -> String {
   <> " "
   <> vr
   <> " "
-  <> registry.tag_name(header.tag, None)
+  <> dictionary.tag_name(header.tag, None)
 }
 
 /// The two possibilities for the size of the value length for a VR stored in

@@ -1,4 +1,4 @@
-use dcmfx_core::{registry, DataError, DataSetPath};
+use dcmfx_core::{dictionary, DataError, DataSetPath};
 
 /// Occurs when an error is encountered converting to the DICOM JSON model.
 ///
@@ -79,7 +79,7 @@ impl dcmfx_core::DcmfxError for JsonDeserializeError {
 
         if let Ok(tag) = path.final_data_element() {
           lines.push(format!("  Tag: {}", tag));
-          lines.push(format!("  Name: {}", registry::tag_name(tag, None)));
+          lines.push(format!("  Name: {}", dictionary::tag_name(tag, None)));
         }
 
         if !path.is_empty() {

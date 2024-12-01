@@ -1,5 +1,5 @@
 use dcmfx_core::{
-  data_set, registry, DataElementTag, DataElementValue, DataSet,
+  data_set, dictionary, DataElementTag, DataElementValue, DataSet,
   DataSetPrintOptions, ValueRepresentation,
 };
 
@@ -136,8 +136,8 @@ impl P10PrintTransform {
         self.indent -= 1;
 
         let mut s = data_set::print::format_data_element_prefix(
-          registry::SEQUENCE_DELIMITATION_ITEM.tag,
-          registry::SEQUENCE_DELIMITATION_ITEM.name,
+          dictionary::SEQUENCE_DELIMITATION_ITEM.tag,
+          dictionary::SEQUENCE_DELIMITATION_ITEM.name,
           None,
           None,
           self.indent,
@@ -152,8 +152,8 @@ impl P10PrintTransform {
 
       P10Part::SequenceItemStart => {
         let mut s = data_set::print::format_data_element_prefix(
-          registry::ITEM.tag,
-          registry::ITEM.name,
+          dictionary::ITEM.tag,
+          dictionary::ITEM.name,
           None,
           None,
           self.indent,
@@ -174,8 +174,8 @@ impl P10PrintTransform {
         self.private_creators.pop();
 
         let mut s = data_set::print::format_data_element_prefix(
-          registry::ITEM_DELIMITATION_ITEM.tag,
-          registry::ITEM_DELIMITATION_ITEM.name,
+          dictionary::ITEM_DELIMITATION_ITEM.tag,
+          dictionary::ITEM_DELIMITATION_ITEM.name,
           None,
           None,
           self.indent,
@@ -189,8 +189,8 @@ impl P10PrintTransform {
 
       P10Part::PixelDataItem { length } => {
         let (s, width) = data_set::print::format_data_element_prefix(
-          registry::ITEM.tag,
-          registry::ITEM.name,
+          dictionary::ITEM.tag,
+          dictionary::ITEM.name,
           None,
           Some(*length as usize),
           self.indent,

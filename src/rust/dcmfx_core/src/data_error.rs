@@ -1,4 +1,4 @@
-use crate::{registry, DataSetPath, ValueRepresentation};
+use crate::{dictionary, DataSetPath, ValueRepresentation};
 
 /// An error that occurred when retrieving or creating data elements. An error
 /// can be one of the following types:
@@ -241,7 +241,7 @@ impl crate::DcmfxError for DataError {
       } => {
         if let Ok(tag) = path.final_data_element() {
           lines.push(format!("  Tag: {}", tag));
-          lines.push(format!("  Name: {}", registry::tag_name(tag, None)));
+          lines.push(format!("  Name: {}", dictionary::tag_name(tag, None)));
         }
 
         lines.push(format!("  Path: {}", path.to_detailed_string()));

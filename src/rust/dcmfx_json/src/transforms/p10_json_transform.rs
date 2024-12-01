@@ -7,8 +7,8 @@ use std::{io::Write, rc::Rc};
 use base64::prelude::*;
 
 use dcmfx_core::{
-  registry, DataElementTag, DataElementValue, DataError, DataSet, DataSetPath,
-  ValueRepresentation,
+  dictionary, DataElementTag, DataElementValue, DataError, DataSet,
+  DataSetPath, ValueRepresentation,
 };
 use dcmfx_p10::P10Part;
 
@@ -150,7 +150,7 @@ impl P10JsonTransform {
     // is needed to interpret that data
     if self.config.store_encapsulated_pixel_data {
       if let Ok(transfer_syntax_uid) =
-        file_meta_information.get_string(registry::TRANSFER_SYNTAX_UID.tag)
+        file_meta_information.get_string(dictionary::TRANSFER_SYNTAX_UID.tag)
       {
         stream.write_all(br#""00020010":{"vr":"UI","Value":[""#)?;
         stream.write_all(transfer_syntax_uid.as_bytes())?;
@@ -173,7 +173,7 @@ impl P10JsonTransform {
     // Exclude group length data elements as these have no use in DICOM JSON.
     // Also exclude the '(0008,0005) Specific Character Set' data element as
     // DICOM JSON always uses UTF-8
-    if tag.element == 0 || tag == registry::SPECIFIC_CHARACTER_SET.tag {
+    if tag.element == 0 || tag == dictionary::SPECIFIC_CHARACTER_SET.tag {
       self.ignore_data_element_value_bytes = true;
       return Ok(());
     }

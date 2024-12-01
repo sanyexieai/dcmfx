@@ -1,7 +1,7 @@
 import dcmfx_anonymize
 import dcmfx_core/data_element_tag
 import dcmfx_core/data_set.{type DataSet}
-import dcmfx_core/registry
+import dcmfx_core/dictionary
 import dcmfx_core/transfer_syntax.{type TransferSyntax}
 import dcmfx_p10
 import dcmfx_p10/p10_error.{type P10Error}
@@ -338,7 +338,7 @@ fn change_transfer_syntax(
 ) -> Result(DataSet, P10Error) {
   // Read the current transfer syntax, defaulting to 'Implicit VR Little Endian'
   let assert Ok(current_transfer_syntax) =
-    data_set.get_string(data_set, registry.transfer_syntax_uid.tag)
+    data_set.get_string(data_set, dictionary.transfer_syntax_uid.tag)
     |> result.unwrap(transfer_syntax.implicit_vr_little_endian.uid)
     |> transfer_syntax.from_uid
 
@@ -354,7 +354,7 @@ fn change_transfer_syntax(
     True -> {
       let assert Ok(data_set) =
         data_set
-        |> data_set.insert_string_value(registry.transfer_syntax_uid, [
+        |> data_set.insert_string_value(dictionary.transfer_syntax_uid, [
           output_transfer_syntax.uid,
         ])
 

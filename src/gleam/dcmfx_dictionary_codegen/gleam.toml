@@ -1,5 +1,5 @@
-name = "dcmfx_registry_codegen"
-description = "DCMfx registry code generator"
+name = "dcmfx_dictionary_codegen"
+description = "DCMfx dictionary code generator"
 licences = ["AGPL-3.0-only"]
 gleam = ">= 1.6.0"
 

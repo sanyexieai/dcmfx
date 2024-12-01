@@ -5,8 +5,8 @@ import dcmfx_core/data_element_value/attribute_tag
 import dcmfx_core/data_error.{type DataError}
 import dcmfx_core/data_set.{type DataSet}
 import dcmfx_core/data_set_path.{type DataSetPath}
+import dcmfx_core/dictionary
 import dcmfx_core/internal/utils
-import dcmfx_core/registry
 import dcmfx_core/value_representation.{type ValueRepresentation}
 import dcmfx_json/json_config.{type DicomJsonConfig}
 import dcmfx_json/json_error.{type JsonSerializeError}
@@ -203,7 +203,7 @@ fn begin(
       let transfer_syntax_uid =
         data_set.get_string(
           file_meta_information,
-          registry.transfer_syntax_uid.tag,
+          dictionary.transfer_syntax_uid.tag,
         )
 
       case transfer_syntax_uid {
@@ -236,7 +236,7 @@ fn write_data_element_header(
   // exclude the '(0008,0005) Specific Character Set' data element as DICOM JSON
   // always uses UTF-8.
   use <- bool.lazy_guard(
-    tag.element == 0 || tag == registry.specific_character_set.tag,
+    tag.element == 0 || tag == dictionary.specific_character_set.tag,
     fn() {
       let transform =
         P10JsonTransform(..transform, ignore_data_element_value_bytes: True)

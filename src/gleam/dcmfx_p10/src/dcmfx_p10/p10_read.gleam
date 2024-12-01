@@ -20,7 +20,7 @@ import dcmfx_core/data_element_value
 import dcmfx_core/data_error
 import dcmfx_core/data_set.{type DataSet}
 import dcmfx_core/data_set_path.{type DataSetPath}
-import dcmfx_core/registry
+import dcmfx_core/dictionary
 import dcmfx_core/transfer_syntax.{type TransferSyntax, BigEndian, LittleEndian}
 import dcmfx_core/value_representation.{type ValueRepresentation}
 import dcmfx_p10/internal/byte_stream.{type ByteStream}
@@ -436,7 +436,7 @@ fn read_file_meta_information_part(
       let assert Ok(fmi_data_set) =
         data_set.insert_string_value(
           fmi_data_set,
-          registry.transfer_syntax_uid,
+          dictionary.transfer_syntax_uid,
           [new_context.transfer_syntax.uid],
         )
 
@@ -591,7 +591,7 @@ fn read_file_meta_information_data_set(
 
   // If this data element specifies the File Meta Information group's length
   // then use it to calculate its end offset
-  let ends_at = case tag == registry.file_meta_information_group_length.tag {
+  let ends_at = case tag == dictionary.file_meta_information_group_length.tag {
     True ->
       case ends_at, data_set.is_empty(fmi_data_set) {
         None, True ->
@@ -613,7 +613,7 @@ fn read_file_meta_information_data_set(
 
   // If this data element specifies the transfer syntax to use then set it in
   // the read context
-  let transfer_syntax = case tag == registry.transfer_syntax_uid.tag {
+  let transfer_syntax = case tag == dictionary.transfer_syntax_uid.tag {
     True ->
       case data_element_value.get_string(value) {
         Ok(uid) ->
@@ -641,7 +641,7 @@ fn read_file_meta_information_data_set(
   use transfer_syntax <- result.try(transfer_syntax)
 
   let fmi_data_set = case
-    tag == registry.file_meta_information_group_length.tag
+    tag == dictionary.file_meta_information_group_length.tag
   {
     True -> fmi_data_set
     False -> data_set.insert(fmi_data_set, tag, value)
@@ -738,7 +738,7 @@ fn read_data_element_header_part(
     }
 
     // If this is the start of a new sequence item then add it to the location
-    tag, None, _ if tag == registry.item.tag -> {
+    tag, None, _ if tag == dictionary.item.tag -> {
       let part = p10_part.SequenceItemStart
 
       let ends_at = case header.length {
@@ -780,9 +780,9 @@ fn read_data_element_header_part(
     // location and update the next action to read its items
     tag, Some(value_representation.OtherByteString), value_length.Undefined
     | tag, Some(value_representation.OtherWordString), value_length.Undefined
-      if tag == registry.pixel_data.tag
+      if tag == dictionary.pixel_data.tag
     -> {
-      let Some(vr) = vr
+      let assert Some(vr) = vr
       let part = p10_part.SequenceStart(tag, vr)
 
       let new_location =
@@ -811,7 +811,7 @@ fn read_data_element_header_part(
     // If this is a sequence delimitation item then remove the current sequence
     // from the current location
     tag, None, value_length.Defined(0)
-      if tag == registry.sequence_delimitation_item.tag
+      if tag == dictionary.sequence_delimitation_item.tag
     -> {
       let #(parts, new_path, new_location, new_sequence_depth) = case
         p10_location.end_sequence(context.location)
@@ -856,7 +856,7 @@ fn read_data_element_header_part(
     // If this is an item delimitation item then remove the latest item from the
     // location
     tag, None, value_length.Defined(0)
-      if tag == registry.item_delimitation_item.tag
+      if tag == dictionary.item_delimitation_item.tag
     -> {
       let part = p10_part.SequenceItemDelimiter
 
@@ -899,7 +899,7 @@ fn read_data_element_header_part(
         True ->
           Error(p10_error.MaximumExceeded(
             "Value for '"
-              <> registry.tag_with_name(header.tag, None)
+              <> dictionary.tag_with_name(header.tag, None)
               <> "' with VR "
               <> value_representation.to_string(vr)
               <> " and length "
@@ -919,7 +919,7 @@ fn read_data_element_header_part(
       // Also swallow group length tags that have an element of 0x0000.
       // Ref: PS3.5 7.2.
       let emit_parts =
-        header.tag != registry.data_set_trailing_padding.tag
+        header.tag != dictionary.data_set_trailing_padding.tag
         && header.tag.element != 0x0000
 
       // If the whole value is being materialized then the DataElementHeader
@@ -994,9 +994,9 @@ fn read_data_element_header(
 
   // The item and delimitation tags always use implicit VRs
   let vr_serialization = case
-    tag == registry.item.tag
-    || tag == registry.item_delimitation_item.tag
-    || tag == registry.sequence_delimitation_item.tag
+    tag == dictionary.item.tag
+    || tag == dictionary.item_delimitation_item.tag
+    || tag == dictionary.sequence_delimitation_item.tag
   {
     True -> transfer_syntax.VrImplicit
     False -> transfer_syntax.vr_serialization
@@ -1046,9 +1046,9 @@ fn read_implicit_vr_and_length(
       // other tags are returned as UN (Unknown) and will have their VR
       // inferred in due course.
       let vr = case
-        tag == registry.item.tag
-        || tag == registry.item_delimitation_item.tag
-        || tag == registry.sequence_delimitation_item.tag
+        tag == dictionary.item.tag
+        || tag == dictionary.item_delimitation_item.tag
+        || tag == dictionary.sequence_delimitation_item.tag
       {
         True -> None
         False -> Some(value_representation.Unknown)
@@ -1095,7 +1095,7 @@ fn read_explicit_vr_and_length(
                 "Unrecognized VR "
                   <> bit_array.inspect(vr_bytes)
                   <> " for tag '"
-                  <> registry.tag_with_name(tag, None)
+                  <> dictionary.tag_with_name(tag, None)
                   <> "'",
                 Some(context.path),
                 Some(byte_stream.bytes_read(context.stream)),
@@ -1222,7 +1222,7 @@ fn read_data_element_value_bytes_part(
         // the next pixel data item if currently reading pixel data items, or to
         // read the header for the next data element
         0 ->
-          case tag == registry.item.tag {
+          case tag == dictionary.item.tag {
             True -> ReadPixelDataItem(vr)
             False -> ReadDataElementHeader
           }
@@ -1326,13 +1326,13 @@ fn read_pixel_data_item_part(
       case header {
         // Pixel data items must have no VR and a defined length
         DataElementHeader(tag, None, value_length.Defined(length))
-          if tag == registry.item.tag && length != 0xFFFFFFFF
+          if tag == dictionary.item.tag && length != 0xFFFFFFFF
         -> {
           let part = p10_part.PixelDataItem(length)
 
           let next_action =
             ReadDataElementValueBytes(
-              registry.item.tag,
+              dictionary.item.tag,
               vr,
               length,
               length,
@@ -1350,7 +1350,7 @@ fn read_pixel_data_item_part(
         }
 
         DataElementHeader(tag, None, value_length.Defined(0))
-          if tag == registry.sequence_delimitation_item.tag
+          if tag == dictionary.sequence_delimitation_item.tag
         -> {
           let part = p10_part.SequenceDelimiter
 

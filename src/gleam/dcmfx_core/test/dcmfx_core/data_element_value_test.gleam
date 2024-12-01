@@ -7,7 +7,7 @@ import dcmfx_core/data_element_value/date_time
 import dcmfx_core/data_element_value/person_name
 import dcmfx_core/data_element_value/time
 import dcmfx_core/data_error
-import dcmfx_core/registry
+import dcmfx_core/dictionary
 import dcmfx_core/value_representation
 import gleam/bit_array
 import gleam/dict
@@ -507,7 +507,7 @@ pub fn to_string_test() {
 
   ["CT"]
   |> data_element_value.new_code_string
-  |> result.map(data_element_value.to_string(_, registry.modality.tag, 80))
+  |> result.map(data_element_value.to_string(_, dictionary.modality.tag, 80))
   |> should.equal(Ok("\"CT\" (Computed Tomography)"))
 
   ["1.23"]

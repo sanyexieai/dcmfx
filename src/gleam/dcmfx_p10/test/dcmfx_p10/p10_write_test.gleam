@@ -1,4 +1,4 @@
-import dcmfx_core/registry
+import dcmfx_core/dictionary
 import dcmfx_core/transfer_syntax
 import dcmfx_core/value_representation
 import dcmfx_p10/internal/data_element_header.{DataElementHeader}
@@ -10,7 +10,7 @@ import gleeunit/should
 
 pub fn data_element_header_to_bytes_test() {
   DataElementHeader(
-    registry.waveform_data.tag,
+    dictionary.waveform_data.tag,
     None,
     value_length.new(0x12345678),
   )
@@ -18,7 +18,7 @@ pub fn data_element_header_to_bytes_test() {
   |> should.equal(Ok(<<0, 84, 16, 16, 120, 86, 52, 18>>))
 
   DataElementHeader(
-    registry.waveform_data.tag,
+    dictionary.waveform_data.tag,
     None,
     value_length.new(0x12345678),
   )
@@ -26,7 +26,7 @@ pub fn data_element_header_to_bytes_test() {
   |> should.equal(Ok(<<84, 0, 16, 16, 18, 52, 86, 120>>))
 
   DataElementHeader(
-    registry.patient_age.tag,
+    dictionary.patient_age.tag,
     Some(value_representation.UnlimitedText),
     value_length.new(0x1234),
   )
@@ -34,7 +34,7 @@ pub fn data_element_header_to_bytes_test() {
   |> should.equal(Ok(<<16, 0, 16, 16, 85, 84, 0, 0, 52, 18, 0, 0>>))
 
   DataElementHeader(
-    registry.pixel_data.tag,
+    dictionary.pixel_data.tag,
     Some(value_representation.OtherWordString),
     value_length.new(0x12345678),
   )
@@ -42,7 +42,7 @@ pub fn data_element_header_to_bytes_test() {
   |> should.equal(Ok(<<224, 127, 16, 0, 79, 87, 0, 0, 120, 86, 52, 18>>))
 
   DataElementHeader(
-    registry.pixel_data.tag,
+    dictionary.pixel_data.tag,
     Some(value_representation.OtherWordString),
     value_length.new(0x12345678),
   )
@@ -50,7 +50,7 @@ pub fn data_element_header_to_bytes_test() {
   |> should.equal(Ok(<<127, 224, 0, 16, 79, 87, 0, 0, 18, 52, 86, 120>>))
 
   DataElementHeader(
-    registry.patient_age.tag,
+    dictionary.patient_age.tag,
     Some(value_representation.AgeString),
     value_length.new(0x12345),
   )
@@ -65,7 +65,7 @@ pub fn data_element_header_to_bytes_test() {
   )
 
   DataElementHeader(
-    registry.smallest_image_pixel_value.tag,
+    dictionary.smallest_image_pixel_value.tag,
     Some(value_representation.SignedShort),
     value_length.new(0x1234),
   )
@@ -73,7 +73,7 @@ pub fn data_element_header_to_bytes_test() {
   |> should.equal(Ok(<<40, 0, 6, 1, 83, 83, 52, 18>>))
 
   DataElementHeader(
-    registry.smallest_image_pixel_value.tag,
+    dictionary.smallest_image_pixel_value.tag,
     Some(value_representation.SignedShort),
     value_length.new(0x1234),
   )

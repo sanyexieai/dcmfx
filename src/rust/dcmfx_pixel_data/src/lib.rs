@@ -1,7 +1,7 @@
 use byteorder::ByteOrder;
 
 use dcmfx_core::{
-  registry, transfer_syntax, DataElementValue, DataError, DataSet,
+  dictionary, transfer_syntax, DataElementValue, DataError, DataSet,
   TransferSyntax, ValueRepresentation,
 };
 
@@ -33,7 +33,7 @@ impl DataSetPixelDataExtensions for DataSet {
     &self,
   ) -> Result<(ValueRepresentation, Vec<Frame>), DataError> {
     // Get the pixel data value
-    let pixel_data = self.get_value(registry::PIXEL_DATA.tag)?;
+    let pixel_data = self.get_value(dictionary::PIXEL_DATA.tag)?;
 
     // Get the extended offset table value, if present
     let extended_offset_table = match parse_extended_offset_table(self) {
@@ -48,7 +48,7 @@ impl DataSetPixelDataExtensions for DataSet {
     }?;
 
     // Get the number of frames value, if present
-    let number_of_frames = self.get_int(registry::NUMBER_OF_FRAMES.tag).ok();
+    let number_of_frames = self.get_int(dictionary::NUMBER_OF_FRAMES.tag).ok();
 
     if let Some(n) = number_of_frames {
       if n < 0 {
@@ -301,7 +301,7 @@ fn parse_extended_offset_table(
   // Get the value of the '(0x7FE0,0001) Extended Offset Table' data
   // element
   let extended_offset_table_bytes = data_set.get_value_bytes(
-    registry::EXTENDED_OFFSET_TABLE.tag,
+    dictionary::EXTENDED_OFFSET_TABLE.tag,
     ValueRepresentation::OtherVeryLongString,
   )?;
 
@@ -321,7 +321,7 @@ fn parse_extended_offset_table(
   // Get the value of the '(0x7FE0,0002) Extended Offset Table Lengths' data
   // element
   let extended_offset_table_lengths_bytes = data_set.get_value_bytes(
-    registry::EXTENDED_OFFSET_TABLE_LENGTHS.tag,
+    dictionary::EXTENDED_OFFSET_TABLE_LENGTHS.tag,
     ValueRepresentation::OtherVeryLongString,
   )?;
 
@@ -492,7 +492,7 @@ mod tests {
   fn get_pixel_data_test() {
     let mut data_set_with_three_fragments = DataSet::new();
     data_set_with_three_fragments.insert(
-      registry::PIXEL_DATA.tag,
+      dictionary::PIXEL_DATA.tag,
       DataElementValue::new_encapsulated_pixel_data(
         ValueRepresentation::OtherByteString,
         vec![
@@ -513,7 +513,7 @@ mod tests {
     .unwrap();
 
     let mut ds = DataSet::new();
-    ds.insert(registry::PIXEL_DATA.tag, pixel_data.clone());
+    ds.insert(dictionary::PIXEL_DATA.tag, pixel_data.clone());
 
     assert_eq!(
       ds.get_pixel_data(),
@@ -525,8 +525,8 @@ mod tests {
 
     // Read two frames of non-encapsulated OB data
     let mut ds = DataSet::new();
-    ds.insert(registry::PIXEL_DATA.tag, pixel_data.clone());
-    ds.insert_int_value(&registry::NUMBER_OF_FRAMES, &[2])
+    ds.insert(dictionary::PIXEL_DATA.tag, pixel_data.clone());
+    ds.insert_int_value(&dictionary::NUMBER_OF_FRAMES, &[2])
       .unwrap();
     assert_eq!(
       ds.get_pixel_data(),
@@ -538,8 +538,8 @@ mod tests {
 
     // Read malformed multi-frame non-encapsulated OB data
     let mut ds = DataSet::new();
-    ds.insert(registry::PIXEL_DATA.tag, pixel_data.clone());
-    ds.insert_int_value(&registry::NUMBER_OF_FRAMES, &[3])
+    ds.insert(dictionary::PIXEL_DATA.tag, pixel_data.clone());
+    ds.insert_int_value(&dictionary::NUMBER_OF_FRAMES, &[3])
       .unwrap();
     assert_eq!(
       ds.get_pixel_data(),
@@ -553,7 +553,7 @@ mod tests {
     // Read frames specified by an extended offset table
     let mut ds = data_set_with_three_fragments.clone();
     ds.insert(
-      registry::EXTENDED_OFFSET_TABLE.tag,
+      dictionary::EXTENDED_OFFSET_TABLE.tag,
       DataElementValue::new_binary(
         ValueRepresentation::OtherVeryLongString,
         Rc::new(vec![
@@ -564,7 +564,7 @@ mod tests {
       .unwrap(),
     );
     ds.insert(
-      registry::EXTENDED_OFFSET_TABLE_LENGTHS.tag,
+      dictionary::EXTENDED_OFFSET_TABLE_LENGTHS.tag,
       DataElementValue::new_binary(
         ValueRepresentation::OtherVeryLongString,
         Rc::new(vec![
@@ -605,7 +605,7 @@ mod tests {
     // Similar to the previous test but with a number of frames value present
     // that causes each fragment to be its own frame
     let mut ds = data_set_with_three_fragments.clone();
-    ds.insert_int_value(&registry::NUMBER_OF_FRAMES, &[3])
+    ds.insert_int_value(&dictionary::NUMBER_OF_FRAMES, &[3])
       .unwrap();
     assert_eq!(
       ds.get_pixel_data(),
@@ -623,7 +623,7 @@ mod tests {
     // Taken from the DICOM standard. Ref: PS3.5 Table A.4-2.
     let mut ds = DataSet::new();
     ds.insert(
-      registry::PIXEL_DATA.tag,
+      dictionary::PIXEL_DATA.tag,
       DataElementValue::new_encapsulated_pixel_data(
         ValueRepresentation::OtherByteString,
         vec![

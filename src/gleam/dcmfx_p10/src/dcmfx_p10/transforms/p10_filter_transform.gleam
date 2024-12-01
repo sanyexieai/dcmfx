@@ -1,6 +1,6 @@
 import dcmfx_core/data_element_tag.{type DataElementTag}
 import dcmfx_core/data_set.{type DataSet}
-import dcmfx_core/registry
+import dcmfx_core/dictionary
 import dcmfx_core/value_representation.{type ValueRepresentation}
 import dcmfx_p10/data_set_builder.{type DataSetBuilder}
 import dcmfx_p10/p10_error.{type P10Error}
@@ -114,7 +114,7 @@ pub fn add_part(
       }
 
       let new_location = [
-        LocationEntry(registry.item.tag, filter_result),
+        LocationEntry(dictionary.item.tag, filter_result),
         ..context.location
       ]
 

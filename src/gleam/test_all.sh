@@ -11,7 +11,7 @@ for dir in dcmfx_*; do
   cd "$dir"
   gleam format --check
 
-  if [ "$dir" != "dcmfx_registry_codegen" ]; then
+  if [ "$dir" != "dcmfx_dictionary_codegen" ]; then
     gleam test --target erlang
     gleam test --target javascript --runtime node
     gleam test --target javascript --runtime deno

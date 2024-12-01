@@ -15,9 +15,9 @@ import dcmfx_core/data_element_value/person_name.{type StructuredPersonName}
 import dcmfx_core/data_element_value/time
 import dcmfx_core/data_element_value/unique_identifier
 import dcmfx_core/data_error.{type DataError}
+import dcmfx_core/dictionary
 import dcmfx_core/internal/bit_array_utils
 import dcmfx_core/internal/utils
-import dcmfx_core/registry
 import dcmfx_core/value_representation.{type ValueRepresentation}
 import gleam/bit_array
 import gleam/bool
@@ -165,7 +165,7 @@ pub fn to_string(
           // Add a descriptive suffix for known UIDs and CodeStrings
           let suffix = case vr {
             value_representation.UniqueIdentifier ->
-              case registry.uid_name(utils.trim_end_whitespace(value)) {
+              case dictionary.uid_name(utils.trim_end_whitespace(value)) {
                 Ok(uid_name) -> Some(" (" <> uid_name <> ")")
                 Error(Nil) -> None
               }

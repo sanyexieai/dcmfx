@@ -1,4 +1,4 @@
-use crate::{registry, DataElementTag};
+use crate::{dictionary, DataElementTag};
 
 /// A path in a data set that specifies the precise location of a specific data
 /// element or sequence item. Entries in a data set path are separated by a
@@ -147,7 +147,7 @@ impl DataSetPath {
       .iter()
       .map(|entry| match entry {
         DataSetPathEntry::DataElement { tag } => {
-          registry::tag_with_name(*tag, None)
+          dictionary::tag_with_name(*tag, None)
         }
         DataSetPathEntry::SequenceItem { index } => format!("Item {}", index),
       })

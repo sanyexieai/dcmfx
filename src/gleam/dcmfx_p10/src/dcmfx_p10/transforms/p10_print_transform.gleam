@@ -2,7 +2,7 @@ import dcmfx_core/data_element_tag.{type DataElementTag, DataElementTag}
 import dcmfx_core/data_element_value
 import dcmfx_core/data_set.{type DataSet}
 import dcmfx_core/data_set_print.{type DataSetPrintOptions}
-import dcmfx_core/registry
+import dcmfx_core/dictionary
 import dcmfx_core/value_representation
 import dcmfx_p10/p10_part.{type P10Part}
 import gleam/int
@@ -170,8 +170,8 @@ pub fn add_part(
     p10_part.SequenceDelimiter -> {
       let s =
         data_set_print.format_data_element_prefix(
-          registry.sequence_delimitation_item.tag,
-          registry.sequence_delimitation_item.name,
+          dictionary.sequence_delimitation_item.tag,
+          dictionary.sequence_delimitation_item.name,
           None,
           None,
           context.indent - 1,
@@ -186,8 +186,8 @@ pub fn add_part(
     p10_part.SequenceItemStart -> {
       let s =
         data_set_print.format_data_element_prefix(
-          registry.item.tag,
-          registry.item.name,
+          dictionary.item.tag,
+          dictionary.item.name,
           None,
           None,
           context.indent,
@@ -207,8 +207,8 @@ pub fn add_part(
     p10_part.SequenceItemDelimiter -> {
       let s =
         data_set_print.format_data_element_prefix(
-          registry.item_delimitation_item.tag,
-          registry.item_delimitation_item.name,
+          dictionary.item_delimitation_item.tag,
+          dictionary.item_delimitation_item.name,
           None,
           None,
           context.indent - 1,
@@ -229,8 +229,8 @@ pub fn add_part(
     p10_part.PixelDataItem(length) -> {
       let #(s, width) =
         data_set_print.format_data_element_prefix(
-          registry.item.tag,
-          registry.item.name,
+          dictionary.item.tag,
+          dictionary.item.name,
           None,
           Some(length),
           context.indent,

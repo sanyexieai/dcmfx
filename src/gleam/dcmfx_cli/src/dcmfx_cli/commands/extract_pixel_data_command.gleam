@@ -1,5 +1,5 @@
 import dcmfx_core/data_set
-import dcmfx_core/registry
+import dcmfx_core/dictionary
 import dcmfx_core/transfer_syntax.{type TransferSyntax}
 import dcmfx_p10
 import dcmfx_p10/p10_error.{type P10Error}
@@ -52,7 +52,7 @@ fn perform_extract_pixel_data(
   case dcmfx_p10.read_file(input_filename) {
     Ok(data_set) -> {
       let assert Ok(transfer_syntax) =
-        data_set.get_string(data_set, registry.transfer_syntax_uid.tag)
+        data_set.get_string(data_set, dictionary.transfer_syntax_uid.tag)
         |> result.unwrap(transfer_syntax.implicit_vr_little_endian.uid)
         |> transfer_syntax.from_uid
 

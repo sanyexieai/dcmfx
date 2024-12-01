@@ -1,4 +1,4 @@
-use dcmfx_core::{registry, DataElementTag, ValueRepresentation};
+use dcmfx_core::{dictionary, DataElementTag, ValueRepresentation};
 
 use crate::internal::value_length::ValueLength;
 
@@ -17,7 +17,7 @@ impl std::fmt::Display for DataElementHeader {
   /// "(GROUP,ELEMENT) VR NAME", e.g. `"(0008,0020) DA StudyDate"`.
   ///
   fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-    let tag_name = registry::tag_name(self.tag, None);
+    let tag_name = dictionary::tag_name(self.tag, None);
 
     match self.vr {
       Some(vr) => write!(f, "{} {} {}", self.tag, vr, tag_name),
@@ -87,7 +87,7 @@ mod tests {
   fn to_string_test() {
     assert_eq!(
       DataElementHeader {
-        tag: registry::PATIENT_AGE.tag,
+        tag: dictionary::PATIENT_AGE.tag,
         vr: Some(ValueRepresentation::AgeString),
         length: ValueLength::ZERO,
       }
@@ -97,7 +97,7 @@ mod tests {
 
     assert_eq!(
       DataElementHeader {
-        tag: registry::ITEM.tag,
+        tag: dictionary::ITEM.tag,
         vr: None,
         length: ValueLength::ZERO,
       }

@@ -8,7 +8,7 @@ use byteorder::ByteOrder;
 use unicode_segmentation::UnicodeSegmentation;
 
 use crate::{
-  code_strings, registry, utils, value_representation, DataElementTag,
+  code_strings, dictionary, utils, value_representation, DataElementTag,
   DataError, DataSet, StructuredAge, StructuredDate, StructuredDateTime,
   StructuredTime, ValueRepresentation,
 };
@@ -157,7 +157,7 @@ impl DataElementValue {
             // Add a descriptive suffix for known UIDs and CodeStrings
             let suffix = match vr {
               ValueRepresentation::UniqueIdentifier => {
-                match registry::uid_name(utils::trim_end_whitespace(value)) {
+                match dictionary::uid_name(utils::trim_end_whitespace(value)) {
                   Ok(uid_name) => Some(format!(" ({})", uid_name)),
                   Err(()) => None,
                 }
@@ -2134,7 +2134,7 @@ mod tests {
     assert_eq!(
       DataElementValue::new_code_string(&["CT"])
         .unwrap()
-        .to_string(registry::MODALITY.tag, 80),
+        .to_string(dictionary::MODALITY.tag, 80),
       "\"CT\" (Computed Tomography)".to_string()
     );
 

@@ -290,7 +290,7 @@ fn change_transfer_syntax(
   if valid_source_ts.contains(transfer_syntax) {
     data_set
       .insert_string_value(
-        &registry::TRANSFER_SYNTAX_UID,
+        &dictionary::TRANSFER_SYNTAX_UID,
         &[output_transfer_syntax.uid],
       )
       .unwrap();

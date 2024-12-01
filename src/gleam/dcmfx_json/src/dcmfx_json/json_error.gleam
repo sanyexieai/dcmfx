@@ -1,7 +1,7 @@
 import dcmfx_core/data_element_tag
 import dcmfx_core/data_error
 import dcmfx_core/data_set_path.{type DataSetPath}
-import dcmfx_core/registry
+import dcmfx_core/dictionary
 import gleam/io
 import gleam/list
 import gleam/option.{None}
@@ -51,7 +51,7 @@ pub fn deserialize_error_to_lines(
         case data_set_path.final_data_element(path) {
           Ok(tag) -> [
             "  Tag: " <> data_element_tag.to_string(tag),
-            "  Name: " <> registry.tag_name(tag, None),
+            "  Name: " <> dictionary.tag_name(tag, None),
           ]
 
           _ -> []

@@ -1,6 +1,6 @@
 import dcmfx_core/data_element_value
 import dcmfx_core/data_set
-import dcmfx_core/registry
+import dcmfx_core/dictionary
 import dcmfx_core/value_representation
 import dcmfx_p10/p10_part
 import dcmfx_p10/p10_read
@@ -52,14 +52,14 @@ pub fn read_file_meta_information_test() {
     p10_part.FileMetaInformation(
       data_set.new()
       |> data_set.insert(
-        registry.file_meta_information_version.tag,
+        dictionary.file_meta_information_version.tag,
         data_element_value.new_binary_unchecked(
           value_representation.OtherByteString,
           <<0, 1>>,
         ),
       )
       |> data_set.insert(
-        registry.media_storage_sop_class_uid.tag,
+        dictionary.media_storage_sop_class_uid.tag,
         data_element_value.new_binary_unchecked(
           value_representation.UniqueIdentifier,
           <<"1.23">>,

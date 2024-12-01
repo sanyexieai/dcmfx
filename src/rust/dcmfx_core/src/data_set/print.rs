@@ -1,6 +1,6 @@
 use std::io::IsTerminal;
 
-use crate::{registry, DataElementTag, DataSet, ValueRepresentation};
+use crate::{dictionary, DataElementTag, DataSet, ValueRepresentation};
 
 /// Configurable options used when printing a data set to stdout.
 ///
@@ -95,8 +95,8 @@ pub fn data_set_to_lines(
       for item in items.iter() {
         callback(
           format_data_element_prefix(
-            registry::ITEM.tag,
-            registry::ITEM.name,
+            dictionary::ITEM.tag,
+            dictionary::ITEM.name,
             None,
             None,
             indent + 1,
@@ -109,8 +109,8 @@ pub fn data_set_to_lines(
 
         callback(
           format_data_element_prefix(
-            registry::ITEM_DELIMITATION_ITEM.tag,
-            registry::ITEM_DELIMITATION_ITEM.name,
+            dictionary::ITEM_DELIMITATION_ITEM.tag,
+            dictionary::ITEM_DELIMITATION_ITEM.name,
             None,
             None,
             indent + 1,
@@ -122,8 +122,8 @@ pub fn data_set_to_lines(
 
       callback(
         format_data_element_prefix(
-          registry::SEQUENCE_DELIMITATION_ITEM.tag,
-          registry::SEQUENCE_DELIMITATION_ITEM.name,
+          dictionary::SEQUENCE_DELIMITATION_ITEM.tag,
+          dictionary::SEQUENCE_DELIMITATION_ITEM.name,
           None,
           None,
           indent,
@@ -137,8 +137,8 @@ pub fn data_set_to_lines(
       for item in items {
         callback(
           format_data_element_prefix(
-            registry::ITEM.tag,
-            registry::ITEM.name,
+            dictionary::ITEM.tag,
+            dictionary::ITEM.name,
             None,
             Some(item.len()),
             indent + 1,
@@ -150,8 +150,8 @@ pub fn data_set_to_lines(
 
       callback(
         format_data_element_prefix(
-          registry::SEQUENCE_DELIMITATION_ITEM.tag,
-          registry::SEQUENCE_DELIMITATION_ITEM.name,
+          dictionary::SEQUENCE_DELIMITATION_ITEM.tag,
+          dictionary::SEQUENCE_DELIMITATION_ITEM.name,
           None,
           None,
           indent,

@@ -5,9 +5,9 @@ import dcmfx_core/data_element_value/decimal_string
 import dcmfx_core/data_element_value/integer_string
 import dcmfx_core/data_set.{type DataSet}
 import dcmfx_core/data_set_path.{type DataSetPath}
+import dcmfx_core/dictionary
 import dcmfx_core/internal/bit_array_utils
 import dcmfx_core/internal/utils
-import dcmfx_core/registry
 import dcmfx_core/transfer_syntax.{type TransferSyntax}
 import dcmfx_core/value_representation.{type ValueRepresentation}
 import dcmfx_json/json_error.{type JsonDeserializeError}
@@ -64,7 +64,7 @@ pub fn convert_json_to_data_set(
     let data_set = data_set.insert(data_set, tag, value)
 
     // Look up the transfer syntax if this is the relevant tag
-    let transfer_syntax = case tag == registry.transfer_syntax_uid.tag {
+    let transfer_syntax = case tag == dictionary.transfer_syntax_uid.tag {
       True ->
         case data_set.get_transfer_syntax(data_set) {
           Ok(ts) -> Some(ts)
@@ -290,7 +290,7 @@ fn read_dicom_json_primitive_value(
         ))
       use ints <- result.try(ints)
 
-      case registry.is_lut_descriptor_tag(tag), ints {
+      case dictionary.is_lut_descriptor_tag(tag), ints {
         True, [entry_count, first_input_value, bits_per_entry] ->
           <<
             entry_count:16-little,
@@ -583,7 +583,7 @@ fn read_dicom_json_inline_binary_value(
   // Look at the tag and the transfer syntax to see if this inline binary holds
   // encapsulated pixel data.
   case
-    tag == registry.pixel_data.tag
+    tag == dictionary.pixel_data.tag
     && option.map(transfer_syntax, fn(ts) { ts.is_encapsulated }) == Some(True)
   {
     True ->

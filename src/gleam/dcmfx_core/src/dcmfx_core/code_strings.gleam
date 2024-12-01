@@ -1,5 +1,5 @@
 import dcmfx_core/data_element_tag.{type DataElementTag}
-import dcmfx_core/registry
+import dcmfx_core/dictionary
 
 /// Converts a `CodeString` value to a descriptive string if one is available.
 ///
@@ -9,7 +9,7 @@ import dcmfx_core/registry
 ///
 pub fn describe(value: String, tag: DataElementTag) -> Result(String, Nil) {
   case tag {
-    tag if tag == registry.modality.tag ->
+    tag if tag == dictionary.modality.tag ->
       case value {
         "ANN" -> Ok("Annotation")
         "AR" -> Ok("Autorefraction")
@@ -93,7 +93,7 @@ pub fn describe(value: String, tag: DataElementTag) -> Result(String, Nil) {
         _ -> Error(Nil)
       }
 
-    tag if tag == registry.patient_sex.tag ->
+    tag if tag == dictionary.patient_sex.tag ->
       case value {
         "M" -> Ok("Male")
         "F" -> Ok("Female")
@@ -101,7 +101,7 @@ pub fn describe(value: String, tag: DataElementTag) -> Result(String, Nil) {
         _ -> Error(Nil)
       }
 
-    tag if tag == registry.conversion_type.tag ->
+    tag if tag == dictionary.conversion_type.tag ->
       case value {
         "DV" -> Ok("Digitized Video")
         "DI" -> Ok("Digital Interface")
@@ -114,7 +114,7 @@ pub fn describe(value: String, tag: DataElementTag) -> Result(String, Nil) {
         _ -> Error(Nil)
       }
 
-    tag if tag == registry.scanning_sequence.tag ->
+    tag if tag == dictionary.scanning_sequence.tag ->
       case value {
         "SE" -> Ok("Spin Echo")
         "IR" -> Ok("Inversion Recovery")
@@ -124,7 +124,7 @@ pub fn describe(value: String, tag: DataElementTag) -> Result(String, Nil) {
         _ -> Error(Nil)
       }
 
-    tag if tag == registry.sequence_variant.tag ->
+    tag if tag == dictionary.sequence_variant.tag ->
       case value {
         "SK" -> Ok("Segmented k-space")
         "MTC" -> Ok("Magnetization transfer contrast")
@@ -137,7 +137,7 @@ pub fn describe(value: String, tag: DataElementTag) -> Result(String, Nil) {
         _ -> Error(Nil)
       }
 
-    tag if tag == registry.scan_options.tag ->
+    tag if tag == dictionary.scan_options.tag ->
       case value {
         "PER" -> Ok("Phase Encode Reordering")
         "RG" -> Ok("Respiratory Gating")
@@ -151,7 +151,7 @@ pub fn describe(value: String, tag: DataElementTag) -> Result(String, Nil) {
         _ -> Error(Nil)
       }
 
-    tag if tag == registry.acquisition_termination_condition.tag ->
+    tag if tag == dictionary.acquisition_termination_condition.tag ->
       case value {
         "CNTS" -> Ok("Preset counts was reached")
         "DENS" -> Ok("Preset count density (counts/sec) was reached")
@@ -166,14 +166,14 @@ pub fn describe(value: String, tag: DataElementTag) -> Result(String, Nil) {
         _ -> Error(Nil)
       }
 
-    tag if tag == registry.rotation_direction.tag ->
+    tag if tag == dictionary.rotation_direction.tag ->
       case value {
         "CW" -> Ok("Clockwise")
         "CC" -> Ok("Counter clockwise")
         _ -> Error(Nil)
       }
 
-    tag if tag == registry.radiation_setting.tag ->
+    tag if tag == dictionary.radiation_setting.tag ->
       case value {
         "SC" ->
           "Low dose exposure generally corresponding to fluoroscopic settings"
@@ -182,7 +182,7 @@ pub fn describe(value: String, tag: DataElementTag) -> Result(String, Nil) {
         _ -> Error(Nil)
       }
 
-    tag if tag == registry.collimator_type.tag ->
+    tag if tag == dictionary.collimator_type.tag ->
       case value {
         "PARA" -> Ok("Parallel (default)")
         "PINH" -> Ok("Pinhole")
@@ -196,7 +196,7 @@ pub fn describe(value: String, tag: DataElementTag) -> Result(String, Nil) {
         _ -> Error(Nil)
       }
 
-    tag if tag == registry.whole_body_technique.tag ->
+    tag if tag == dictionary.whole_body_technique.tag ->
       case value {
         "1PS" -> Ok("One pass")
         "2PS" -> Ok("Two pass")
@@ -205,7 +205,7 @@ pub fn describe(value: String, tag: DataElementTag) -> Result(String, Nil) {
         _ -> Error(Nil)
       }
 
-    tag if tag == registry.patient_position.tag ->
+    tag if tag == dictionary.patient_position.tag ->
       case value {
         "HFP" -> Ok("Head First-Prone")
         "HFS" -> Ok("Head First-Supine")
@@ -226,7 +226,7 @@ pub fn describe(value: String, tag: DataElementTag) -> Result(String, Nil) {
         _ -> Error(Nil)
       }
 
-    tag if tag == registry.view_position.tag ->
+    tag if tag == dictionary.view_position.tag ->
       case value {
         "AP" -> Ok("Anterior/Posterior")
         "PA" -> Ok("Posterior/Anterior")
@@ -239,7 +239,7 @@ pub fn describe(value: String, tag: DataElementTag) -> Result(String, Nil) {
         _ -> Error(Nil)
       }
 
-    tag if tag == registry.image_laterality.tag ->
+    tag if tag == dictionary.image_laterality.tag ->
       case value {
         "R" -> Ok("Right")
         "L" -> Ok("Left")
@@ -248,7 +248,7 @@ pub fn describe(value: String, tag: DataElementTag) -> Result(String, Nil) {
         _ -> Error(Nil)
       }
 
-    tag if tag == registry.multienergy_detector_type.tag ->
+    tag if tag == dictionary.multienergy_detector_type.tag ->
       case value {
         "INTEGRATING" ->
           Ok("Physical detector integrates the full X-Ray spectrum")
@@ -261,7 +261,7 @@ pub fn describe(value: String, tag: DataElementTag) -> Result(String, Nil) {
         _ -> Error(Nil)
       }
 
-    tag if tag == registry.corrected_image.tag ->
+    tag if tag == dictionary.corrected_image.tag ->
       case value {
         "UNIF" -> Ok("Flood corrected")
         "COR" -> Ok("Center of rotation corrected")
@@ -277,7 +277,7 @@ pub fn describe(value: String, tag: DataElementTag) -> Result(String, Nil) {
         _ -> Error(Nil)
       }
 
-    tag if tag == registry.pixel_intensity_relationship.tag ->
+    tag if tag == dictionary.pixel_intensity_relationship.tag ->
       case value {
         "LIN" -> Ok("Approximately proportional to X-Ray beam intensity")
         "LOG" -> Ok("Non-linear \"Log Function\"")
@@ -285,14 +285,14 @@ pub fn describe(value: String, tag: DataElementTag) -> Result(String, Nil) {
         _ -> Error(Nil)
       }
 
-    tag if tag == registry.lossy_image_compression.tag ->
+    tag if tag == dictionary.lossy_image_compression.tag ->
       case value {
         "00" -> Ok("Image has not been subjected to lossy compression")
         "01" -> Ok("Image has been subjected to lossy compression")
         _ -> Error(Nil)
       }
 
-    tag if tag == registry.lossy_image_compression_method.tag ->
+    tag if tag == dictionary.lossy_image_compression_method.tag ->
       case value {
         "ISO_10918_1" -> Ok("JPEG Lossy Compression [ISO/IEC 10918-1]")
         "ISO_14495_1" ->
@@ -308,7 +308,7 @@ pub fn describe(value: String, tag: DataElementTag) -> Result(String, Nil) {
         _ -> Error(Nil)
       }
 
-    tag if tag == registry.universal_entity_id_type.tag ->
+    tag if tag == dictionary.universal_entity_id_type.tag ->
       case value {
         "DNS" -> Ok("An Internet dotted name. Either in ASCII or as integers")
         "EUI64" -> Ok("An IEEE Extended Unique Identifier")
@@ -320,7 +320,7 @@ pub fn describe(value: String, tag: DataElementTag) -> Result(String, Nil) {
         _ -> Error(Nil)
       }
 
-    tag if tag == registry.slice_progression_direction.tag ->
+    tag if tag == dictionary.slice_progression_direction.tag ->
       case value {
         "APEX_TO_BASE" -> Ok("Apex to base")
         "BASE_TO_APEX" -> Ok("Base to apex")
@@ -332,9 +332,9 @@ pub fn describe(value: String, tag: DataElementTag) -> Result(String, Nil) {
       }
 
     tag
-      if tag.group >= registry.overlay_type.tag.group
-      && tag.group <= registry.overlay_type.tag.group + 0xFF
-      && tag.element == registry.overlay_type.tag.element
+      if tag.group >= dictionary.overlay_type.tag.group
+      && tag.group <= dictionary.overlay_type.tag.group + 0xFF
+      && tag.element == dictionary.overlay_type.tag.element
     ->
       case value {
         "G" -> Ok("Graphics")

@@ -4,7 +4,7 @@
 import dcmfx_core/data_element_tag.{type DataElementTag, DataElementTag}
 import dcmfx_core/data_element_value.{type DataElementValue}
 import dcmfx_core/data_set.{type DataSet}
-import dcmfx_core/registry
+import dcmfx_core/dictionary
 import dcmfx_core/value_representation.{type ValueRepresentation}
 import dcmfx_p10/internal/data_element_header
 import dcmfx_p10/internal/value_length
@@ -98,7 +98,7 @@ pub fn to_string(part: P10Part) -> String {
       "DataElementHeader: "
       <> data_element_tag.to_string(tag)
       <> ", name: "
-      <> registry.tag_name(tag, None)
+      <> dictionary.tag_name(tag, None)
       <> ", vr: "
       <> value_representation.to_string(vr)
       <> ", length: "
@@ -116,7 +116,7 @@ pub fn to_string(part: P10Part) -> String {
       "SequenceStart: "
       <> data_element_tag.to_string(tag)
       <> ", name: "
-      <> registry.tag_name(tag, None)
+      <> dictionary.tag_name(tag, None)
       <> ", vr: "
       <> value_representation.to_string(vr)
 

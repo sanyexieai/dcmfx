@@ -25,7 +25,7 @@
 use std::collections::HashMap;
 
 use dcmfx_character_set::{self, SpecificCharacterSet, StringType};
-use dcmfx_core::{registry, DataElementTag, ValueRepresentation};
+use dcmfx_core::{dictionary, DataElementTag, ValueRepresentation};
 
 use crate::{internal::value_length::ValueLength, P10Error, P10Part};
 
@@ -73,11 +73,11 @@ struct ClarifyingDataElements {
 /// needs to be materialized by the read process and added to the location.
 ///
 pub fn is_clarifying_data_element(tag: DataElementTag) -> bool {
-  tag == registry::SPECIFIC_CHARACTER_SET.tag
-    || tag == registry::BITS_ALLOCATED.tag
-    || tag == registry::PIXEL_REPRESENTATION.tag
-    || tag == registry::WAVEFORM_BITS_STORED.tag
-    || tag == registry::WAVEFORM_BITS_ALLOCATED.tag
+  tag == dictionary::SPECIFIC_CHARACTER_SET.tag
+    || tag == dictionary::BITS_ALLOCATED.tag
+    || tag == dictionary::PIXEL_REPRESENTATION.tag
+    || tag == dictionary::WAVEFORM_BITS_STORED.tag
+    || tag == dictionary::WAVEFORM_BITS_ALLOCATED.tag
     || tag.is_private_creator()
 }
 
@@ -227,7 +227,7 @@ impl P10Location {
         Err(format!(
           "Sequence data element '{}' encountered outside of the root data set \
             or an item",
-        registry::tag_with_name(tag, private_creator.map(|x| x.as_str()))
+        dictionary::tag_with_name(tag, private_creator.map(|x| x.as_str()))
       ))
       }
     }
@@ -355,7 +355,7 @@ impl P10Location {
     vr: ValueRepresentation,
     value_bytes: &mut Vec<u8>,
   ) -> Result<(), P10Error> {
-    if tag == registry::SPECIFIC_CHARACTER_SET.tag {
+    if tag == dictionary::SPECIFIC_CHARACTER_SET.tag {
       self
         .update_specific_character_set_clarifying_data_element(value_bytes)?;
     } else if vr == ValueRepresentation::UnsignedShort && value_bytes.len() == 2
@@ -408,13 +408,13 @@ impl P10Location {
   ) {
     let clarifying_data_elements = self.active_clarifying_data_elements_mut();
 
-    if tag == registry::BITS_ALLOCATED.tag {
+    if tag == dictionary::BITS_ALLOCATED.tag {
       clarifying_data_elements.bits_allocated = Some(value);
-    } else if tag == registry::PIXEL_REPRESENTATION.tag {
+    } else if tag == dictionary::PIXEL_REPRESENTATION.tag {
       clarifying_data_elements.pixel_representation = Some(value);
-    } else if tag == registry::WAVEFORM_BITS_STORED.tag {
+    } else if tag == dictionary::WAVEFORM_BITS_STORED.tag {
       clarifying_data_elements.waveform_bits_stored = Some(value);
-    } else if tag == registry::WAVEFORM_BITS_ALLOCATED.tag {
+    } else if tag == dictionary::WAVEFORM_BITS_ALLOCATED.tag {
       clarifying_data_elements.waveform_bits_allocated = Some(value);
     }
   }
@@ -478,7 +478,7 @@ impl P10Location {
   /// transfer syntax, returns the VR for the data element, or `Unknown` if it
   /// can't be determined.
   ///
-  /// The vast majority of VRs can be determined by looking in the registry as
+  /// The vast majority of VRs can be determined by looking in the dictionary as
   /// they only have one valid VR. Data elements that can use different VRs
   /// depending on the context require additional logic, which isn't guaranteed
   /// to succeed.
@@ -491,8 +491,8 @@ impl P10Location {
     let private_creator = clarifying_data_elements.private_creator_for_tag(tag);
 
     let allowed_vrs =
-      match registry::find(tag, private_creator.map(|x| x.as_str())) {
-        Ok(registry::Item { vrs, .. }) => vrs,
+      match dictionary::find(tag, private_creator.map(|x| x.as_str())) {
+        Ok(dictionary::Item { vrs, .. }) => vrs,
         Err(()) => &[],
       };
 
@@ -502,7 +502,7 @@ impl P10Location {
       // For '(7FE0, 0010) Pixel Data', OB is not usable when in an implicit VR
       // transfer syntax. Ref: PS3.5 8.2.
       [ValueRepresentation::OtherByteString, ValueRepresentation::OtherWordString]
-        if tag == registry::PIXEL_DATA.tag =>
+        if tag == dictionary::PIXEL_DATA.tag =>
       {
         ValueRepresentation::OtherWordString
       }
@@ -510,28 +510,29 @@ impl P10Location {
       // Use '(0028,0103) PixelRepresentation' to determine a US/SS VR on
       // relevant values
       [ValueRepresentation::UnsignedShort, ValueRepresentation::SignedShort]
-        if tag == registry::ZERO_VELOCITY_PIXEL_VALUE.tag
-          || tag == registry::MAPPED_PIXEL_VALUE.tag
-          || tag == registry::SMALLEST_VALID_PIXEL_VALUE.tag
-          || tag == registry::LARGEST_VALID_PIXEL_VALUE.tag
-          || tag == registry::SMALLEST_IMAGE_PIXEL_VALUE.tag
-          || tag == registry::LARGEST_IMAGE_PIXEL_VALUE.tag
-          || tag == registry::SMALLEST_PIXEL_VALUE_IN_SERIES.tag
-          || tag == registry::LARGEST_PIXEL_VALUE_IN_SERIES.tag
-          || tag == registry::SMALLEST_IMAGE_PIXEL_VALUE_IN_PLANE.tag
-          || tag == registry::LARGEST_IMAGE_PIXEL_VALUE_IN_PLANE.tag
-          || tag == registry::PIXEL_PADDING_VALUE.tag
-          || tag == registry::PIXEL_PADDING_RANGE_LIMIT.tag
-          || tag == registry::RED_PALETTE_COLOR_LOOKUP_TABLE_DESCRIPTOR.tag
+        if tag == dictionary::ZERO_VELOCITY_PIXEL_VALUE.tag
+          || tag == dictionary::MAPPED_PIXEL_VALUE.tag
+          || tag == dictionary::SMALLEST_VALID_PIXEL_VALUE.tag
+          || tag == dictionary::LARGEST_VALID_PIXEL_VALUE.tag
+          || tag == dictionary::SMALLEST_IMAGE_PIXEL_VALUE.tag
+          || tag == dictionary::LARGEST_IMAGE_PIXEL_VALUE.tag
+          || tag == dictionary::SMALLEST_PIXEL_VALUE_IN_SERIES.tag
+          || tag == dictionary::LARGEST_PIXEL_VALUE_IN_SERIES.tag
+          || tag == dictionary::SMALLEST_IMAGE_PIXEL_VALUE_IN_PLANE.tag
+          || tag == dictionary::LARGEST_IMAGE_PIXEL_VALUE_IN_PLANE.tag
+          || tag == dictionary::PIXEL_PADDING_VALUE.tag
+          || tag == dictionary::PIXEL_PADDING_RANGE_LIMIT.tag
           || tag
-            == registry::GREEN_PALETTE_COLOR_LOOKUP_TABLE_DESCRIPTOR.tag
+            == dictionary::RED_PALETTE_COLOR_LOOKUP_TABLE_DESCRIPTOR.tag
           || tag
-            == registry::BLUE_PALETTE_COLOR_LOOKUP_TABLE_DESCRIPTOR.tag
-          || tag == registry::LUT_DESCRIPTOR.tag
-          || tag == registry::REAL_WORLD_VALUE_LAST_VALUE_MAPPED.tag
-          || tag == registry::REAL_WORLD_VALUE_FIRST_VALUE_MAPPED.tag
-          || tag == registry::HISTOGRAM_FIRST_BIN_VALUE.tag
-          || tag == registry::HISTOGRAM_LAST_BIN_VALUE.tag =>
+            == dictionary::GREEN_PALETTE_COLOR_LOOKUP_TABLE_DESCRIPTOR.tag
+          || tag
+            == dictionary::BLUE_PALETTE_COLOR_LOOKUP_TABLE_DESCRIPTOR.tag
+          || tag == dictionary::LUT_DESCRIPTOR.tag
+          || tag == dictionary::REAL_WORLD_VALUE_LAST_VALUE_MAPPED.tag
+          || tag == dictionary::REAL_WORLD_VALUE_FIRST_VALUE_MAPPED.tag
+          || tag == dictionary::HISTOGRAM_FIRST_BIN_VALUE.tag
+          || tag == dictionary::HISTOGRAM_LAST_BIN_VALUE.tag =>
       {
         match clarifying_data_elements.pixel_representation {
           Some(0) => ValueRepresentation::UnsignedShort,
@@ -542,8 +543,8 @@ impl P10Location {
       // Use '(003A,021A) WaveformBitsStored' to determine an OB/OW VR on
       // relevant values
       [ValueRepresentation::OtherByteString, ValueRepresentation::OtherWordString]
-        if tag == registry::CHANNEL_MINIMUM_VALUE.tag
-          || tag == registry::CHANNEL_MAXIMUM_VALUE.tag =>
+        if tag == dictionary::CHANNEL_MINIMUM_VALUE.tag
+          || tag == dictionary::CHANNEL_MAXIMUM_VALUE.tag =>
       {
         match clarifying_data_elements.waveform_bits_stored {
           Some(16) => ValueRepresentation::OtherWordString,
@@ -555,8 +556,8 @@ impl P10Location {
       // Use '(5400,1004) WaveformBitsAllocated' to determine an OB/OW VR on
       // relevant values
       [ValueRepresentation::OtherByteString, ValueRepresentation::OtherWordString]
-        if tag == registry::WAVEFORM_PADDING_VALUE.tag
-          || tag == registry::WAVEFORM_DATA.tag =>
+        if tag == dictionary::WAVEFORM_PADDING_VALUE.tag
+          || tag == dictionary::WAVEFORM_DATA.tag =>
       {
         match clarifying_data_elements.waveform_bits_allocated {
           Some(16) => ValueRepresentation::OtherWordString,
@@ -572,7 +573,7 @@ impl P10Location {
       // by the spec (Ref: PS3.3 C.11.1.1.1), even though there is no VR that
       // correctly expresses this, i.e. OB is not a valid VR for LUTData.
       [ValueRepresentation::UnsignedShort, ValueRepresentation::OtherWordString]
-        if tag == registry::LUT_DATA.tag =>
+        if tag == dictionary::LUT_DATA.tag =>
       {
         ValueRepresentation::OtherWordString
       }

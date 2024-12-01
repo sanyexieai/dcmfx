@@ -1,6 +1,6 @@
 import dcmfx_core/data_element_tag.{type DataElementTag}
 import dcmfx_core/data_set.{type DataSet}
-import dcmfx_core/registry
+import dcmfx_core/dictionary
 import dcmfx_json
 import dcmfx_json/json_config.{DicomJsonConfig}
 import dcmfx_p10
@@ -192,7 +192,7 @@ fn test_dcmfx_p10_rewrite_cycle(
   // Filter that removes File Meta Information and specific character set data
   // elements which we don't want to be part of the rewrite comparison
   let data_set_filter = fn(tag: DataElementTag, _value) {
-    tag.group != 0x0002 && tag != registry.specific_character_set.tag
+    tag.group != 0x0002 && tag != dictionary.specific_character_set.tag
   }
 
   let data_set = data_set.filter(data_set, data_set_filter)
