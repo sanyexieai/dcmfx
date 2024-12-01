@@ -76,7 +76,7 @@ jobs:
         run: cargo test
 
   test_examples:
-    name: Test Examples
+    name: Test examples
     timeout-minutes: 10
     runs-on: ubuntu-24.04
 
@@ -117,7 +117,7 @@ jobs:
         run: ./test_all.sh
 
   build_docs:
-    name: Build Docs
+    name: Build docs
     timeout-minutes: 10
     runs-on: ubuntu-24.04
 

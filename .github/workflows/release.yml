@@ -47,8 +47,8 @@ jobs:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           check-regexp: Test
 
-  build:
-    name: Build
+  build_rust_cli_tool:
+    name: Build Rust CLI tool
     timeout-minutes: 10
 
     needs: check_semantic_release
@@ -140,10 +140,10 @@ jobs:
           retention-days: 1
 
   release:
-    name: Release
+    name: Release on GitHub
     timeout-minutes: 10
     runs-on: ubuntu-24.04
-    needs: build
+    needs: build_rust_cli_tool
 
     steps:
       - name: Checkout repository
@@ -179,7 +179,7 @@ jobs:
       - name: Download build artifacts
         uses: actions/download-artifact@v4
 
-      - name: Update formula
+      - name: Update formula with latest version and hashes
         run: |
           VERSION=${{ needs.check_semantic_release.outputs.new_release_version }}
 
