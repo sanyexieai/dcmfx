@@ -1,3 +1,5 @@
+//! Extracts frames of pixel data present in a data set.
+
 use byteorder::ByteOrder;
 
 use dcmfx_core::{

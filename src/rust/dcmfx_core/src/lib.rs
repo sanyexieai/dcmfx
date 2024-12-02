@@ -1,3 +1,7 @@
+//! Provides core DICOM concepts including data sets, data elements, value
+//! representations, transfer syntaxes, and a dictionary of the data elements
+//! defined in DICOM PS3.6 as well as well-known private data elements.
+
 pub mod code_strings;
 pub mod data_element_tag;
 pub mod data_element_value;

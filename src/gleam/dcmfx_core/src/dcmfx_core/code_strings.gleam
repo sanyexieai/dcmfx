@@ -1,3 +1,5 @@
+//// Converts DICOM Code String (CS) values to a human-readable description.
+
 import dcmfx_core/data_element_tag.{type DataElementTag}
 import dcmfx_core/dictionary
 

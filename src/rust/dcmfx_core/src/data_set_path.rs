@@ -1,3 +1,6 @@
+//! A path in a data set that specifies the precise location of a specific data
+//! element or sequence item.
+
 use crate::{dictionary, DataElementTag};
 
 /// A path in a data set that specifies the precise location of a specific data

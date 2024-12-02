@@ -1244,9 +1244,9 @@ impl DataElementValue {
     }
   }
 
-  /// Returns the float contained in a data element value. This is only
-  /// supported for the `PersonName` value representation when exactly one
-  /// person name is present.
+  /// Returns the structured person name contained in a data element value. This
+  /// is only supported for the `PersonName` value representation when exactly
+  /// one person name is present.
   ///
   pub fn get_person_name(
     &self,
@@ -1259,8 +1259,8 @@ impl DataElementValue {
     }
   }
 
-  /// Returns the structured time contained in a data element value. This is
-  /// only supported for the `PersonName` value representation.
+  /// Returns the structured person names contained in a data element value.
+  /// This is only supported for the `PersonName` value representation.
   ///
   pub fn get_person_names(
     &self,

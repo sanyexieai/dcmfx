@@ -1,3 +1,6 @@
+//// Decodes DICOM string data that uses a Specific Character Set into a native
+//// UTF-8 string.
+
 import dcmfx_character_set/internal/character_set.{
   type CharacterSet, type CodeElement, type CodeElementPair,
   MultiByteWithExtensions, MultiByteWithoutExtensions, SingleByteWithExtensions,

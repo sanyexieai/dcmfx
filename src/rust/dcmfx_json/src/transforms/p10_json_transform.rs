@@ -15,7 +15,7 @@ use dcmfx_p10::P10Part;
 use crate::json_error::JsonSerializeError;
 use crate::DicomJsonConfig;
 
-/// This transform converts a stream of DICOM P10 parts to the DICOM JSON model.
+/// Transform that converts a stream of DICOM P10 parts to the DICOM JSON model.
 ///
 pub struct P10JsonTransform {
   /// The DICOM JSON config to use when serializing the part stream to JSON.

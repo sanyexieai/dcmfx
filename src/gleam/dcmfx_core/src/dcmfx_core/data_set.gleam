@@ -1,5 +1,5 @@
-//// A DICOM data set, defined as a dictionary of data element tags mapped to
-//// data element values.
+//// A DICOM data set, defined as a map of data element tags to data element
+//// values.
 
 import bigi.{type BigInt}
 import dcmfx_core/data_element_tag.{type DataElementTag, DataElementTag}

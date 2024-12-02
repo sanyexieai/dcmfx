@@ -1,12 +1,12 @@
-//// DICOM value multiplicity.
+//// DICOM value multiplicity (VM).
 
 import gleam/int
 import gleam/option.{type Option, None, Some}
 
-/// Describes DICOM value multiplicity, where the multiplicity is the number of
-/// values that are allowed to be present in a data element. The `min` value is
-/// always at least 1, and the maximum (if applicable) will always be greater
-/// than or equal to `min`.
+/// Describes DICOM value multiplicity, i.e. the number of values that are
+/// allowed to be present in a data element. The `min` value is always at least
+/// 1, and the maximum (if applicable) will always be greater than or equal to
+/// `min`.
 ///
 pub type ValueMultiplicity {
   ValueMultiplicity(min: Int, max: Option(Int))

@@ -1,3 +1,6 @@
+//// Provides the `DataError` type that describes the errors that can occur when
+//// working with data sets and elements.
+
 import dcmfx_core/data_element_tag
 import dcmfx_core/data_set_path.{type DataSetPath}
 import dcmfx_core/dictionary

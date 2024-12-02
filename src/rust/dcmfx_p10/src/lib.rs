@@ -1,3 +1,6 @@
+//! Reads and writes the DICOM Part 10 (P10) binary format used to store and
+//! transmit DICOM-based medical imaging information.
+
 pub mod data_set_builder;
 pub mod p10_error;
 pub mod p10_part;

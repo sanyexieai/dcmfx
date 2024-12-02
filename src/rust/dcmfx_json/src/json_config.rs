@@ -12,7 +12,7 @@ pub struct DicomJsonConfig {
   ///
   /// This option is disabled by default as it's not a part of the DICOM JSON
   /// standard, which means that data sets with encapsulated pixel data elements
-  /// won't convert to JSON.
+  /// will error on conversion to DICOM JSON.
   ///
   pub store_encapsulated_pixel_data: bool,
 }

@@ -22,7 +22,7 @@ import gleam/result
 import gleam/string
 import ieee_float.{type IEEEFloat}
 
-/// This transform converts a stream of DICOM P10 parts to the DICOM JSON model.
+/// Transform that converts a stream of DICOM P10 parts to the DICOM JSON model.
 ///
 pub type P10JsonTransform {
   P10JsonTransform(

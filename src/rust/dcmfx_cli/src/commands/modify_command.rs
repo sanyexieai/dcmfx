@@ -64,21 +64,20 @@ pub struct ModifyArgs {
       DICOM P10 file. Separate each tag to be removed with a comma. E.g. \
       --delete-tags 00100010,00100030",
     value_parser = validate_data_element_tag_list,
-    default_value_t = String::new()
+    default_values_t = Vec::<DataElementTag>::new()
   )]
-  delete_tags: String,
+  delete_tags: Vec<DataElementTag>,
 }
 
-fn validate_data_element_tag_list(s: &str) -> Result<String, String> {
-  if !s.is_empty() {
-    for tag in s.split(",") {
-      if DataElementTag::from_hex_string(tag).is_err() {
-        return Err("".to_string());
-      }
-    }
-  }
-
-  Ok(s.to_string())
+fn validate_data_element_tag_list(
+  s: &str,
+) -> Result<Vec<DataElementTag>, String> {
+  s.split(",")
+    .map(|tag| match DataElementTag::from_hex_string(tag) {
+      Ok(tag) => Ok(tag),
+      Err(_) => Err("".to_string()),
+    })
+    .collect()
 }
 
 pub fn run(args: &ModifyArgs) -> Result<(), ()> {
@@ -87,23 +86,11 @@ pub fn run(args: &ModifyArgs) -> Result<(), ()> {
     zlib_compression_level: args.zlib_compression_level,
   };
 
-  // Get the list of tags to be deleted
-  let tags_to_delete = if args.delete_tags.is_empty() {
-    vec![]
-  } else {
-    args
-      .delete_tags
-      .split(",")
-      .map(DataElementTag::from_hex_string)
-      .collect::<Result<Vec<DataElementTag>, _>>()
-      .unwrap()
-  };
-
-  let has_tags_to_delete = !tags_to_delete.is_empty();
   let anonymize = args.anonymize;
+  let tags_to_delete = args.delete_tags.clone();
 
   // Create a filter transform for anonymization and tag deletion if needed
-  let filter_context = if anonymize || has_tags_to_delete {
+  let filter_context = if anonymize || !tags_to_delete.is_empty() {
     Some(P10FilterTransform::new(
       Box::new(move |tag, vr, _| {
         (!anonymize || dcmfx::anonymize::filter_tag(tag, vr))

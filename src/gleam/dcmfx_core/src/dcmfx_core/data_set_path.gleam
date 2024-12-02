@@ -1,3 +1,6 @@
+//// A path in a data set that specifies the precise location of a specific data
+//// element or sequence item.
+
 import dcmfx_core/data_element_tag.{type DataElementTag}
 import dcmfx_core/dictionary
 import gleam/bool

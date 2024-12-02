@@ -1,3 +1,6 @@
+//! A DICOM data set, defined as a map of data element tags to data element
+//! values.
+
 pub mod print;
 
 use std::collections::BTreeMap;

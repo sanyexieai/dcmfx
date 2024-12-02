@@ -1,6 +1,6 @@
-/// The type of string to be decoded. This affects the characters that act as
-/// delimiters when decoding ISO 2022-encoded strings that contain escape
-/// sequences.
+/// The type of string to be decoded. This determines the characters that act as
+/// delimiters and reset the active character set during decoding of encoded
+/// strings that use ISO 2022 escape sequences.
 ///
 /// Encountering a delimiter resets the active code elements back to their
 /// initial state.

@@ -1,3 +1,6 @@
+//! Defines DCMfx's root UID prefix and implementation details that are stored
+//! into File Meta Information of DICOM P10 it serializes.
+
 /// DCMfx's unique root UID prefix. This was allocated via Medical Connections'
 /// FreeUID service: <https://www.medicalconnections.co.uk/FreeUID.html>.
 ///

@@ -1,6 +1,8 @@
+//! Defines a trait implemented by all error types in DCMfx.
+
 use owo_colors::{OwoColorize, Stream::Stdout};
 
-/// Shared trait implemented by all error types in DCMfx.
+/// Error trait implemented by all error types in DCMfx.
 ///
 pub trait DcmfxError {
   /// Returns lines of text that describe an error in a human-readable format.

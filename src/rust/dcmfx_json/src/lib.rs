@@ -1,3 +1,7 @@
+//! Converts between DICOM data sets and DICOM JSON.
+//!
+//! Ref: PS3.18 F.
+
 mod internal;
 mod json_config;
 mod json_error;

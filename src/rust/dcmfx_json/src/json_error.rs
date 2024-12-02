@@ -5,7 +5,7 @@ use dcmfx_core::{dictionary, DataError, DataSetPath};
 #[derive(Debug)]
 pub enum JsonSerializeError {
   /// The data to be serialized to the DICOM JSON model is invalid. Details of
-  /// the issue are contained in the enclosed [`DataError`].
+  /// the issue are contained in the contained [`DataError`].
   DataError(DataError),
 
   /// An error occurred when trying to read or write DICOM JSON data on the

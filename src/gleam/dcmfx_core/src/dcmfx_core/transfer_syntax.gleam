@@ -1,7 +1,7 @@
 //// Defines all supported DICOM transfer syntaxes.
 
-/// The value representation (VR) serialization mode of a transfer syntax. This
-/// is either implicit or explicit.
+/// The value representation serialization mode of a transfer syntax. This is
+/// either implicit or explicit.
 ///
 pub type VrSerialization {
   VrImplicit

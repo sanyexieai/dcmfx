@@ -10,7 +10,7 @@ import gleam/option.{None}
 ///
 pub type JsonSerializeError {
   /// The data to be serialized to the DICOM JSON model is invalid. Details of
-  /// the issue are contained in the enclosed [`DataError`].
+  /// the issue are contained in the contained `DataError`.
   DataError(data_error: data_error.DataError)
 }
 
