@@ -21,5 +21,5 @@ dcmfx_pixel_data = { path = "../dcmfx_pixel_data", version = "0.0.0" }
 
 [dev-dependencies]
 rand = { version = "0.8.5", features = ["small_rng"] }
-serde_json = "1.0.132"
+serde_json = "1.0.133"
 walkdir = "2.5.0"
