@@ -180,6 +180,7 @@ dependencies = [
  "dcmfx_json",
  "dcmfx_p10",
  "dcmfx_pixel_data",
+ "rand",
  "serde_json",
  "walkdir",
 ]

@@ -24,6 +24,7 @@ packages = [
 dcmfx_core = { path = "../dcmfx_core" }
 dcmfx_json = { path = "../dcmfx_json" }
 dcmfx_p10 = { path = "../dcmfx_p10" }
+file_streams = { version = ">= 1.2.2 and < 2.0.0" }
 gleam_json = { version = ">= 2.1.0 and < 3.0.0" }
 gleam_stdlib = { version = ">= 0.44.0 and < 2.0.0" }
 simplifile = { version = ">= 2.2.0 and < 3.0.0" }

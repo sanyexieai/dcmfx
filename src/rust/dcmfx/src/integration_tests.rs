@@ -1,8 +1,12 @@
 // Integration tests for dcmfx
 #[cfg(test)]
 mod tests {
-  use std::{ffi::OsStr, fs::File, io::Write, path::Path};
+  const RNG_SEED: u64 = 1023;
 
+  use std::{ffi::OsStr, fs::File, io::Read, io::Write, path::Path};
+
+  use rand::rngs::SmallRng;
+  use rand::{Rng, SeedableRng};
   use walkdir::WalkDir;
 
   use dcmfx_core::*;
@@ -57,7 +61,7 @@ mod tests {
           }
 
           Err((dicom, DicomValidationError::PrintedOutputMissing)) => {
-            eprintln!("Error: No printed output file for dicom {:?}", dicom)
+            eprintln!("Error: No printed output file for {:?}", dicom)
           }
 
           Err((dicom, DicomValidationError::PrintedOutputMismatch)) => {
@@ -69,7 +73,7 @@ mod tests {
           }
 
           Err((dicom, DicomValidationError::JsonOutputMissing)) => {
-            eprintln!("Error: No JSON file for dicom {:?}", dicom)
+            eprintln!("Error: No JSON file for {:?}", dicom)
           }
 
           Err((dicom, DicomValidationError::JsonOutputMismatch)) => eprintln!(
@@ -78,7 +82,15 @@ mod tests {
           ),
 
           Err((dicom, DicomValidationError::RewriteMismatch)) => {
-            eprintln!("Error: Rewrite of file {:?} was different", dicom)
+            eprintln!("Error: Rewrite of {:?} was different", dicom)
+          }
+
+          Err((dicom, DicomValidationError::JitteredReadError { error })) => {
+            error.print(&format!("reading {:?} (jittered)", dicom));
+          }
+
+          Err((dicom, DicomValidationError::JitteredReadMismatch)) => {
+            eprintln!("Error: Jittered read of {:?} was different", dicom);
           }
         }
       }
@@ -88,12 +100,14 @@ mod tests {
   }
 
   enum DicomValidationError {
-    LoadError { error: dcmfx_p10::P10Error },
+    LoadError { error: P10Error },
     PrintedOutputMissing,
     PrintedOutputMismatch,
     JsonOutputMissing,
     JsonOutputMismatch,
     RewriteMismatch,
+    JitteredReadError { error: P10Error },
+    JitteredReadMismatch,
   }
 
   /// Loads a DICOM file and checks that its JSON serialization by this library
@@ -119,6 +133,14 @@ mod tests {
     )?;
     test_dicom_json_rewrite_cycle(dicom, &expected_json_string)?;
     test_p10_rewrite_cycle(dicom, &data_set)?;
+
+    // Test a read using a chunk size of 15 bytes (this isn't truly jittered as
+    // the chunk size is constant)
+    test_jittered_read(dicom, &data_set, &mut || 15)?;
+
+    // Test a jittered read with chunk sizes ranging from 1 to 256 bytes
+    let mut rng = SmallRng::seed_from_u64(RNG_SEED);
+    test_jittered_read(dicom, &data_set, &mut || rng.gen_range(1..256))?;
 
     Ok(())
   }
@@ -269,5 +291,53 @@ mod tests {
     } else {
       Err(DicomValidationError::RewriteMismatch)
     }
+  }
+
+  /// Reads a DICOM in streaming fashion with each chunk of incoming P10 data
+  /// being of a random size. This tests that DICOM reading is unaffected by
+  /// different input chunk sizes and where the boundaries between chunks fall.
+  ///
+  fn test_jittered_read(
+    dicom: &Path,
+    data_set: &DataSet,
+    next_chunk_size: &mut impl FnMut() -> usize,
+  ) -> Result<(), DicomValidationError> {
+    let mut file = File::open(dicom).unwrap();
+
+    let mut context = P10ReadContext::new();
+    let mut data_set_builder = DataSetBuilder::new();
+
+    while !data_set_builder.is_complete() {
+      match context.read_parts() {
+        Ok(parts) => {
+          for part in parts {
+            data_set_builder.add_part(&part).unwrap()
+          }
+        }
+
+        Err(P10Error::DataRequired { .. }) => {
+          let mut buffer = vec![0u8; next_chunk_size()];
+
+          match file.read(&mut buffer).unwrap() {
+            0 => context.write_bytes(vec![], true).unwrap(),
+
+            bytes_count => {
+              buffer.resize(bytes_count, 0);
+              context.write_bytes(buffer, false).unwrap();
+            }
+          }
+        }
+
+        Err(error) => {
+          return Err(DicomValidationError::JitteredReadError { error })
+        }
+      }
+    }
+
+    if *data_set != data_set_builder.final_data_set().unwrap() {
+      return Err(DicomValidationError::JitteredReadMismatch);
+    }
+
+    Ok(())
   }
 }

@@ -4,7 +4,11 @@ import dcmfx_core/dictionary
 import dcmfx_json
 import dcmfx_json/json_config.{DicomJsonConfig}
 import dcmfx_p10
+import dcmfx_p10/data_set_builder.{type DataSetBuilder}
 import dcmfx_p10/p10_error.{type P10Error}
+import dcmfx_p10/p10_read.{type P10ReadContext}
+import file_streams/file_stream.{type FileStream}
+import file_streams/file_stream_error
 import gleam/dynamic.{type Dynamic}
 import gleam/int
 import gleam/io
@@ -49,7 +53,7 @@ pub fn main() {
             p10_error.print(e, "reading " <> dicom)
 
           Error(#(dicom, JsonOutputMissing)) ->
-            io.println("Error: No JSON file for dicom \"" <> dicom <> "\"")
+            io.println("Error: No JSON file for \"" <> dicom <> "\"")
 
           Error(#(dicom, JsonOutputMismatch)) ->
             io.println(
@@ -59,9 +63,13 @@ pub fn main() {
             )
 
           Error(#(dicom, RewriteMismatch)) ->
-            io.println(
-              "Error: Rewrite of file \"" <> dicom <> "\" was different",
-            )
+            io.println("Error: Rewrite of \"" <> dicom <> "\" was different")
+
+          Error(#(dicom, JitteredReadError(error:))) ->
+            p10_error.print(error, "reading " <> dicom <> " (jittered)")
+
+          Error(#(dicom, JitteredReadMismatch)) ->
+            io.println("Error: Jittered read of " <> dicom <> " was different")
         }
       })
 
@@ -79,6 +87,8 @@ type DicomValidationError {
   JsonOutputMissing
   JsonOutputMismatch
   RewriteMismatch
+  JitteredReadError(error: P10Error)
+  JitteredReadMismatch
 }
 
 /// Loads a DICOM file and checks that its JSON serialization by this library
@@ -100,11 +110,12 @@ fn validate_dicom(dicom: String) -> Result(Nil, DicomValidationError) {
   let assert Ok(expected_json) =
     json.decode(expected_json_string, dynamic.dynamic)
 
-  // Run several tests on the data set
   [
     test_data_set_matches_expected_json(dicom, data_set, expected_json),
     test_dicom_json_rewrite_cycle(dicom, expected_json_string),
     test_dcmfx_p10_rewrite_cycle(dicom, data_set),
+    test_jittered_read(dicom, data_set, fn() { 15 }),
+    test_jittered_read(dicom, data_set, fn() { 1 + int.random(255) }),
   ]
   |> result.all
   |> result.replace(Nil)
@@ -201,5 +212,69 @@ fn test_dcmfx_p10_rewrite_cycle(
   case data_set == rewritten_data_set {
     True -> Ok(Nil)
     False -> Error(RewriteMismatch)
+  }
+}
+
+/// Reads a DICOM in streaming fashion with each chunk of incoming P10 data
+/// being of a random size. This tests that DICOM reading is unaffected by
+/// different input chunk sizes and where the boundaries between chunks fall.
+///
+fn test_jittered_read(
+  dicom: String,
+  data_set: DataSet,
+  next_chunk_size: fn() -> Int,
+) -> Result(Nil, DicomValidationError) {
+  let assert Ok(stream) = file_stream.open_read(dicom)
+
+  use builder <- result.try(test_jittered_read_loop(
+    stream,
+    p10_read.new_read_context(),
+    data_set_builder.new(),
+    next_chunk_size,
+  ))
+
+  case data_set_builder.final_data_set(builder) == Ok(data_set) {
+    True -> Ok(Nil)
+    False -> Error(JitteredReadMismatch)
+  }
+}
+
+fn test_jittered_read_loop(
+  file: FileStream,
+  context: P10ReadContext,
+  builder: DataSetBuilder,
+  next_chunk_size: fn() -> Int,
+) -> Result(DataSetBuilder, DicomValidationError) {
+  case data_set_builder.is_complete(builder) {
+    True -> Ok(builder)
+
+    False -> {
+      case p10_read.read_parts(context) {
+        Ok(#(parts, context)) -> {
+          let assert Ok(builder) =
+            parts
+            |> list.try_fold(builder, fn(builder, part) {
+              data_set_builder.add_part(builder, part)
+            })
+
+          test_jittered_read_loop(file, context, builder, next_chunk_size)
+        }
+
+        Error(p10_error.DataRequired(..)) -> {
+          let assert Ok(context) = case
+            file_stream.read_bytes(file, next_chunk_size())
+          {
+            Ok(bytes) -> p10_read.write_bytes(context, bytes, False)
+            Error(file_stream_error.Eof) ->
+              p10_read.write_bytes(context, <<>>, True)
+            Error(e) -> panic as string.inspect(e)
+          }
+
+          test_jittered_read_loop(file, context, builder, next_chunk_size)
+        }
+
+        Error(error) -> Error(JitteredReadError(error:))
+      }
+    }
   }
 }
