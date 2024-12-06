@@ -22,6 +22,7 @@ pub opaque type ByteStream {
     max_read_size: Int,
     is_writing_finished: Bool,
     zlib_stream: Option(ZlibStream),
+    zlib_inflate_complete: Bool,
   )
 }
 
@@ -60,6 +61,7 @@ pub fn new(max_read_size: Int) -> ByteStream {
     max_read_size: max_read_size,
     is_writing_finished: False,
     zlib_stream: None,
+    zlib_inflate_complete: False,
   )
 }
 
@@ -76,7 +78,7 @@ pub fn bytes_read(stream: ByteStream) -> Int {
 pub fn is_fully_consumed(stream: ByteStream) -> Bool {
   stream.bytes_queue_size == 0
   && stream.is_writing_finished
-  && stream.zlib_stream == None
+  && { stream.zlib_stream == None || stream.zlib_inflate_complete }
 }
 
 /// Writes bytes to a byte stream so they are available to be read by subsequent
@@ -98,10 +100,15 @@ pub fn write(
   // out the next chunk of inflated bytes if any are now available
   let new_bytes = case stream.zlib_stream {
     Some(zlib_stream) ->
-      case zlib.safe_inflate(zlib_stream, data) {
-        Ok(inflate_result.Continue(bytes)) | Ok(inflate_result.Finished(bytes)) ->
-          Ok(bytes)
-        Error(Nil) -> Error(ZlibDataError)
+      case stream.zlib_inflate_complete {
+        True -> Ok(<<>>)
+        False ->
+          case zlib.safe_inflate(zlib_stream, data) {
+            Ok(inflate_result.Continue(bytes))
+            | Ok(inflate_result.Finished(bytes)) -> Ok(bytes)
+
+            Error(Nil) -> Error(ZlibDataError)
+          }
       }
 
     None -> Ok(data)
@@ -315,12 +322,12 @@ fn inflate_up_to_max_read_size(
   case stream.zlib_stream {
     Some(zlib_stream) ->
       case zlib.safe_inflate(zlib_stream, <<>>) {
-        // Once the zlib stream finishes decompressing all data set it to None
-        // as is has nothing left to do. Exhaustion of the zlib stream after the
-        // final deflated bytes have been written is necessary for the byte
-        // stream being considered fully consumed.
+        // Record when the zlib stream finishes decompressing all data.
+        // Exhaustion of the zlib stream after the final deflated bytes have
+        // been written is necessary for the byte stream being considered fully
+        // consumed.
         Ok(inflate_result.Finished(<<>>)) if stream.is_writing_finished ->
-          Ok(ByteStream(..stream, zlib_stream: None))
+          Ok(ByteStream(..stream, zlib_inflate_complete: True))
 
         // Put inflated bytes onto the bytes queue
         Ok(inflate_result.Continue(bytes)) | Ok(inflate_result.Finished(bytes)) ->

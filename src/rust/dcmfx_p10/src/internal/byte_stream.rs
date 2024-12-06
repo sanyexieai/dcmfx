@@ -14,6 +14,7 @@ pub struct ByteStream {
   is_writing_finished: bool,
   zlib_stream: Option<flate2::Decompress>,
   zlib_input_queue: VecDeque<QueueItem>,
+  zlib_inflate_complete: bool,
 }
 
 struct QueueItem {
@@ -55,6 +56,7 @@ impl ByteStream {
       is_writing_finished: false,
       zlib_stream: None,
       zlib_input_queue: VecDeque::new(),
+      zlib_inflate_complete: false,
     }
   }
 
@@ -71,7 +73,7 @@ impl ByteStream {
   pub fn is_fully_consumed(&self) -> bool {
     self.bytes_queue_size == 0
       && self.is_writing_finished
-      && self.zlib_stream.is_none()
+      && (self.zlib_stream.is_none() || self.zlib_inflate_complete)
   }
 
   /// Writes bytes to a byte stream so they are available to be read by
@@ -299,12 +301,12 @@ impl ByteStream {
             self.bytes_queue_size += bytes_produced;
           }
 
-          // Once the zlib stream finishes decompressing all data set it to
-          // None as is has nothing left to do. Exhaustion of the zlib stream
-          // after the final deflated bytes have been written is necessary for
-          // the byte stream being considered fully consumed.
+          // Record when the zlib stream finishes decompressing all data.
+          // Exhaustion of the zlib stream after the final deflated bytes have
+          // been written is necessary for the byte stream being considered
+          // fully consumed.
           if status == flate2::Status::StreamEnd {
-            self.zlib_stream = None;
+            self.zlib_inflate_complete = true;
             return Ok(());
           }
 
