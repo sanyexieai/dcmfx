@@ -227,8 +227,8 @@ impl P10Location {
         Err(format!(
           "Sequence data element '{}' encountered outside of the root data set \
             or an item",
-        dictionary::tag_with_name(tag, private_creator.map(|x| x.as_str()))
-      ))
+          dictionary::tag_with_name(tag, private_creator.map(|x| x.as_str()))
+        ))
       }
     }
   }

@@ -14992,11 +14992,7 @@ pub const palette_color_lookup_table_uid = Item(
 pub const gray_lookup_table_data = Item(
   DataElementTag(0x0028, 0x1200),
   "Gray Lookup Table Data",
-  [
-    value_representation.UnsignedShort,
-    value_representation.SignedShort,
-    value_representation.OtherWordString,
-  ],
+  [UnsignedShort, SignedShort, OtherWordString],
   vm_1_to_n,
 )
 
@@ -15311,7 +15307,7 @@ pub const modality_lut_type = Item(
 pub const lut_data = Item(
   DataElementTag(0x0028, 0x3006),
   "LUT Data",
-  [value_representation.UnsignedShort, value_representation.OtherWordString],
+  [UnsignedShort, OtherWordString],
   vm_1_to_n,
 )
 
@@ -35976,7 +35972,6 @@ fn find_element_in_group_0002(element: Int) -> Result(Item, Nil) {
     0x0038 -> Ok(rtv_flow_actual_frame_duration)
     0x0100 -> Ok(private_information_creator_uid)
     0x0102 -> Ok(private_information)
-
     _ -> Error(Nil)
   }
 }
@@ -36006,7 +36001,6 @@ fn find_element_in_group_0004(element: Int) -> Result(Item, Nil) {
     0x1512 -> Ok(referenced_transfer_syntax_uid_in_file)
     0x151A -> Ok(referenced_related_general_sop_class_uid_in_file)
     0x1600 -> Ok(number_of_references)
-
     _ -> Error(Nil)
   }
 }
@@ -36016,7 +36010,6 @@ fn find_element_in_group_0004(element: Int) -> Result(Item, Nil) {
 fn find_element_in_group_0006(element: Int) -> Result(Item, Nil) {
   case element {
     0x0001 -> Ok(current_frame_functional_groups_sequence)
-
     _ -> Error(Nil)
   }
 }
@@ -36290,7 +36283,6 @@ fn find_element_in_group_0008(element: Int) -> Result(Item, Nil) {
     0x9458 -> Ok(frame_display_sequence)
     0x9459 -> Ok(recommended_display_frame_rate_in_float)
     0x9460 -> Ok(skip_frame_range_flag)
-
     _ -> Error(Nil)
   }
 }
@@ -36375,7 +36367,6 @@ fn find_element_in_group_0010(element: Int) -> Result(Item, Nil) {
     0x2299 -> Ok(responsible_organization)
     0x4000 -> Ok(patient_comments)
     0x9431 -> Ok(examined_body_thickness)
-
     _ -> Error(Nil)
   }
 }
@@ -36416,7 +36407,6 @@ fn find_element_in_group_0012(element: Int) -> Result(Item, Nil) {
     0x0085 -> Ok(consent_for_distribution_flag)
     0x0086 -> Ok(ethics_committee_approval_effectiveness_start_date)
     0x0087 -> Ok(ethics_committee_approval_effectiveness_end_date)
-
     _ -> Error(Nil)
   }
 }
@@ -36627,7 +36617,6 @@ fn find_element_in_group_0014(element: Int) -> Result(Item, Nil) {
     0x511D -> Ok(wedge_chamfer_height)
     0x511E -> Ok(wedge_curve)
     0x511F -> Ok(radius_along_wedge)
-
     _ -> Error(Nil)
   }
 }
@@ -36746,7 +36735,6 @@ fn find_element_in_group_0016(element: Int) -> Result(Item, Nil) {
     0x1003 -> Ok(contact_method)
     0x1004 -> Ok(immersion_media)
     0x1005 -> Ok(optical_magnification_factor)
-
     _ -> Error(Nil)
   }
 }
@@ -37650,7 +37638,6 @@ fn find_element_in_group_0018(element: Int) -> Result(Item, Nil) {
     0xA001 -> Ok(contributing_equipment_sequence)
     0xA002 -> Ok(contribution_date_time)
     0xA003 -> Ok(contribution_description)
-
     _ -> Error(Nil)
   }
 }
@@ -37781,7 +37768,6 @@ fn find_element_in_group_0020(element: Int) -> Result(Item, Nil) {
     0x9518 -> Ok(acquisition_index)
     0x9529 -> Ok(contributing_sop_instances_reference_sequence)
     0x9536 -> Ok(reconstruction_index)
-
     _ -> Error(Nil)
   }
 }
@@ -37967,7 +37953,6 @@ fn find_element_in_group_0022(element: Int) -> Result(Item, Nil) {
     0x1649 -> Ok(ascan_rate)
     0x1650 -> Ok(bscan_rate)
     0x1658 -> Ok(surface_mesh_z_pixel_offset)
-
     _ -> Error(Nil)
   }
 }
@@ -38079,7 +38064,6 @@ fn find_element_in_group_0024(element: Int) -> Result(Item, Nil) {
     0x0338 -> Ok(index_normals_flag)
     0x0341 -> Ok(index_probability)
     0x0344 -> Ok(index_probability_sequence)
-
     _ -> Error(Nil)
   }
 }
@@ -38326,7 +38310,6 @@ fn find_element_in_group_0028(element: Int) -> Result(Item, Nil) {
     0x9507 -> Ok(lut_frame_range)
     0x9520 -> Ok(image_to_equipment_mapping_matrix)
     0x9537 -> Ok(equipment_coordinate_system_identification)
-
     _ -> Error(Nil)
   }
 }
@@ -38365,7 +38348,6 @@ fn find_element_in_group_0032(element: Int) -> Result(Item, Nil) {
     0x1067 -> Ok(reason_for_visit_code_sequence)
     0x1070 -> Ok(requested_contrast_agent)
     0x4000 -> Ok(study_comments)
-
     _ -> Error(Nil)
   }
 }
@@ -38386,7 +38368,6 @@ fn find_element_in_group_0034(element: Int) -> Result(Item, Nil) {
     0x000B -> Ok(camera_position_group_sequence)
     0x000C -> Ok(includes_information)
     0x000D -> Ok(time_of_frame_group_sequence)
-
     _ -> Error(Nil)
   }
 }
@@ -38425,7 +38406,6 @@ fn find_element_in_group_0038(element: Int) -> Result(Item, Nil) {
     0x0500 -> Ok(patient_state)
     0x0502 -> Ok(patient_clinical_trial_participation_sequence)
     0x4000 -> Ok(visit_comments)
-
     _ -> Error(Nil)
   }
 }
@@ -38497,7 +38477,6 @@ fn find_element_in_group_003a(element: Int) -> Result(Item, Nil) {
     0x032C -> Ok(frequency_encoding_code_sequence)
     0x032D -> Ok(magnitude_encoding_code_sequence)
     0x032E -> Ok(filter_lookup_table_data)
-
     _ -> Error(Nil)
   }
 }
@@ -38835,7 +38814,6 @@ fn find_element_in_group_0040(element: Int) -> Result(Item, Nil) {
     0xE025 -> Ok(wadors_retrieval_sequence)
     0xE030 -> Ok(repository_unique_id)
     0xE031 -> Ok(home_community_id)
-
     _ -> Error(Nil)
   }
 }
@@ -38850,7 +38828,6 @@ fn find_element_in_group_0042(element: Int) -> Result(Item, Nil) {
     0x0013 -> Ok(source_instance_sequence)
     0x0014 -> Ok(list_of_mime_types)
     0x0015 -> Ok(encapsulated_document_length)
-
     _ -> Error(Nil)
   }
 }
@@ -38884,7 +38861,6 @@ fn find_element_in_group_0044(element: Int) -> Result(Item, Nil) {
     0x0108 -> Ok(referenced_assertion_uid)
     0x0109 -> Ok(approval_subject_sequence)
     0x010A -> Ok(organizational_role_code_sequence)
-
     _ -> Error(Nil)
   }
 }
@@ -38982,7 +38958,6 @@ fn find_element_in_group_0046(element: Int) -> Result(Item, Nil) {
     0x0251 -> Ok(refractive_power)
     0x0252 -> Ok(relative_elevation)
     0x0253 -> Ok(corneal_wavefront)
-
     _ -> Error(Nil)
   }
 }
@@ -39028,7 +39003,6 @@ fn find_element_in_group_0048(element: Int) -> Result(Item, Nil) {
     0x0301 -> Ok(pixel_origin_interpretation)
     0x0302 -> Ok(number_of_optical_paths)
     0x0303 -> Ok(total_pixel_matrix_focal_planes)
-
     _ -> Error(Nil)
   }
 }
@@ -39054,7 +39028,6 @@ fn find_element_in_group_0050(element: Int) -> Result(Item, Nil) {
     0x001E -> Ok(container_component_description)
     0x0020 -> Ok(device_description)
     0x0021 -> Ok(long_device_description)
-
     _ -> Error(Nil)
   }
 }
@@ -39089,7 +39062,6 @@ fn find_element_in_group_0052(element: Int) -> Result(Item, Nil) {
     0x0038 -> Ok(number_of_padded_a_lines)
     0x0039 -> Ok(interpolation_type)
     0x003A -> Ok(refractive_index_applied)
-
     _ -> Error(Nil)
   }
 }
@@ -39179,7 +39151,6 @@ fn find_element_in_group_0054(element: Int) -> Result(Item, Nil) {
     0x1330 -> Ok(image_index)
     0x1400 -> Ok(counts_included)
     0x1401 -> Ok(dead_time_correction_flag)
-
     _ -> Error(Nil)
   }
 }
@@ -39195,7 +39166,6 @@ fn find_element_in_group_0060(element: Int) -> Result(Item, Nil) {
     0x3008 -> Ok(histogram_bin_width)
     0x3010 -> Ok(histogram_explanation)
     0x3020 -> Ok(histogram_data)
-
     _ -> Error(Nil)
   }
 }
@@ -39225,7 +39195,6 @@ fn find_element_in_group_0062(element: Int) -> Result(Item, Nil) {
     0x0013 -> Ok(segments_overlap)
     0x0020 -> Ok(tracking_id)
     0x0021 -> Ok(tracking_uid)
-
     _ -> Error(Nil)
   }
 }
@@ -39242,7 +39211,6 @@ fn find_element_in_group_0064(element: Int) -> Result(Item, Nil) {
     0x0009 -> Ok(vector_grid_data)
     0x000F -> Ok(pre_deformation_matrix_registration_sequence)
     0x0010 -> Ok(post_deformation_matrix_registration_sequence)
-
     _ -> Error(Nil)
   }
 }
@@ -39319,7 +39287,6 @@ fn find_element_in_group_0066(element: Int) -> Result(Item, Nil) {
     0x0132 -> Ok(measurement_values_sequence)
     0x0133 -> Ok(diffusion_acquisition_code_sequence)
     0x0134 -> Ok(diffusion_model_code_sequence)
-
     _ -> Error(Nil)
   }
 }
@@ -39403,7 +39370,6 @@ fn find_element_in_group_0068(element: Int) -> Result(Item, Nil) {
     0x7003 -> Ok(model_usage_code_sequence)
     0x7004 -> Ok(model_group_uid)
     0x7005 -> Ok(relative_uri_reference_within_encapsulated_document)
-
     _ -> Error(Nil)
   }
 }
@@ -39428,7 +39394,6 @@ fn find_element_in_group_006a(element: Int) -> Result(Item, Nil) {
     0x000F -> Ok(annotation_applies_to_all_z_planes)
     0x0010 -> Ok(common_z_coordinate_value)
     0x0011 -> Ok(annotation_index_list)
-
     _ -> Error(Nil)
   }
 }
@@ -39628,7 +39593,6 @@ fn find_element_in_group_0070(element: Int) -> Result(Item, Nil) {
     0x1B12 -> Ok(threshold_value_sequence)
     0x1B13 -> Ok(threshold_type)
     0x1B14 -> Ok(threshold_value)
-
     _ -> Error(Nil)
   }
 }
@@ -39761,7 +39725,6 @@ fn find_element_in_group_0072(element: Int) -> Result(Item, Nil) {
     0x0716 -> Ok(show_acquisition_techniques_flag)
     0x0717 -> Ok(display_set_horizontal_justification)
     0x0718 -> Ok(display_set_vertical_justification)
-
     _ -> Error(Nil)
   }
 }
@@ -39844,7 +39807,6 @@ fn find_element_in_group_0074(element: Int) -> Result(Item, Nil) {
     0x140C -> Ok(channel_delivery_order_index)
     0x140D -> Ok(channel_delivery_continuation_sequence)
     0x140E -> Ok(omitted_application_setup_sequence)
-
     _ -> Error(Nil)
   }
 }
@@ -39876,7 +39838,6 @@ fn find_element_in_group_0076(element: Int) -> Result(Item, Nil) {
     0x00A0 -> Ok(component_2_referenced_id)
     0x00B0 -> Ok(component_2_referenced_mating_feature_set_id)
     0x00C0 -> Ok(component_2_referenced_mating_feature_id)
-
     _ -> Error(Nil)
   }
 }
@@ -39903,7 +39864,6 @@ fn find_element_in_group_0078(element: Int) -> Result(Item, Nil) {
     0x00B4 -> Ok(implant_template_group_variation_dimension_rank_sequence)
     0x00B6 -> Ok(referenced_implant_template_group_member_id)
     0x00B8 -> Ok(implant_template_group_variation_dimension_rank)
-
     _ -> Error(Nil)
   }
 }
@@ -39925,7 +39885,6 @@ fn find_element_in_group_0080(element: Int) -> Result(Item, Nil) {
     0x0011 -> Ok(v_value_data)
     0x0012 -> Ok(referenced_texture_sequence)
     0x0013 -> Ok(referenced_surface_data_sequence)
-
     _ -> Error(Nil)
   }
 }
@@ -39958,7 +39917,6 @@ fn find_element_in_group_0082(element: Int) -> Result(Item, Nil) {
     0x0036 -> Ok(constraint_violation_significance)
     0x0037 -> Ok(constraint_violation_condition)
     0x0038 -> Ok(modifiable_constraint_flag)
-
     _ -> Error(Nil)
   }
 }
@@ -39974,7 +39932,6 @@ fn find_element_in_group_0088(element: Int) -> Result(Item, Nil) {
     0x0906 -> Ok(topic_subject)
     0x0910 -> Ok(topic_author)
     0x0912 -> Ok(topic_keywords)
-
     _ -> Error(Nil)
   }
 }
@@ -39987,7 +39944,6 @@ fn find_element_in_group_0100(element: Int) -> Result(Item, Nil) {
     0x0420 -> Ok(sop_authorization_date_time)
     0x0424 -> Ok(sop_authorization_comment)
     0x0426 -> Ok(authorization_equipment_certification_number)
-
     _ -> Error(Nil)
   }
 }
@@ -40023,23 +39979,6 @@ fn find_element_in_group_0400(element: Int) -> Result(Item, Nil) {
     0x0564 -> Ok(source_of_previous_values)
     0x0565 -> Ok(reason_for_the_attribute_modification)
     0x0600 -> Ok(instance_origin_status)
-
-    _ -> Error(Nil)
-  }
-}
-
-/// Returns details for a data element in group 0x1000.
-///
-fn find_element_in_group_1000(element: Int) -> Result(Item, Nil) {
-  case element {
-    _ -> Error(Nil)
-  }
-}
-
-/// Returns details for a data element in group 0x1010.
-///
-fn find_element_in_group_1010(element: Int) -> Result(Item, Nil) {
-  case element {
     _ -> Error(Nil)
   }
 }
@@ -40069,7 +40008,6 @@ fn find_element_in_group_2000(element: Int) -> Result(Item, Nil) {
     0x00A8 -> Ok(supported_image_display_formats_sequence)
     0x0500 -> Ok(referenced_film_box_sequence)
     0x0510 -> Ok(referenced_stored_print_sequence)
-
     _ -> Error(Nil)
   }
 }
@@ -40104,7 +40042,6 @@ fn find_element_in_group_2010(element: Int) -> Result(Item, Nil) {
     0x0500 -> Ok(referenced_film_session_sequence)
     0x0510 -> Ok(referenced_image_box_sequence)
     0x0520 -> Ok(referenced_basic_annotation_box_sequence)
-
     _ -> Error(Nil)
   }
 }
@@ -40124,7 +40061,6 @@ fn find_element_in_group_2020(element: Int) -> Result(Item, Nil) {
     0x0111 -> Ok(basic_color_image_sequence)
     0x0130 -> Ok(referenced_image_overlay_box_sequence)
     0x0140 -> Ok(referenced_voilut_box_sequence)
-
     _ -> Error(Nil)
   }
 }
@@ -40135,7 +40071,6 @@ fn find_element_in_group_2030(element: Int) -> Result(Item, Nil) {
   case element {
     0x0010 -> Ok(annotation_position)
     0x0020 -> Ok(text_string)
-
     _ -> Error(Nil)
   }
 }
@@ -40156,7 +40091,6 @@ fn find_element_in_group_2040(element: Int) -> Result(Item, Nil) {
     0x0090 -> Ok(overlay_mode)
     0x0100 -> Ok(threshold_density)
     0x0500 -> Ok(referenced_image_box_sequence_retired)
-
     _ -> Error(Nil)
   }
 }
@@ -40168,7 +40102,6 @@ fn find_element_in_group_2050(element: Int) -> Result(Item, Nil) {
     0x0010 -> Ok(presentation_lut_sequence)
     0x0020 -> Ok(presentation_lut_shape)
     0x0500 -> Ok(referenced_presentation_lut_sequence)
-
     _ -> Error(Nil)
   }
 }
@@ -40187,7 +40120,6 @@ fn find_element_in_group_2100(element: Int) -> Result(Item, Nil) {
     0x0160 -> Ok(owner_id)
     0x0170 -> Ok(number_of_films)
     0x0500 -> Ok(referenced_print_job_sequence_pull_stored_print)
-
     _ -> Error(Nil)
   }
 }
@@ -40200,7 +40132,6 @@ fn find_element_in_group_2110(element: Int) -> Result(Item, Nil) {
     0x0020 -> Ok(printer_status_info)
     0x0030 -> Ok(printer_name)
     0x0099 -> Ok(print_queue_id)
-
     _ -> Error(Nil)
   }
 }
@@ -40212,7 +40143,6 @@ fn find_element_in_group_2120(element: Int) -> Result(Item, Nil) {
     0x0010 -> Ok(queue_status)
     0x0050 -> Ok(print_job_description_sequence)
     0x0070 -> Ok(referenced_print_job_sequence)
-
     _ -> Error(Nil)
   }
 }
@@ -40230,7 +40160,6 @@ fn find_element_in_group_2130(element: Int) -> Result(Item, Nil) {
     0x0080 -> Ok(presentation_lut_content_sequence)
     0x00A0 -> Ok(proposed_study_sequence)
     0x00C0 -> Ok(original_image_sequence)
-
     _ -> Error(Nil)
   }
 }
@@ -40255,7 +40184,6 @@ fn find_element_in_group_2200(element: Int) -> Result(Item, Nil) {
     0x000E -> Ok(failure_attributes)
     0x000F -> Ok(allow_lossy_compression)
     0x0020 -> Ok(request_priority)
-
     _ -> Error(Nil)
   }
 }
@@ -40343,7 +40271,6 @@ fn find_element_in_group_3002(element: Int) -> Result(Item, Nil) {
     0x0133 -> Ok(energy_derivation_code_sequence)
     0x0134 -> Ok(maximum_cumulative_meterset_exposure)
     0x0135 -> Ok(acquisition_initiation_sequence)
-
     _ -> Error(Nil)
   }
 }
@@ -40376,7 +40303,6 @@ fn find_element_in_group_3004(element: Int) -> Result(Item, Nil) {
     0x0070 -> Ok(dvh_minimum_dose)
     0x0072 -> Ok(dvh_maximum_dose)
     0x0074 -> Ok(dvh_mean_dose)
-
     _ -> Error(Nil)
   }
 }
@@ -40448,7 +40374,6 @@ fn find_element_in_group_3006(element: Int) -> Result(Item, Nil) {
     0x00C9 -> Ok(patient_location_coordinates_sequence)
     0x00CA -> Ok(patient_location_coordinates_code_sequence)
     0x00CB -> Ok(patient_support_position_sequence)
-
     _ -> Error(Nil)
   }
 }
@@ -40557,7 +40482,6 @@ fn find_element_in_group_3008(element: Int) -> Result(Item, Nil) {
     0x0240 -> Ok(fraction_status_summary_sequence)
     0x0250 -> Ok(treatment_date)
     0x0251 -> Ok(treatment_time)
-
     _ -> Error(Nil)
   }
 }
@@ -41177,7 +41101,6 @@ fn find_element_in_group_300a(element: Int) -> Result(Item, Nil) {
     0x079C -> Ok(patient_support_displacement_sequence)
     0x079D -> Ok(displacement_reference_location_code_sequence)
     0x079E -> Ok(rt_radiation_set_delivery_usage)
-
     _ -> Error(Nil)
   }
 }
@@ -41236,7 +41159,6 @@ fn find_element_in_group_300c(element: Int) -> Result(Item, Nil) {
     0x0127 -> Ok(beam_hold_transition_date_time)
     0x0128 -> Ok(beam_hold_originating_device_sequence)
     0x0129 -> Ok(beam_hold_transition_trigger_source)
-
     _ -> Error(Nil)
   }
 }
@@ -41249,7 +41171,6 @@ fn find_element_in_group_300e(element: Int) -> Result(Item, Nil) {
     0x0004 -> Ok(review_date)
     0x0005 -> Ok(review_time)
     0x0008 -> Ok(reviewer_name)
-
     _ -> Error(Nil)
   }
 }
@@ -41406,7 +41327,6 @@ fn find_element_in_group_3010(element: Int) -> Result(Item, Nil) {
     0x0099 -> Ok(tomotherapeutic_leaf_open_durations)
     0x009A -> Ok(tomotherapeutic_leaf_initial_closed_durations)
     0x00A0 -> Ok(conceptual_volume_identification_sequence)
-
     _ -> Error(Nil)
   }
 }
@@ -41417,7 +41337,6 @@ fn find_element_in_group_4000(element: Int) -> Result(Item, Nil) {
   case element {
     0x0010 -> Ok(arbitrary)
     0x4000 -> Ok(text_comments)
-
     _ -> Error(Nil)
   }
 }
@@ -41454,7 +41373,6 @@ fn find_element_in_group_4008(element: Int) -> Result(Item, Nil) {
     0x0212 -> Ok(interpretation_status_id)
     0x0300 -> Ok(impressions)
     0x4000 -> Ok(results_comments)
-
     _ -> Error(Nil)
   }
 }
@@ -41549,7 +41467,6 @@ fn find_element_in_group_4010(element: Int) -> Result(Item, Nil) {
     0x107C -> Ok(inspection_selection_criteria)
     0x107D -> Ok(secondary_inspection_method_sequence)
     0x107E -> Ok(prcs_to_rcs_orientation)
-
     _ -> Error(Nil)
   }
 }
@@ -41559,7 +41476,6 @@ fn find_element_in_group_4010(element: Int) -> Result(Item, Nil) {
 fn find_element_in_group_4ffe(element: Int) -> Result(Item, Nil) {
   case element {
     0x0001 -> Ok(mac_parameters_sequence)
-
     _ -> Error(Nil)
   }
 }
@@ -41570,7 +41486,6 @@ fn find_element_in_group_5200(element: Int) -> Result(Item, Nil) {
   case element {
     0x9229 -> Ok(shared_functional_groups_sequence)
     0x9230 -> Ok(per_frame_functional_groups_sequence)
-
     _ -> Error(Nil)
   }
 }
@@ -41586,7 +41501,6 @@ fn find_element_in_group_5400(element: Int) -> Result(Item, Nil) {
     0x1006 -> Ok(waveform_sample_interpretation)
     0x100A -> Ok(waveform_padding_value)
     0x1010 -> Ok(waveform_data)
-
     _ -> Error(Nil)
   }
 }
@@ -41597,7 +41511,6 @@ fn find_element_in_group_5600(element: Int) -> Result(Item, Nil) {
   case element {
     0x0010 -> Ok(first_order_phase_correction_angle)
     0x0020 -> Ok(spectroscopy_data)
-
     _ -> Error(Nil)
   }
 }
@@ -41615,7 +41528,6 @@ fn find_element_in_group_7fe0(element: Int) -> Result(Item, Nil) {
     0x0020 -> Ok(coefficients_sdvn)
     0x0030 -> Ok(coefficients_sdhn)
     0x0040 -> Ok(coefficients_sddn)
-
     _ -> Error(Nil)
   }
 }
@@ -41625,7 +41537,6 @@ fn find_element_in_group_7fe0(element: Int) -> Result(Item, Nil) {
 fn find_element_in_group_fffa(element: Int) -> Result(Item, Nil) {
   case element {
     0xFFFA -> Ok(digital_signatures_sequence)
-
     _ -> Error(Nil)
   }
 }
@@ -41635,7 +41546,6 @@ fn find_element_in_group_fffa(element: Int) -> Result(Item, Nil) {
 fn find_element_in_group_fffc(element: Int) -> Result(Item, Nil) {
   case element {
     0xFFFC -> Ok(data_set_trailing_padding)
-
     _ -> Error(Nil)
   }
 }
@@ -41647,7 +41557,6 @@ fn find_element_in_group_fffe(element: Int) -> Result(Item, Nil) {
     0xE000 -> Ok(item)
     0xE00D -> Ok(item_delimitation_item)
     0xE0DD -> Ok(sequence_delimitation_item)
-
     _ -> Error(Nil)
   }
 }
@@ -41701,8 +41610,6 @@ pub fn find(
     0x0088 -> find_element_in_group_0088(tag.element)
     0x0100 -> find_element_in_group_0100(tag.element)
     0x0400 -> find_element_in_group_0400(tag.element)
-    0x1000 -> find_element_in_group_1000(tag.element)
-    0x1010 -> find_element_in_group_1010(tag.element)
     0x2000 -> find_element_in_group_2000(tag.element)
     0x2010 -> find_element_in_group_2010(tag.element)
     0x2020 -> find_element_in_group_2020(tag.element)

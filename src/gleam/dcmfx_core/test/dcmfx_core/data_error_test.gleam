@@ -19,7 +19,7 @@ pub fn to_lines_test() {
 
   Error: Tag not present
   Tag: (1000,2000)
-  Name: unknown_tag
+  Name: Escape Triplet
   Path: 10002000",
   )
 

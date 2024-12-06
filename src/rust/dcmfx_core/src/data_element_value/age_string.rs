@@ -104,7 +104,7 @@ mod tests {
     assert_eq!(
       StructuredAge {
         number: 20,
-        unit: AgeUnit::Days,
+        unit: AgeUnit::Days
       }
       .to_string(),
       "20 days"
@@ -113,7 +113,7 @@ mod tests {
     assert_eq!(
       StructuredAge {
         number: 3,
-        unit: AgeUnit::Weeks,
+        unit: AgeUnit::Weeks
       }
       .to_string(),
       "3 weeks"
@@ -122,7 +122,7 @@ mod tests {
     assert_eq!(
       StructuredAge {
         number: 13,
-        unit: AgeUnit::Months,
+        unit: AgeUnit::Months
       }
       .to_string(),
       "13 months"
@@ -131,7 +131,7 @@ mod tests {
     assert_eq!(
       StructuredAge {
         number: 1,
-        unit: AgeUnit::Years,
+        unit: AgeUnit::Years
       }
       .to_string(),
       "1 year"

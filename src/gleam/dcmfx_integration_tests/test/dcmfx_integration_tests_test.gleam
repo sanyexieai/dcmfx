@@ -59,7 +59,7 @@ pub fn main() {
             io.println(
               "Error: JSON mismatch on file \""
               <> dicom
-              <> "\", compare the two files for details",
+              <> "\", compare the two files",
             )
 
           Error(#(dicom, RewriteMismatch)) ->

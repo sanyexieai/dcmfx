@@ -1,6 +1,6 @@
 //! Converts DICOM Code String (CS) values to a human-readable description.
 
-use crate::{dictionary, DataElementTag};
+use crate::{dictionary::*, DataElementTag};
 
 /// Converts a `CodeString` value to a descriptive string if one is available.
 ///
@@ -11,7 +11,7 @@ use crate::{dictionary, DataElementTag};
 #[allow(clippy::result_unit_err)]
 pub fn describe(value: &str, tag: DataElementTag) -> Result<&str, ()> {
   match tag {
-    tag if tag == dictionary::MODALITY.tag => match value {
+    tag if tag == MODALITY.tag => match value {
       "ANN" => Ok("Annotation"),
       "AR" => Ok("Autorefraction"),
       "ASMT" => Ok("Content Assessment Results"),
@@ -94,14 +94,14 @@ pub fn describe(value: &str, tag: DataElementTag) -> Result<&str, ()> {
       _ => Err(()),
     },
 
-    tag if tag == dictionary::PATIENT_SEX.tag => match value {
+    tag if tag == PATIENT_SEX.tag => match value {
       "M" => Ok("Male"),
       "F" => Ok("Female"),
       "O" => Ok("Other"),
       _ => Err(()),
     },
 
-    tag if tag == dictionary::CONVERSION_TYPE.tag => match value {
+    tag if tag == CONVERSION_TYPE.tag => match value {
       "DV" => Ok("Digitized Video"),
       "DI" => Ok("Digital Interface"),
       "DF" => Ok("Digitized Film"),
@@ -113,7 +113,7 @@ pub fn describe(value: &str, tag: DataElementTag) -> Result<&str, ()> {
       _ => Err(()),
     },
 
-    tag if tag == dictionary::SCANNING_SEQUENCE.tag => match value {
+    tag if tag == SCANNING_SEQUENCE.tag => match value {
       "SE" => Ok("Spin Echo"),
       "IR" => Ok("Inversion Recovery"),
       "GR" => Ok("Gradient Recalled"),
@@ -122,7 +122,7 @@ pub fn describe(value: &str, tag: DataElementTag) -> Result<&str, ()> {
       _ => Err(()),
     },
 
-    tag if tag == dictionary::SEQUENCE_VARIANT.tag => match value {
+    tag if tag == SEQUENCE_VARIANT.tag => match value {
       "SK" => Ok("Segmented k-space"),
       "MTC" => Ok("Magnetization transfer contrast"),
       "SS" => Ok("Steady state"),
@@ -134,7 +134,7 @@ pub fn describe(value: &str, tag: DataElementTag) -> Result<&str, ()> {
       _ => Err(()),
     },
 
-    tag if tag == dictionary::SCAN_OPTIONS.tag => match value {
+    tag if tag == SCAN_OPTIONS.tag => match value {
       "PER" => Ok("Phase Encode Reordering"),
       "RG" => Ok("Respiratory Gating"),
       "CG" => Ok("Cardiac Gating"),
@@ -147,8 +147,7 @@ pub fn describe(value: &str, tag: DataElementTag) -> Result<&str, ()> {
       _ => Err(()),
     },
 
-    tag if tag == dictionary::ACQUISITION_TERMINATION_CONDITION.tag => match value
-    {
+    tag if tag == ACQUISITION_TERMINATION_CONDITION.tag => match value {
       "CNTS" => Ok("Preset counts was reached"),
       "DENS" => Ok("Preset count density (counts/sec) was reached"),
       "RDD" => Ok(
@@ -163,21 +162,22 @@ pub fn describe(value: &str, tag: DataElementTag) -> Result<&str, ()> {
       _ => Err(()),
     },
 
-    tag if tag == dictionary::ROTATION_DIRECTION.tag => match value {
+    tag if tag == ROTATION_DIRECTION.tag => match value {
       "CW" => Ok("Clockwise"),
       "CC" => Ok("Counter clockwise"),
       _ => Err(()),
     },
 
-    tag if tag == dictionary::RADIATION_SETTING.tag => match value {
-      "SC" => {
-        Ok("Low dose exposure generally corresponding to fluoroscopic settings")
-      }
+    tag if tag == RADIATION_SETTING.tag => match value {
+      "SC" => Ok(
+        "Low dose exposure generally corresponding to fluoroscopic \
+            settings",
+      ),
       "GR" => Ok("High dose for diagnostic quality image acquisition"),
       _ => Err(()),
     },
 
-    tag if tag == dictionary::COLLIMATOR_TYPE.tag => match value {
+    tag if tag == COLLIMATOR_TYPE.tag => match value {
       "PARA" => Ok("Parallel (default)"),
       "PINH" => Ok("Pinhole"),
       "FANB" => Ok("Fan-beam"),
@@ -190,7 +190,7 @@ pub fn describe(value: &str, tag: DataElementTag) -> Result<&str, ()> {
       _ => Err(()),
     },
 
-    tag if tag == dictionary::WHOLE_BODY_TECHNIQUE.tag => match value {
+    tag if tag == WHOLE_BODY_TECHNIQUE.tag => match value {
       "1PS" => Ok("One pass"),
       "2PS" => Ok("Two pass"),
       "PCN" => Ok("Patient contour following employed"),
@@ -198,7 +198,7 @@ pub fn describe(value: &str, tag: DataElementTag) -> Result<&str, ()> {
       _ => Err(()),
     },
 
-    tag if tag == dictionary::PATIENT_POSITION.tag => match value {
+    tag if tag == PATIENT_POSITION.tag => match value {
       "HFP" => Ok("Head First-Prone"),
       "HFS" => Ok("Head First-Supine"),
       "HFDR" => Ok("Head First-Decubitus Right"),
@@ -218,7 +218,7 @@ pub fn describe(value: &str, tag: DataElementTag) -> Result<&str, ()> {
       _ => Err(()),
     },
 
-    tag if tag == dictionary::VIEW_POSITION.tag => match value {
+    tag if tag == VIEW_POSITION.tag => match value {
       "AP" => Ok("Anterior/Posterior"),
       "PA" => Ok("Posterior/Anterior"),
       "LL" => Ok("Left Lateral"),
@@ -230,7 +230,7 @@ pub fn describe(value: &str, tag: DataElementTag) -> Result<&str, ()> {
       _ => Err(()),
     },
 
-    tag if tag == dictionary::IMAGE_LATERALITY.tag => match value {
+    tag if tag == IMAGE_LATERALITY.tag => match value {
       "R" => Ok("Right"),
       "L" => Ok("Left"),
       "U" => Ok("Unpaired"),
@@ -238,12 +238,13 @@ pub fn describe(value: &str, tag: DataElementTag) -> Result<&str, ()> {
       _ => Err(()),
     },
 
-    tag if tag == dictionary::MULTIENERGY_DETECTOR_TYPE.tag => match value {
+    tag if tag == MULTIENERGY_DETECTOR_TYPE.tag => match value {
       "INTEGRATING" => {
         Ok("Physical detector integrates the full X-Ray spectrum")
       }
       "MULTILAYER" => Ok(
-        "Physical detector layers absorb different parts of the X-Ray spectrum",
+        "Physical detector layers absorb different parts of the X-Ray \
+            spectrum",
       ),
       "PHOTON_COUNTING" => Ok(
         "Physical detector counts photons with energy discrimination \
@@ -252,7 +253,7 @@ pub fn describe(value: &str, tag: DataElementTag) -> Result<&str, ()> {
       _ => Err(()),
     },
 
-    tag if tag == dictionary::CORRECTED_IMAGE.tag => match value {
+    tag if tag == CORRECTED_IMAGE.tag => match value {
       "UNIF" => Ok("Flood corrected"),
       "COR" => Ok("Center of rotation corrected"),
       "NCO" => Ok("Non-circular orbit corrected"),
@@ -267,20 +268,20 @@ pub fn describe(value: &str, tag: DataElementTag) -> Result<&str, ()> {
       _ => Err(()),
     },
 
-    tag if tag == dictionary::PIXEL_INTENSITY_RELATIONSHIP.tag => match value {
+    tag if tag == PIXEL_INTENSITY_RELATIONSHIP.tag => match value {
       "LIN" => Ok("Approximately proportional to X-Ray beam intensity"),
       "LOG" => Ok("Non-linear \"Log Function\""),
       "OTHER" => Ok("Not proportional to X-Ray beam intensity"),
       _ => Err(()),
     },
 
-    tag if tag == dictionary::LOSSY_IMAGE_COMPRESSION.tag => match value {
+    tag if tag == LOSSY_IMAGE_COMPRESSION.tag => match value {
       "00" => Ok("Image has not been subjected to lossy compression"),
       "01" => Ok("Image has been subjected to lossy compression"),
       _ => Err(()),
     },
 
-    tag if tag == dictionary::LOSSY_IMAGE_COMPRESSION_METHOD.tag => match value {
+    tag if tag == LOSSY_IMAGE_COMPRESSION_METHOD.tag => match value {
       "ISO_10918_1" => Ok("JPEG Lossy Compression [ISO/IEC 10918-1]"),
       "ISO_14495_1" => {
         Ok("JPEG-LS Near-lossless Compression [ISO/IEC 14495-1]")
@@ -289,7 +290,8 @@ pub fn describe(value: &str, tag: DataElementTag) -> Result<&str, ()> {
         Ok("JPEG 2000 Irreversible Compression [ISO/IEC 15444-1]")
       }
       "ISO_15444_15" => Ok(
-        "High-Throughput JPEG 2000 Irreversible Compression [ISO/IEC 15444-15]",
+        "High-Throughput JPEG 2000 Irreversible Compression \
+            [ISO/IEC 15444-15]",
       ),
       "ISO_13818_2" => Ok("MPEG2 Compression [ISO/IEC 13818-2]"),
       "ISO_14496_10" => Ok("MPEG-4 AVC/H.264 Compression [ISO/IEC 14496-10]"),
@@ -297,7 +299,7 @@ pub fn describe(value: &str, tag: DataElementTag) -> Result<&str, ()> {
       _ => Err(()),
     },
 
-    tag if tag == dictionary::UNIVERSAL_ENTITY_ID_TYPE.tag => match value {
+    tag if tag == UNIVERSAL_ENTITY_ID_TYPE.tag => match value {
       "DNS" => Ok("An Internet dotted name. Either in ASCII or as integers"),
       "EUI64" => Ok("An IEEE Extended Unique Identifier"),
       "ISO" => Ok("An International Standards Organization Object Identifier"),
@@ -308,7 +310,7 @@ pub fn describe(value: &str, tag: DataElementTag) -> Result<&str, ()> {
       _ => Err(()),
     },
 
-    tag if tag == dictionary::SLICE_PROGRESSION_DIRECTION.tag => match value {
+    tag if tag == SLICE_PROGRESSION_DIRECTION.tag => match value {
       "APEX_TO_BASE" => Ok("Apex to base"),
       "BASE_TO_APEX" => Ok("Base to apex"),
       "ANT_TO_INF" => Ok("Anterior to inferior"),
@@ -319,9 +321,9 @@ pub fn describe(value: &str, tag: DataElementTag) -> Result<&str, ()> {
     },
 
     tag
-      if tag.group >= dictionary::OVERLAY_TYPE.tag.group
-        && tag.group <= dictionary::OVERLAY_TYPE.tag.group + 0xFF
-        && tag.element == dictionary::OVERLAY_TYPE.tag.element =>
+      if tag.group >= OVERLAY_TYPE.tag.group
+        && tag.group <= OVERLAY_TYPE.tag.group + 0xFF
+        && tag.element == OVERLAY_TYPE.tag.element =>
     {
       match value {
         "G" => Ok("Graphics"),

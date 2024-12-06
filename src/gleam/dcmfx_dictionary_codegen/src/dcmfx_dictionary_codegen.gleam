@@ -5,9 +5,17 @@ import gleam/int
 import gleam/io
 import gleam/json
 import gleam/list
+import gleam/option.{type Option, None, Some}
 import gleam/set
 import gleam/string
 import simplifile
+
+type TargetLanguage {
+  Gleam
+  Rust
+}
+
+const target_language = Gleam
 
 pub fn main() {
   let dictionary_items = read_attributes_json()
@@ -84,9 +92,12 @@ fn read_attributes_json() -> List(DictionaryItem) {
         |> string.replace("CTXRay", "CT_XRay")
         |> string.replace("DVHROI", "DVH_ROI")
         |> insert_underscores_in_keyword("")
-        |> string.lowercase
+        |> case target_language {
+          Gleam -> string.lowercase
+          Rust -> string.uppercase
+        }
 
-      DictionaryItem(..attribute, keyword: keyword)
+      DictionaryItem(..attribute, keyword:)
     })
 
   // Sort by tag
@@ -163,25 +174,57 @@ fn generate_constants(dictionary_items: List(DictionaryItem)) -> Nil {
     let group = string.slice(tag, 1, 4)
     let element = string.slice(tag, 6, 4)
 
-    let item_code =
-      item_constructor(
-        "DataElementTag(0x" <> group <> ", 0x" <> element <> ")",
-        item,
-      )
+    case target_language {
+      Gleam -> {
+        let tag = "DataElementTag(0x" <> group <> ", 0x" <> element <> ")"
+        let item_code = item_constructor(tag, item)
 
-    io.println("pub const " <> item.keyword <> " = " <> item_code)
+        io.println("pub const " <> item.keyword <> " = " <> item_code)
+      }
+      Rust -> {
+        let tag =
+          "DataElementTag { group: 0x"
+          <> group
+          <> ", element: 0x"
+          <> element
+          <> " }"
+        let item_code = item_constructor(tag, item)
+
+        io.println(
+          "\npub const " <> item.keyword <> ": Item = " <> item_code <> ";",
+        )
+      }
+    }
   })
 }
 
 fn item_constructor(tag: String, item: DictionaryItem) -> String {
-  let args = [
-    tag,
-    "\"" <> string.replace(item.name, "\\", "\\\\") <> "\"",
-    convert_value_representation(item.value_representation),
-    convert_value_multiplicity(item.value_multiplicity),
-  ]
+  case target_language {
+    Gleam -> {
+      let args = [
+        tag,
+        "\"" <> string.replace(item.name, "\\", "\\\\") <> "\"",
+        convert_value_representation(item.value_representation),
+        convert_value_multiplicity(item.value_multiplicity),
+      ]
 
-  "Item(" <> string.join(args, ", ") <> ")"
+      "Item(" <> string.join(args, ", ") <> ")"
+    }
+
+    Rust -> {
+      let args = [
+        case tag {
+          "tag" -> "tag"
+          _ -> "tag: " <> tag
+        },
+        "name: \"" <> string.replace(item.name, "\\", "\\\\") <> "\"",
+        "vrs: &" <> convert_value_representation(item.value_representation),
+        "multiplicity: " <> convert_value_multiplicity(item.value_multiplicity),
+      ]
+
+      "Item {\n" <> string.join(args, ",\n") <> "\n}"
+    }
+  }
 }
 
 /// Prints code for the dictionary.find() function.
@@ -193,18 +236,39 @@ fn generate_find_function(dictionary_items: List(DictionaryItem)) -> Nil {
     |> list.map(fn(item) { string.slice(item.tag, 1, 4) })
     |> set.from_list
     |> set.to_list
-    |> list.filter(fn(tag) { !string.contains(tag, "X") })
+    |> list.filter(fn(group) {
+      use <- bool.guard(string.contains(group, "X"), False)
+
+      dictionary_items
+      |> list.any(fn(item) {
+        string.slice(item.tag, 1, 4) == group && !string.contains(item.tag, "X")
+      })
+    })
     |> list.sort(string.compare)
 
   // Generate a find function for each simple group
   simple_groups
   |> list.each(fn(group) {
-    { "
+    io.println("
 /// Returns details for a data element in group 0x" <> group <> ".
 ///
-fn find_element_in_group_" <> string.lowercase(group) <> "(element: Int) -> Result(Item, Nil) {
-  case element {" }
-    |> io.println
+" <> case target_language {
+      Gleam ->
+        "fn find_element_in_group_"
+        <> string.lowercase(group)
+        <> "(element: Int) -> Result(Item, Nil) {
+  case element {"
+      Rust ->
+        "fn find_element_in_group_"
+        <> string.lowercase(group)
+        <> "(element: u16) -> Result<Item, ()> {
+  match element {"
+    })
+
+    let arrow = case target_language {
+      Gleam -> "->"
+      Rust -> "=>"
+    }
 
     dictionary_items
     |> list.each(fn(item) {
@@ -213,43 +277,73 @@ fn find_element_in_group_" <> string.lowercase(group) <> "(element: Int) -> Resu
 
       let element = "0x" <> string.slice(item.tag, 6, 4)
 
-      { "    " <> element <> " -> Ok(" <> item.keyword <> ")" }
-      |> io.println
+      io.println(
+        "    "
+        <> element
+        <> " "
+        <> arrow
+        <> " Ok("
+        <> item.keyword
+        <> ")"
+        <> case target_language {
+          Gleam -> ""
+          Rust -> ","
+        },
+      )
     })
 
-    "
-    _ -> Error(Nil)
-  }
-}"
-    |> io.println
+    let e = case target_language {
+      Gleam -> "Error(Nil)"
+      Rust -> "Err(())"
+    }
+
+    io.println("    _ " <> arrow <> " " <> e <> "\n  }\n}")
   })
 
-  "
+  io.println("
 /// Returns details for a data element based on a tag. The private creator is
 /// required in order to look up well-known privately defined data elements.
 ///
-pub fn find(tag: DataElementTag, private_creator: Option(String)) -> Result(Item, Nil) {
-  case tag.group {
+" <> case target_language {
+    Gleam ->
+      "pub fn find(tag: DataElementTag, private_creator: Option(String)) -> Result(Item, Nil) {
+  case tag.group {"
+    Rust ->
+      "pub fn find(tag: DataElementTag, private_creator: Option<&str>) -> Result<Item, ()> {
+  match tag.group {
   "
-  |> io.println
+  })
+
+  let arrow = case target_language {
+    Gleam -> "->"
+    Rust -> "=>"
+  }
+
+  let match_arm_separator = case target_language {
+    Gleam -> ""
+    Rust -> ","
+  }
 
   // Handle simple groups with no ranges by passing off to their helper function
   simple_groups
   |> list.each(fn(group) {
-    {
+    io.println(
       "0x"
       <> group
-      <> " -> find_element_in_group_"
+      <> " "
+      <> arrow
+      <> " find_element_in_group_"
       <> string.lowercase(group)
       <> "(tag.element)"
-    }
-    |> io.println
+      <> match_arm_separator,
+    )
   })
 
   // Now handle remaining dictionary items that specify a range of some kind
-  "
-    _ ->  case tag.group, tag.element {"
-  |> io.println
+  io.println(case target_language {
+    Gleam -> "\n    _ -> case tag.group, tag.element {"
+    Rust -> "\n    _ => match (tag.group, tag.element) {"
+  })
 
   // Print cases for the dictionary items with ranges simple enough to be
   // handled as a single case
@@ -262,19 +356,22 @@ pub fn find(tag: DataElementTag, private_creator: Option(String)) -> Result(Item
     let group = "0x" <> string.slice(dictionary_item.tag, 1, 4)
     let element = "0x" <> string.slice(dictionary_item.tag, 6, 4)
 
-    {
+    io.print(
       "\n    // Handle the '"
       <> dictionary_item.tag
       <> " "
       <> dictionary_item.name
       <> "' range of data elements"
-      <> "\n    "
-    }
-    |> io.print
+      <> "\n    ",
+    )
 
     case dictionary_item.tag {
       "(0020,31XX)" ->
-        "0x0020, element if element >= 0x3100 && element <= 0x31FF"
+        case target_language {
+          Gleam -> "0x0020, element"
+          Rust -> "(0x0020, element)"
+        }
+        <> " if element >= 0x3100 && element <= 0x31FF"
 
       "(0028,04X0)"
       | "(0028,04X1)"
@@ -284,8 +381,11 @@ pub fn find(tag: DataElementTag, private_creator: Option(String)) -> Result(Item
       | "(0028,08X2)"
       | "(0028,08X3)"
       | "(0028,08X4)"
-      | "(0028,08X8)" -> {
-        "0x0028, element if "
+      | "(0028,08X8)" ->
+        case target_language {
+          Gleam -> "0x0028, element if "
+          Rust -> "(0x0028, element) if "
+        }
         <> {
           list.range(0, 15)
           |> list.map(fn(i) {
@@ -296,33 +396,42 @@ pub fn find(tag: DataElementTag, private_creator: Option(String)) -> Result(Item
           })
           |> string.join(" || ")
         }
-      }
 
-      "(1010,XXXX)" -> "0x1010, _"
+      "(1010,XXXX)" ->
+        case target_language {
+          Gleam -> "0x1010, _"
+          Rust -> "(0x1010, _)"
+        }
 
-      "(50XX," <> _ | "(60XX," <> _ | "(7FXX," <> _ -> {
-        "group, "
-        <> element
+      "(50XX," <> _ | "(60XX," <> _ | "(7FXX," <> _ ->
+        case target_language {
+          Gleam -> "group, " <> element
+          Rust -> "(group, " <> element <> ")"
+        }
         <> " if group >= "
         <> string.slice(group, 0, 4)
         <> "00 && group <= "
         <> string.slice(group, 0, 4)
         <> "FF"
-      }
 
       _ -> panic as { "Range not handled: " <> dictionary_item.tag }
     }
     |> io.print
 
-    io.println(" -> Ok(Item(.." <> dictionary_item.keyword <> ", tag: tag))")
+    case target_language {
+      Gleam -> " -> Ok(Item(.." <> dictionary_item.keyword <> ", tag: tag))"
+      Rust -> " => Ok(Item{tag, .." <> dictionary_item.keyword <> "}),"
+    }
+    |> io.println
   })
 
   // Print custom handler for the (1000,XXXY) range
-  "
-    // Handle the '(1000,XXXY)' range of data elements, where Y is in the range 0-5
-    0x1000, element -> case element % 16 {
-"
-  |> io.print
+  io.println("
+      // Handle the '(1000,XXXY)' range of data elements, where Y is in the range 0-5
+      " <> case target_language {
+    Gleam -> "0x1000, element -> case element % 16 {"
+    Rust -> "(0x1000, element) => match element % 16 {"
+  })
 
   list.range(0, 5)
   |> list.map(fn(i) {
@@ -333,22 +442,33 @@ pub fn find(tag: DataElementTag, private_creator: Option(String)) -> Result(Item
 
     "      "
     <> int.to_string(i)
-    <> " -> Ok(Item(.."
+    <> case target_language {
+      Gleam -> " -> Ok(Item(.."
+      Rust -> " => Ok(Item{tag, .."
+    }
     <> item.keyword
-    <> ", tag: tag))"
+    <> case target_language {
+      Gleam -> ", tag: tag))"
+      Rust -> "}),"
+    }
   })
   |> string.join("\n")
   |> io.print
 
-  "
-      _ -> Error(Nil)
+  { "
+      _ " <> case target_language {
+      Gleam -> "-> Error(Nil)"
+      Rust -> "=> Err(())"
+    } <> "
     }
-      "
+      " }
   |> io.print
 
   // Print custom handler for the (gggg,00XX) range
-  "
-      // Handle private range tags
+  case target_language {
+    Gleam -> {
+      "
+    // Handle private range tags
       _, _ -> {
         // Check this is a private range tag
         use <- bool.guard(!data_element_tag.is_private(tag), Error(Nil))
@@ -357,19 +477,19 @@ pub fn find(tag: DataElementTag, private_creator: Option(String)) -> Result(Item
         // Ref: PS3.5 7.8.1.
         use <- bool.guard(data_element_tag.is_private_creator(tag), Ok(
           "
-  |> io.print
+      |> io.print
 
-  DictionaryItem(
-    tag: "",
-    name: "Private Creator",
-    keyword: "",
-    value_representation: "LO",
-    value_multiplicity: "1",
-  )
-  |> item_constructor("tag", _)
-  |> io.print
+      DictionaryItem(
+        tag: "",
+        name: "Private Creator",
+        keyword: "",
+        value_representation: "LO",
+        value_multiplicity: "1",
+      )
+      |> item_constructor("tag", _)
+      |> io.print
 
-  "
+      "
         ))
 
         // Handle other private range tags
@@ -381,25 +501,66 @@ pub fn find(tag: DataElementTag, private_creator: Option(String)) -> Result(Item
     }
   }
 }"
-  |> io.print
+      |> io.println
+    }
+    Rust ->
+      "
+      // Handle private range tags
+      _ => {
+        // Check this is a private range tag
+        if !tag.is_private() {
+          return Err(());
+        }
+
+        // Handle the '(gggg,00XX) Private Creator' data elements.
+        // Ref: PS3.5 7.8.1.
+        if tag.is_private_creator() {
+          return Ok(Item {
+            tag,
+            name: \"Private Creator\",
+            vrs: &[ValueRepresentation::LongString],
+            multiplicity: VM_1,
+          });
+        }
+
+        // Handle other private range tags
+        match private_creator {
+          Some(private_creator) => find_private(tag, private_creator),
+          None => Err(())
+        }
+      }
+    }
+  }
+}"
+      |> io.println
+  }
 }
 
 /// Prints code for the dictionary.find_private() function.
 ///
 fn generate_find_private_function(private_tags: PrivateTags) -> Nil {
-  io.println(
-    "
+  io.println("
 /// Returns details for a well-known privately defined data element.
-///
-fn find_private(tag: DataElementTag, private_creator: String) -> Result(Item, Nil) {
+///\n" <> case target_language {
+    Gleam ->
+      "fn find_private(tag: DataElementTag, private_creator: String) -> Result(Item, Nil) {
   // Get the high and low bytes of the group and element to match against
   let g0 = int.bitwise_shift_right(tag.group, 8)
   let g1 = int.bitwise_and(tag.group, 0xFF)
   let e0 = int.bitwise_shift_right(tag.element, 8)
   let e1 = int.bitwise_and(tag.element, 0xFF)
 
-  case private_creator {",
-  )
+  case private_creator {"
+    Rust ->
+      "fn find_private(tag: DataElementTag, private_creator: &str) -> Result<Item, ()> {
+  // Get the high and low bytes of the group and element to match against
+  let g0 = tag.group >> 8;
+  let g1 = tag.group & 0xFF;
+  let e0 = tag.element >> 8;
+  let e1 = tag.element & 0xFF;
+
+  match private_creator {"
+  })
 
   private_tags
   |> dict.keys
@@ -413,45 +574,94 @@ fn find_private(tag: DataElementTag, private_creator: String) -> Result(Item, Ni
       |> dict.filter(fn(tag, _) { string.slice(tag, 4, 1) != "0" })
     use <- bool.guard(dict.is_empty(private_creator_tags), Nil)
 
-    io.println("    \"" <> name <> "\" ->")
-    io.println("      case g0, g1, e0, e1 {")
+    case target_language {
+      Gleam -> {
+        io.println("    \"" <> name <> "\" ->")
+        io.println("      case g0, g1, e0, e1 {")
+      }
+      Rust -> {
+        io.println("    \"" <> name <> "\" =>")
+        io.println("      match (g0, g1, e0, e1) {")
+      }
+    }
 
     private_creator_tags
     |> dict.keys()
     |> list.each(fn(tag) {
       // Match on this tag's bytes, where 'xx' is a wildcard
       io.print("        ")
+      case target_language {
+        Gleam -> io.print("")
+        Rust -> io.print("(")
+      }
+
+      let separator = case target_language {
+        Gleam -> ", "
+        Rust -> ""
+      }
+
       [0, 2, 4, 6]
       |> list.each(fn(i) {
         case string.slice(tag, i, 2) {
-          "xx" -> "_, "
-          b -> "0x" <> b <> ", "
+          "xx" -> "_" <> separator
+          b -> "0x" <> b <> "" <> separator
         }
         |> io.print
+
+        case target_language {
+          Gleam -> Nil
+          Rust ->
+            case i {
+              6 -> ""
+              _ -> ", "
+            }
+            |> io.print
+        }
       })
 
       // Print entry
       let assert Ok([vrs, multiplicity, name, _private]) =
         dict.get(private_creator_tags, tag)
-      io.print(" -> Ok(")
-      DictionaryItem(
-        tag: "",
-        name: name,
-        keyword: "",
-        value_representation: vrs,
-        value_multiplicity: multiplicity,
-      )
-      |> item_constructor("tag", _)
+      case target_language {
+        Gleam -> " -> Ok("
+        Rust -> ") => Ok("
+      }
+      |> io.print()
+
+      let item =
+        DictionaryItem(
+          tag: "",
+          name: name,
+          keyword: "",
+          value_representation: vrs,
+          value_multiplicity: multiplicity,
+        )
+
+      item_constructor("tag", item)
       |> io.print
 
-      io.println(")")
+      case target_language {
+        Gleam -> io.println(")")
+        Rust -> io.println("),")
+      }
     })
 
-    io.println("        _, _, _, _ -> Error(Nil)")
-    io.println("      }")
+    case target_language {
+      Gleam -> {
+        io.println("        _, _, _, _ -> Error(Nil)")
+        io.println("      }")
+      }
+      Rust -> {
+        io.println("        _ => Err(()),")
+        io.println("      },")
+      }
+    }
   })
 
-  io.println("    _ -> Error(Nil)")
+  case target_language {
+    Gleam -> io.println("    _ -> Error(Nil)")
+    Rust -> io.println("    _ => Err(())")
+  }
   io.println("  }")
   io.println("}")
 }
@@ -459,51 +669,60 @@ fn find_private(tag: DataElementTag, private_creator: String) -> Result(Item, Ni
 /// Returns the code for a value representation.
 ///
 fn convert_value_representation(vr: String) -> String {
-  case vr {
-    "AE" -> "[ApplicationEntity]"
-    "AS" -> "[AgeString]"
-    "AT" -> "[AttributeTag]"
-    "CS" -> "[CodeString]"
-    "DA" -> "[Date]"
-    "DS" -> "[DecimalString]"
-    "DT" -> "[DateTime]"
-    "FD" -> "[FloatingPointDouble]"
-    "FL" -> "[FloatingPointSingle]"
-    "IS" -> "[IntegerString]"
-    "LO" -> "[LongString]"
-    "LT" -> "[LongText]"
-    "OB" -> "[OtherByteString]"
-    "OD" -> "[OtherDoubleString]"
-    "OF" -> "[OtherFloatString]"
-    "OL" -> "[OtherLongString]"
-    "OV" -> "[OtherVeryLongString]"
-    "OW" -> "[OtherWordString]"
-    "PN" -> "[PersonName]"
-    "SH" -> "[ShortString]"
-    "SL" -> "[SignedLong]"
-    "SQ" -> "[Sequence]"
-    "SS" -> "[SignedShort]"
-    "ST" -> "[ShortText]"
-    "SV" -> "[SignedVeryLong]"
-    "TM" -> "[Time]"
-    "UC" -> "[UnlimitedCharacters]"
-    "UI" -> "[UniqueIdentifier]"
-    "UL" -> "[UnsignedLong]"
-    "UN" -> "[Unknown]"
-    "UR" -> "[UniversalResourceIdentifier]"
-    "US" -> "[UnsignedShort]"
-    "UT" -> "[UnlimitedText]"
-    "UV" -> "[UnsignedVeryLong]"
+  let prefix = case target_language {
+    Gleam -> ""
+    Rust -> "ValueRepresentation::"
+  }
 
-    "OB_OW" | "OB or OW" -> "[OtherByteString, OtherWordString]"
-    "US or SS" -> "[UnsignedShort, SignedShort]"
+  case vr {
+    "AE" -> "[" <> prefix <> "ApplicationEntity]"
+    "AS" -> "[" <> prefix <> "AgeString]"
+    "AT" -> "[" <> prefix <> "AttributeTag]"
+    "CS" -> "[" <> prefix <> "CodeString]"
+    "DA" -> "[" <> prefix <> "Date]"
+    "DS" -> "[" <> prefix <> "DecimalString]"
+    "DT" -> "[" <> prefix <> "DateTime]"
+    "FD" -> "[" <> prefix <> "FloatingPointDouble]"
+    "FL" -> "[" <> prefix <> "FloatingPointSingle]"
+    "IS" -> "[" <> prefix <> "IntegerString]"
+    "LO" -> "[" <> prefix <> "LongString]"
+    "LT" -> "[" <> prefix <> "LongText]"
+    "OB" -> "[" <> prefix <> "OtherByteString]"
+    "OD" -> "[" <> prefix <> "OtherDoubleString]"
+    "OF" -> "[" <> prefix <> "OtherFloatString]"
+    "OL" -> "[" <> prefix <> "OtherLongString]"
+    "OV" -> "[" <> prefix <> "OtherVeryLongString]"
+    "OW" -> "[" <> prefix <> "OtherWordString]"
+    "PN" -> "[" <> prefix <> "PersonName]"
+    "SH" -> "[" <> prefix <> "ShortString]"
+    "SL" -> "[" <> prefix <> "SignedLong]"
+    "SQ" -> "[" <> prefix <> "Sequence]"
+    "SS" -> "[" <> prefix <> "SignedShort]"
+    "ST" -> "[" <> prefix <> "ShortText]"
+    "SV" -> "[" <> prefix <> "SignedVeryLong]"
+    "TM" -> "[" <> prefix <> "Time]"
+    "UC" -> "[" <> prefix <> "UnlimitedCharacters]"
+    "UI" -> "[" <> prefix <> "UniqueIdentifier]"
+    "UL" -> "[" <> prefix <> "UnsignedLong]"
+    "UN" -> "[" <> prefix <> "Unknown]"
+    "UR" -> "[" <> prefix <> "UniversalResourceIdentifier]"
+    "US" -> "[" <> prefix <> "UnsignedShort]"
+    "UT" -> "[" <> prefix <> "UnlimitedText]"
+    "UV" -> "[" <> prefix <> "UnsignedVeryLong]"
+
+    "OB_OW" | "OB or OW" ->
+      "[" <> prefix <> "OtherByteString, " <> prefix <> "OtherWordString]"
+    "US or SS" -> "[" <> prefix <> "UnsignedShort, " <> prefix <> "SignedShort]"
     "US or OW" ->
-      "[value_representation.UnsignedShort, "
-      <> "value_representation.OtherWordString]"
+      "[" <> prefix <> "UnsignedShort, " <> prefix <> "OtherWordString]"
     "US or SS or OW" ->
-      "[value_representation.UnsignedShort, "
-      <> "value_representation.SignedShort, "
-      <> "value_representation.OtherWordString]"
+      "["
+      <> prefix
+      <> "UnsignedShort, "
+      <> prefix
+      <> "SignedShort, "
+      <> prefix
+      <> "OtherWordString]"
 
     "See Note 2" -> "[]"
 
@@ -514,41 +733,62 @@ fn convert_value_representation(vr: String) -> String {
 /// Returns the code for a value multiplicity.
 ///
 fn convert_value_multiplicity(value_multiplicity: String) -> String {
+  let multiplicity_constant = fn(constant: String) {
+    case target_language {
+      Gleam -> constant
+      Rust -> constant |> string.uppercase
+    }
+  }
+
+  let multiplicity = fn(min: Int, max: Option(Int)) {
+    let min = int.to_string(min)
+
+    let max = case max {
+      None -> "None"
+      Some(i) -> "Some(" <> int.to_string(i) <> ")"
+    }
+
+    case target_language {
+      Gleam -> "ValueMultiplicity(" <> min <> ", " <> max <> ")"
+      Rust -> "ValueMultiplicity{min:" <> min <> ", max:" <> max <> "}"
+    }
+  }
+
   case value_multiplicity {
-    "1" -> "vm_1"
-    "2" -> "vm_2"
-    "3" -> "vm_3"
-    "4" -> "vm_4"
-    "5" -> "vm_5"
-    "6" -> "vm_6"
-    "8" -> "ValueMultiplicity(8, Some(8))"
-    "9" -> "ValueMultiplicity(9, Some(9))"
-    "10" -> "ValueMultiplicity(10, Some(10))"
-    "12" -> "ValueMultiplicity(12, Some(12))"
-    "16" -> "ValueMultiplicity(16, Some(16))"
-    "18" -> "ValueMultiplicity(18, Some(18))"
-    "24" -> "ValueMultiplicity(24, Some(24))"
-    "28" -> "ValueMultiplicity(28, Some(28))"
-    "35" -> "ValueMultiplicity(35, Some(35))"
-    "256" -> "ValueMultiplicity(256, Some(256))"
-    "1-2" -> "vm_1_to_2"
-    "1-3" -> "ValueMultiplicity(1, Some(3))"
-    "1-4" -> "ValueMultiplicity(1, Some(4))"
-    "1-8" -> "ValueMultiplicity(1, Some(8))"
-    "1-99" -> "ValueMultiplicity(1, Some(99))"
-    "1-32" -> "ValueMultiplicity(1, Some(32))"
-    "1-5" -> "ValueMultiplicity(1, Some(5))"
-    "2-4" -> "ValueMultiplicity(2, Some(4))"
-    "3-4" -> "ValueMultiplicity(3, Some(4))"
-    "4-5" -> "ValueMultiplicity(4, Some(5))"
-    "1-n" | "1-n or 1" -> "vm_1_to_n"
-    "2-n" | "2-2n" -> "vm_2_to_n"
-    "3-n" | "3-3n" -> "vm_3_to_n"
-    "4-4n" -> "ValueMultiplicity(4, None)"
-    "6-n" | "6-6n" -> "ValueMultiplicity(6, None)"
-    "7-n" | "7-7n" -> "ValueMultiplicity(7, None)"
-    "30-30n" -> "ValueMultiplicity(30, None)"
-    "47-47n" -> "ValueMultiplicity(47, None)"
+    "1" -> multiplicity_constant("vm_1")
+    "2" -> multiplicity_constant("vm_2")
+    "3" -> multiplicity_constant("vm_3")
+    "4" -> multiplicity_constant("vm_4")
+    "5" -> multiplicity_constant("vm_5")
+    "6" -> multiplicity_constant("vm_6")
+    "8" -> multiplicity(8, Some(8))
+    "9" -> multiplicity(9, Some(9))
+    "10" -> multiplicity(10, Some(10))
+    "12" -> multiplicity(12, Some(12))
+    "16" -> multiplicity(16, Some(16))
+    "18" -> multiplicity(18, Some(18))
+    "24" -> multiplicity(24, Some(24))
+    "28" -> multiplicity(28, Some(28))
+    "35" -> multiplicity(35, Some(35))
+    "256" -> multiplicity(256, Some(256))
+    "1-2" -> multiplicity_constant("vm_1_to_2")
+    "1-3" -> multiplicity(1, Some(3))
+    "1-4" -> multiplicity(1, Some(4))
+    "1-8" -> multiplicity(1, Some(8))
+    "1-99" -> multiplicity(1, Some(99))
+    "1-32" -> multiplicity(1, Some(32))
+    "1-5" -> multiplicity(1, Some(5))
+    "2-4" -> multiplicity(2, Some(4))
+    "3-4" -> multiplicity(3, Some(4))
+    "4-5" -> multiplicity(4, Some(5))
+    "1-n" | "1-n or 1" -> multiplicity_constant("vm_1_to_n")
+    "2-n" | "2-2n" -> multiplicity_constant("vm_2_to_n")
+    "3-n" | "3-3n" -> multiplicity_constant("vm_3_to_n")
+    "4-4n" -> multiplicity(4, None)
+    "6-n" | "6-6n" -> multiplicity(6, None)
+    "7-n" | "7-7n" -> multiplicity(7, None)
+    "30-30n" -> multiplicity(30, None)
+    "47-47n" -> multiplicity(47, None)
 
     _ -> panic as { "Unknown value multiplicity: " <> value_multiplicity }
   }
@@ -591,20 +831,35 @@ fn read_uid_definitions_json() -> List(UidDefinition) {
 fn generate_uid_name_function() {
   let uid_definitions = read_uid_definitions_json()
 
-  io.println(
-    "
+  io.println("
 /// Returns the display name for a UID defined in the DICOM standard.
-///
+///" <> case target_language {
+    Gleam ->
+      "
 pub fn uid_name(uid: String) -> Result(String, Nil) {
-  case uid {",
-  )
+  case uid {"
+    Rust ->
+      "
+#[allow(clippy::result_unit_err)]
+pub fn uid_name(uid: &str) -> Result<&'static str, ()> {
+  match uid {"
+  })
 
   uid_definitions
   |> list.each(fn(n) {
-    io.println("    \"" <> n.uid <> "\" -> Ok(\"" <> n.name <> "\")")
+    case target_language {
+      Gleam -> "    \"" <> n.uid <> "\" -> Ok(\"" <> n.name <> "\")"
+      Rust -> "    \"" <> n.uid <> "\" => Ok(\"" <> n.name <> "\"),"
+    }
+    |> io.println
   })
 
-  io.println("    _ -> Error(Nil)")
+  case target_language {
+    Gleam -> "    _ -> Error(Nil)"
+    Rust -> "    _ => Err(())"
+  }
+  |> io.println
+
   io.println("  }")
   io.println("}")
 }

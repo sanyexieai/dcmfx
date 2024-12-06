@@ -20,7 +20,10 @@ pub struct StructuredDateTime {
 
 static PARSE_DATE_TIME_REGEX: std::sync::LazyLock<Regex> =
   std::sync::LazyLock::new(|| {
-    Regex::new("^(\\d{4})((\\d{2})((\\d{2})((\\d{2})((\\d{2})((\\d{2})(\\.\\d{1,6})?)?)?)?)?)?([\\+\\-]\\d{4})?$").unwrap()
+    Regex::new(
+      "^(\\d{4})((\\d{2})((\\d{2})((\\d{2})((\\d{2})((\\d{2})(\\.\\d{1,6})?)?)?)?)?)?([\\+\\-]\\d{4})?$",
+    )
+    .unwrap()
   });
 
 impl StructuredDateTime {

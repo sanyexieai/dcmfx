@@ -416,67 +416,72 @@ fn fragments_to_frames_using_extended_offset_table<'a>(
 /// returned.
 ///
 pub fn file_extension_for_transfer_syntax(ts: &TransferSyntax) -> &'static str {
+  use transfer_syntax as ts;
+
   match ts {
     // JPEG and JPEG Lossless use the .jpg extension
-    ts
-      if ts == &transfer_syntax::JPEG_BASELINE_8BIT
-      || ts == &transfer_syntax::JPEG_EXTENDED_12BIT
-      || ts == &transfer_syntax::JPEG_LOSSLESS_NON_HIERARCHICAL
-      || ts == &transfer_syntax::JPEG_LOSSLESS_NON_HIERARCHICAL_SV1
-    => ".jpg",
+    ts if ts == &ts::JPEG_BASELINE_8BIT
+      || ts == &ts::JPEG_EXTENDED_12BIT
+      || ts == &ts::JPEG_LOSSLESS_NON_HIERARCHICAL
+      || ts == &ts::JPEG_LOSSLESS_NON_HIERARCHICAL_SV1 =>
+    {
+      ".jpg"
+    }
 
     // JPEG-LS uses the .jls extension
-    ts
-      if ts == &transfer_syntax::JPEG_LS_LOSSLESS
-      || ts == &transfer_syntax::JPEG_LS_LOSSY_NEAR_LOSSLESS
-    => ".jls",
+    ts if ts == &ts::JPEG_LS_LOSSLESS
+      || ts == &ts::JPEG_LS_LOSSY_NEAR_LOSSLESS =>
+    {
+      ".jls"
+    }
 
     // JPEG 2000 uses the .jp2 extension
-    ts
-      if ts == &transfer_syntax::JPEG_2K_LOSSLESS_ONLY
-      || ts == &transfer_syntax::JPEG_2K
-      || ts == &transfer_syntax::JPEG_2K_MULTI_COMPONENT_LOSSLESS_ONLY
-      || ts == &transfer_syntax::JPEG_2K_MULTI_COMPONENT
-    => ".jp2",
+    ts if ts == &ts::JPEG_2K_LOSSLESS_ONLY
+      || ts == &ts::JPEG_2K
+      || ts == &ts::JPEG_2K_MULTI_COMPONENT_LOSSLESS_ONLY
+      || ts == &ts::JPEG_2K_MULTI_COMPONENT =>
+    {
+      ".jp2"
+    }
 
     // MPEG-2 uses the .mp2 extension
-    ts
-      if ts == &transfer_syntax::MPEG2_MAIN_PROFILE_MAIN_LEVEL
-      || ts == &transfer_syntax::FRAGMENTABLE_MPEG2_MAIN_PROFILE_MAIN_LEVEL
-      || ts == &transfer_syntax::MPEG2_MAIN_PROFILE_HIGH_LEVEL
-      || ts == &transfer_syntax::FRAGMENTABLE_MPEG2_MAIN_PROFILE_HIGH_LEVEL
-    => ".mp2",
+    ts if ts == &ts::MPEG2_MAIN_PROFILE_MAIN_LEVEL
+      || ts == &ts::FRAGMENTABLE_MPEG2_MAIN_PROFILE_MAIN_LEVEL
+      || ts == &ts::MPEG2_MAIN_PROFILE_HIGH_LEVEL
+      || ts == &ts::FRAGMENTABLE_MPEG2_MAIN_PROFILE_HIGH_LEVEL =>
+    {
+      ".mp2"
+    }
 
     // MPEG-4 uses the .mp4 extension
-    ts
-      if ts == &transfer_syntax::MPEG4_AVC_H264_HIGH_PROFILE
-      || ts == &transfer_syntax::FRAGMENTABLE_MPEG4_AVC_H264_HIGH_PROFILE
-      || ts == &transfer_syntax::MPEG4_AVC_H264_BD_COMPATIBLE_HIGH_PROFILE
-      || ts
-      == &transfer_syntax::FRAGMENTABLE_MPEG4_AVC_H264_BD_COMPATIBLE_HIGH_PROFILE
-      || ts == &transfer_syntax::MPEG4_AVC_H264_HIGH_PROFILE_FOR_2D_VIDEO
-      || ts
-      == &transfer_syntax::FRAGMENTABLE_MPEG4_AVC_H264_HIGH_PROFILE_FOR_2D_VIDEO
-      || ts == &transfer_syntax::MPEG4_AVC_H264_HIGH_PROFILE_FOR_3D_VIDEO
-      || ts
-      == &transfer_syntax::FRAGMENTABLE_MPEG4_AVC_H264_HIGH_PROFILE_FOR_3D_VIDEO
-      || ts == &transfer_syntax::MPEG4_AVC_H264_STEREO_HIGH_PROFILE
-      || ts == &transfer_syntax::FRAGMENTABLE_MPEG4_AVC_H264_STEREO_HIGH_PROFILE
-    => ".mp4",
+    ts if ts == &ts::MPEG4_AVC_H264_HIGH_PROFILE
+      || ts == &ts::FRAGMENTABLE_MPEG4_AVC_H264_HIGH_PROFILE
+      || ts == &ts::MPEG4_AVC_H264_BD_COMPATIBLE_HIGH_PROFILE
+      || ts == &ts::FRAGMENTABLE_MPEG4_AVC_H264_BD_COMPATIBLE_HIGH_PROFILE
+      || ts == &ts::MPEG4_AVC_H264_HIGH_PROFILE_FOR_2D_VIDEO
+      || ts == &ts::FRAGMENTABLE_MPEG4_AVC_H264_HIGH_PROFILE_FOR_2D_VIDEO
+      || ts == &ts::MPEG4_AVC_H264_HIGH_PROFILE_FOR_3D_VIDEO
+      || ts == &ts::FRAGMENTABLE_MPEG4_AVC_H264_HIGH_PROFILE_FOR_3D_VIDEO
+      || ts == &ts::MPEG4_AVC_H264_STEREO_HIGH_PROFILE
+      || ts == &ts::FRAGMENTABLE_MPEG4_AVC_H264_STEREO_HIGH_PROFILE =>
+    {
+      ".mp4"
+    }
 
     // HEVC/H.265 also uses the .mp4 extension
-    ts
-      if ts == &transfer_syntax::HEVC_H265_MAIN_PROFILE
-      || ts == &transfer_syntax::HEVC_H265_MAIN_10_PROFILE
-    => ".mp4",
+    ts if ts == &ts::HEVC_H265_MAIN_PROFILE
+      || ts == &ts::HEVC_H265_MAIN_10_PROFILE =>
+    {
+      ".mp4"
+    }
 
     // High-Throughput JPEG 2000 uses the .jph extension
-    ts
-      if ts == &transfer_syntax::HIGH_THROUGHPUT_JPEG_2K_LOSSLESS_ONLY
-      || ts
-      == &transfer_syntax::HIGH_THROUGHPUT_JPEG_2K_WITH_RPCL_OPTIONS_LOSSLESS_ONLY
-      || ts == &transfer_syntax::HIGH_THROUGHPUT_JPEG_2K
-    => ".jph",
+    ts if ts == &ts::HIGH_THROUGHPUT_JPEG_2K_LOSSLESS_ONLY
+      || ts == &ts::HIGH_THROUGHPUT_JPEG_2K_WITH_RPCL_OPTIONS_LOSSLESS_ONLY
+      || ts == &ts::HIGH_THROUGHPUT_JPEG_2K =>
+    {
+      ".jph"
+    }
 
     // Everything else uses the .bin extension as there isn't a meaningful image
     // extension for them to use

@@ -20187,15 +20187,16 @@ pub const GENERALIZED_DEFECT_CORRECTED_SENSITIVITY_DEVIATION_VALUE: Item =
     multiplicity: VM_1,
   };
 
-pub const GENERALIZED_DEFECT_CORRECTED_SENSITIVITY_DEVIATION_PROBABILITY_VALUE: Item = Item {
-  tag: DataElementTag {
-    group: 0x0024,
-    element: 0x0104,
-  },
-  name: "Generalized Defect Corrected Sensitivity Deviation Probability Value",
-  vrs: &[ValueRepresentation::FloatingPointSingle],
-  multiplicity: VM_1,
-};
+pub const GENERALIZED_DEFECT_CORRECTED_SENSITIVITY_DEVIATION_PROBABILITY_VALUE: Item =
+  Item {
+    tag: DataElementTag {
+      group: 0x0024,
+      element: 0x0104
+    },
+    name: "Generalized Defect Corrected Sensitivity Deviation Probability Value",
+    vrs: &[ValueRepresentation::FloatingPointSingle],
+    multiplicity: VM_1,
+  };
 
 pub const MINIMUM_SENSITIVITY_VALUE: Item = Item {
   tag: DataElementTag {
@@ -110253,9 +110254,7 @@ pub fn uid_name(uid: &str) -> Result<&'static str, ()> {
     "1.2.840.10008.1.2.4.64" => Ok("JPEG Full Progression, Hierarchical (Process 25 and 27)"),
     "1.2.840.10008.1.2.4.65" => Ok("JPEG Lossless, Hierarchical (Process 28)"),
     "1.2.840.10008.1.2.4.66" => Ok("JPEG Lossless, Hierarchical (Process 29)"),
-    "1.2.840.10008.1.2.4.70" => {
-      Ok("JPEG Lossless, Non-Hierarchical, First-Order Prediction (Process 14 [Selection Value 1])")
-    }
+    "1.2.840.10008.1.2.4.70" => Ok("JPEG Lossless, Non-Hierarchical, First-Order Prediction (Process 14 [Selection Value 1])"),
     "1.2.840.10008.1.2.4.80" => Ok("JPEG-LS Lossless Image Compression"),
     "1.2.840.10008.1.2.4.81" => Ok("JPEG-LS Lossy (Near-Lossless) Image Compression"),
     "1.2.840.10008.1.2.4.90" => Ok("JPEG 2000 Image Compression (Lossless Only)"),
@@ -110363,9 +110362,7 @@ pub fn uid_name(uid: &str) -> Result<&'static str, ()> {
     "1.2.840.10008.15.1.1" => Ok("Universal Coordinated Time"),
     "1.2.840.10008.2.16.10" => Ok("Dublin Core"),
     "1.2.840.10008.2.16.11" => Ok("New York University Melanoma Clinical Cooperative Group"),
-    "1.2.840.10008.2.16.12" => {
-      Ok("Mayo Clinic Non-radiological Images Specific Body Structure Anatomical Surface Region Guide")
-    }
+    "1.2.840.10008.2.16.12" => Ok("Mayo Clinic Non-radiological Images Specific Body Structure Anatomical Surface Region Guide"),
     "1.2.840.10008.2.16.13" => Ok("Image Biomarker Standardisation Initiative"),
     "1.2.840.10008.2.16.14" => Ok("Radiomics Ontology"),
     "1.2.840.10008.2.16.15" => Ok("RadElement"),
@@ -110560,9 +110557,7 @@ pub fn uid_name(uid: &str) -> Result<&'static str, ()> {
     "1.2.840.10008.5.1.4.1.1.77.1.5.2" => Ok("Ophthalmic Photography 16 Bit Image Storage"),
     "1.2.840.10008.5.1.4.1.1.77.1.5.3" => Ok("Stereometric Relationship Storage"),
     "1.2.840.10008.5.1.4.1.1.77.1.5.4" => Ok("Ophthalmic Tomography Image Storage"),
-    "1.2.840.10008.5.1.4.1.1.77.1.5.5" => {
-      Ok("Wide Field Ophthalmic Photography Stereographic Projection Image Storage")
-    }
+    "1.2.840.10008.5.1.4.1.1.77.1.5.5" => Ok("Wide Field Ophthalmic Photography Stereographic Projection Image Storage"),
     "1.2.840.10008.5.1.4.1.1.77.1.5.6" => Ok("Wide Field Ophthalmic Photography 3D Coordinates Image Storage"),
     "1.2.840.10008.5.1.4.1.1.77.1.5.7" => Ok("Ophthalmic Optical Coherence Tomography En Face Image Storage"),
     "1.2.840.10008.5.1.4.1.1.77.1.5.8" => Ok("Ophthalmic Optical Coherence Tomography B-scan Volume Analysis Storage"),

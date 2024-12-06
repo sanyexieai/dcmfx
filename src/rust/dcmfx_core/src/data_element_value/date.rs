@@ -143,7 +143,7 @@ mod tests {
       Ok(StructuredDate {
         year: 2000,
         month: 1,
-        day: 2,
+        day: 2
       })
     );
 

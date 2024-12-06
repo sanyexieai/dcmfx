@@ -57,32 +57,33 @@ mod tests {
           Ok(()) => (),
 
           Err((dicom, DicomValidationError::LoadError { error })) => {
-            error.print(&format!("reading {:?}", dicom))
+            error.print(&format!("reading {:?}", dicom));
           }
 
           Err((dicom, DicomValidationError::PrintedOutputMissing)) => {
-            eprintln!("Error: No printed output file for {:?}", dicom)
+            eprintln!("Error: No printed output file for {:?}", dicom);
           }
 
           Err((dicom, DicomValidationError::PrintedOutputMismatch)) => {
             eprintln!(
-              "Error: printed output mismatch with {:?}, compare the two files \
-                for details",
+              "Error: printed output mismatch with {:?}, compare the two files",
               dicom
-            )
+            );
           }
 
           Err((dicom, DicomValidationError::JsonOutputMissing)) => {
-            eprintln!("Error: No JSON file for {:?}", dicom)
+            eprintln!("Error: No JSON file for {:?}", dicom);
           }
 
-          Err((dicom, DicomValidationError::JsonOutputMismatch)) => eprintln!(
-            "Error: JSON mismatch with {:?}, compare the two files for details",
-            dicom
-          ),
+          Err((dicom, DicomValidationError::JsonOutputMismatch)) => {
+            eprintln!(
+              "Error: JSON mismatch with {:?}, compare the two files",
+              dicom
+            );
+          }
 
           Err((dicom, DicomValidationError::RewriteMismatch)) => {
-            eprintln!("Error: Rewrite of {:?} was different", dicom)
+            eprintln!("Error: Rewrite of {:?} was different", dicom);
           }
 
           Err((dicom, DicomValidationError::JitteredReadError { error })) => {
