@@ -204,6 +204,7 @@ dependencies = [
  "dcmfx",
  "flate2",
  "libc",
+ "same-file",
 ]
 
 [[package]]
