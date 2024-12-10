@@ -103,7 +103,7 @@ jobs:
       - name: Set version number in Cargo.toml files
         working-directory: src/rust
         shell: bash
-        run: sed -i'' -E "s/^version = \"0.0.0\"/version = \"${{ needs.check_semantic_release.outputs.new_release_version }}\"/" dcmfx/Cargo.toml dcmfx_cli/Cargo.toml
+        run: find . -name "Cargo.toml" -exec sed -i'' -E "s/version = \"0.0.0\"/version = \"${{ needs.check_semantic_release.outputs.new_release_version }}\"/" {} +
 
       - name: Build release binary
         uses: clechasseur/rs-cargo@v2
