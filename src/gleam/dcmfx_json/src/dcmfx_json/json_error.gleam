@@ -18,7 +18,7 @@ pub type JsonSerializeError {
   /// is `PartStreamInvalid`, indicating that the stream of parts was not
   /// well-formed.
   ///
-  P10Error(P10Error)
+  P10Error(p10_error: P10Error)
 }
 
 /// Occurs when an error is encountered converting from the DICOM JSON model.
