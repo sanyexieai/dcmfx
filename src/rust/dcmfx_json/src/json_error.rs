@@ -30,6 +30,16 @@ pub enum JsonDeserializeError {
   JsonInvalid { details: String, path: DataSetPath },
 }
 
+impl std::fmt::Display for JsonSerializeError {
+  fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    match self {
+      JsonSerializeError::DataError(e) => e.fmt(f),
+      JsonSerializeError::P10Error(e) => e.fmt(f),
+      JsonSerializeError::IOError(e) => e.fmt(f),
+    }
+  }
+}
+
 impl std::fmt::Display for JsonDeserializeError {
   fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
     match self {

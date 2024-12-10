@@ -82,6 +82,12 @@ pub enum P10Error {
   OtherError { error_type: String, details: String },
 }
 
+impl std::fmt::Display for P10Error {
+  fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    write!(f, "DICOM P10 error: {}", self.name())
+  }
+}
+
 impl P10Error {
   /// Returns the name of the error as a human-readable string.
   ///
