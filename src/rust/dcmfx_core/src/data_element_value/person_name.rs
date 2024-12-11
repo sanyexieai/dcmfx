@@ -79,10 +79,8 @@ fn parse_person_name_string(
 fn parse_person_name_component_group(
   component_group: &str,
 ) -> Result<Option<PersonNameComponents>, DataError> {
-  let mut components: Vec<String> = component_group
-    .split('^')
-    .map(|s| s.trim_end().to_string())
-    .collect();
+  let mut components: Vec<&str> =
+    component_group.split('^').map(|s| s.trim_end()).collect();
 
   if components.len() > 5 {
     return Err(DataError::new_value_invalid(format!(
@@ -97,13 +95,13 @@ fn parse_person_name_component_group(
   }
 
   // Resize to reach a length of 5
-  components.resize(5, "".to_string());
+  components.resize(5, "");
   Ok(Some(PersonNameComponents {
-    last_name: components[0].clone(),
-    first_name: components[1].clone(),
-    middle_name: components[2].clone(),
-    prefix: components[3].clone(),
-    suffix: components[4].clone(),
+    last_name: components[0].to_string(),
+    first_name: components[1].to_string(),
+    middle_name: components[2].to_string(),
+    prefix: components[3].to_string(),
+    suffix: components[4].to_string(),
   }))
 }
 

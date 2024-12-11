@@ -225,17 +225,9 @@ impl DataElementValue {
         | ValueRepresentation::OtherLongString
         | ValueRepresentation::OtherVeryLongString
         | ValueRepresentation::OtherWordString
-        | ValueRepresentation::Unknown => Ok((
-          format!(
-            "[{}]",
-            bytes[0..std::cmp::min(bytes.len(), output_list_max_size)]
-              .iter()
-              .map(|byte| format!("{:02X}", byte))
-              .collect::<Vec<_>>()
-              .join(" ")
-          ),
-          None,
-        )),
+        | ValueRepresentation::Unknown => {
+          Ok((utils::inspect_u8_slice(bytes, output_list_max_size), None))
+        }
 
         ValueRepresentation::SignedLong
         | ValueRepresentation::SignedShort

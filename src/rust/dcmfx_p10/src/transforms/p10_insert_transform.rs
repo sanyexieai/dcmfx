@@ -124,23 +124,23 @@ mod tests {
     let data_elements_to_insert: DataSet = vec![
       (
         DataElementTag::new(0, 0),
-        DataElementValue::new_long_text("0".to_owned()).unwrap(),
+        DataElementValue::new_long_text("0".to_string()).unwrap(),
       ),
       (
         DataElementTag::new(1, 0),
-        DataElementValue::new_long_text("1".to_owned()).unwrap(),
+        DataElementValue::new_long_text("1".to_string()).unwrap(),
       ),
       (
         DataElementTag::new(3, 0),
-        DataElementValue::new_long_text("3".to_owned()).unwrap(),
+        DataElementValue::new_long_text("3".to_string()).unwrap(),
       ),
       (
         DataElementTag::new(4, 0),
-        DataElementValue::new_long_text("4".to_owned()).unwrap(),
+        DataElementValue::new_long_text("4".to_string()).unwrap(),
       ),
       (
         DataElementTag::new(6, 0),
-        DataElementValue::new_long_text("6".to_owned()).unwrap(),
+        DataElementValue::new_long_text("6".to_string()).unwrap(),
       ),
     ]
     .into_iter()

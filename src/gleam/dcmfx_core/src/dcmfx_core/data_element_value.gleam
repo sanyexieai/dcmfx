@@ -225,18 +225,8 @@ pub fn to_string(
         | value_representation.OtherLongString
         | value_representation.OtherVeryLongString
         | value_representation.OtherWordString
-        | value_representation.Unknown -> {
-          let assert Ok(bytes) =
-            bit_array.slice(
-              bytes,
-              0,
-              int.min(bit_array.byte_size(bytes), output_list_max_size),
-            )
-
-          let s = utils.inspect_bit_array(bytes)
-
-          Ok(#(s, None))
-        }
+        | value_representation.Unknown ->
+          Ok(#(utils.inspect_bit_array(bytes, output_list_max_size), None))
 
         value_representation.SignedLong
         | value_representation.SignedShort

@@ -320,7 +320,10 @@ fn update_specific_character_set_clarifying_data_element(
     value_bytes
     |> bit_array.to_string
     |> result.map_error(fn(_) {
-      p10_error.SpecificCharacterSetInvalid("", "Invalid UTF-8")
+      p10_error.SpecificCharacterSetInvalid(
+        utils.inspect_bit_array(value_bytes, 64),
+        "Invalid UTF-8",
+      )
     })
   use specific_character_set <- result.try(specific_character_set)
 

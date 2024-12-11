@@ -124,13 +124,26 @@ fn list_drop(from list: List(a), up_to n: Int) -> List(a) {
   }
 }
 
-/// Inspects a bit array in hexadecimal, e.g. `[1A 2B 3C 4D]`.
+/// Inspects a bit array in hexadecimal, e.g. `[1A 2B 3C 4D]`. If the number of
+/// bytes in the bit array exceeds `max_length` then not all bytes will be
+/// shown and a trailing ellipsis will be appended, e.g. `[1A 2B 3C 4D ...]`.
 ///
-pub fn inspect_bit_array(bits: BitArray) -> String {
-  do_inspect_bit_array(bits, "[") <> "]"
+pub fn inspect_bit_array(bits: BitArray, max_length: Int) -> String {
+  let byte_count = int.min(max_length, bit_array.byte_size(bits))
+
+  let assert Ok(bits) = bit_array.slice(bits, 0, byte_count)
+
+  let s = do_inspect_bit_array(bits, "[")
+
+  let suffix = case byte_count == bit_array.byte_size(bits) {
+    True -> "]"
+    False -> " ...]"
+  }
+
+  s <> suffix
 }
 
-fn do_inspect_bit_array(input: BitArray, accumulator: String) -> String {
+fn do_inspect_bit_array(input: BitArray, acc: String) -> String {
   case input {
     <<x, rest:bytes>> -> {
       let suffix = case rest {
@@ -138,12 +151,11 @@ fn do_inspect_bit_array(input: BitArray, accumulator: String) -> String {
         _ -> " "
       }
 
-      let accumulator =
-        accumulator <> { x |> int.to_base16 |> pad_start(2, "0") } <> suffix
+      let acc = acc <> { x |> int.to_base16 |> pad_start(2, "0") } <> suffix
 
-      do_inspect_bit_array(rest, accumulator)
+      do_inspect_bit_array(rest, acc)
     }
 
-    _ -> accumulator
+    _ -> acc
   }
 }

@@ -25,7 +25,7 @@
 use std::collections::HashMap;
 
 use dcmfx_character_set::{self, SpecificCharacterSet, StringType};
-use dcmfx_core::{dictionary, DataElementTag, ValueRepresentation};
+use dcmfx_core::{dictionary, utils, DataElementTag, ValueRepresentation};
 
 use crate::{internal::value_length::ValueLength, P10Error, P10Part};
 
@@ -379,7 +379,7 @@ impl P10Location {
     let specific_character_set =
       std::str::from_utf8(value_bytes).map_err(|_| {
         P10Error::SpecificCharacterSetInvalid {
-          specific_character_set: "".to_string(),
+          specific_character_set: utils::inspect_u8_slice(value_bytes, 64),
           details: "Invalid UTF-8".to_string(),
         }
       })?;

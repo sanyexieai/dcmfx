@@ -11,7 +11,7 @@ pub mod data_set_path;
 pub mod dictionary;
 pub mod error;
 pub mod transfer_syntax;
-pub(crate) mod utils;
+pub mod utils;
 pub mod value_multiplicity;
 pub mod value_representation;
 
