@@ -123,13 +123,10 @@ pub fn write_part(
 ) -> Result(P10WriteContext, P10Error) {
   use <- bool.guard(
     context.is_ended,
-    Error(p10_error.DataInvalid(
-      "Writing DICOM P10 part",
-      "Received the DICOM P10 part '"
-        <> p10_part.to_string(part)
-        <> "' after the write has been completed",
-      None,
-      None,
+    Error(p10_error.PartStreamInvalid(
+      when: "Writing DICOM P10 part",
+      details: "Received a further DICOM P10 part after the write was completed",
+      part:,
     )),
   )
 

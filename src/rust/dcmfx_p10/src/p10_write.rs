@@ -100,14 +100,12 @@ impl P10WriteContext {
   ///
   pub fn write_part(&mut self, part: &P10Part) -> Result<(), P10Error> {
     if self.is_ended {
-      return Err(P10Error::DataInvalid {
+      return Err(P10Error::PartStreamInvalid {
         when: "Writing DICOM P10 part".to_string(),
-        details: format!(
-          "Received the DICOM P10 part '{}' after the write has been completed",
-          part
-        ),
-        path: None,
-        offset: None,
+        details:
+          "Received a further DICOM P10 part after the write was completed"
+            .to_string(),
+        part: part.clone(),
       });
     }
 
