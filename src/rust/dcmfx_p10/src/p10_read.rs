@@ -1031,9 +1031,7 @@ impl P10ReadContext {
       Ok(mut data) => {
         // Data element values are always returned in little endian, so if this
         // is a big endian transfer syntax then convert to little endian
-        if self.active_transfer_syntax().endianness
-          == transfer_syntax::Endianness::BigEndian
-        {
+        if self.active_transfer_syntax().endianness.is_big() {
           vr.swap_endianness(&mut data);
         }
 

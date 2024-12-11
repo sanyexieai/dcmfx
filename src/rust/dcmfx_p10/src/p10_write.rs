@@ -377,7 +377,7 @@ fn part_to_bytes(
     }
 
     P10Part::DataElementValueBytes { vr, data, .. } => {
-      if transfer_syntax.endianness == transfer_syntax::Endianness::BigEndian {
+      if transfer_syntax.endianness.is_big() {
         // To swap endianness the data needs to be cloned as it can't be swapped
         // in place
         let mut data_vec = (**data).clone();

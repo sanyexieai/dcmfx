@@ -17,6 +17,14 @@ pub enum Endianness {
   BigEndian,
 }
 
+impl Endianness {
+  /// Returns whether the endianness enum specifies big endian byte ordering.
+  ///
+  pub fn is_big(&self) -> bool {
+    *self == Self::BigEndian
+  }
+}
+
 /// Describes a single DICOM transfer syntax, with its name, UID, how it
 /// serializes value representations (implicit vs explicit), whether it is zlib
 /// deflated, and whether it stores its pixel data as encapsulated.
