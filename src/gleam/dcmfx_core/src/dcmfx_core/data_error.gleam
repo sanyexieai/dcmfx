@@ -95,7 +95,7 @@ pub fn new_multiplicity_mismatch() -> DataError {
   MultiplicityMismatch(path: None)
 }
 
-/// Constructs a new 'VAlue invalid' data error.
+/// Constructs a new 'Value invalid' data error.
 ///
 pub fn new_value_invalid(details: String) -> DataError {
   ValueInvalid(details, None)
