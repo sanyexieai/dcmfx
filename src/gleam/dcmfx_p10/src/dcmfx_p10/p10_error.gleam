@@ -7,7 +7,6 @@ import file_streams/file_stream_error
 import gleam/int
 import gleam/io
 import gleam/list
-import gleam/option.{type Option, Some}
 import gleam/string
 
 /// An error that occurred when reading or writing DICOM P10 data.
@@ -37,15 +36,7 @@ pub type P10Error {
   /// This error occurs when a DICOM P10 read context is unable to read the next
   /// DICOM P10 part because the supplied data is invalid, and also when a DICOM
   /// P10 write context is unable to serialize a part written to it.
-  ///
-  /// The path and offset are only present when this error occurs in a DICOM P10
-  /// read context.
-  DataInvalid(
-    when: String,
-    details: String,
-    path: Option(DataSetPath),
-    offset: Option(Int),
-  )
+  DataInvalid(when: String, details: String, path: DataSetPath, offset: Int)
 
   /// This error occurs when one of the configured maximums for a DICOM P10 read
   /// context is exceeded during reading of the supplied data. These maximums
@@ -151,7 +142,7 @@ pub fn to_lines(error: P10Error, task_description: String) -> List(String) {
   // Add the path and offset if present
   let lines = case error {
     DataEndedUnexpectedly(path:, offset: offset, ..)
-    | DataInvalid(path: Some(path), offset: Some(offset), ..)
+    | DataInvalid(path:, offset:, ..)
     | MaximumExceeded(path:, offset: offset, ..) -> [
       "  Offset: 0x" <> int.to_base16(offset),
       "  Path: " <> data_set_path.to_detailed_string(path),

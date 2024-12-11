@@ -11,12 +11,12 @@ use dcmfx_core::{
   DataElementValue, DataSet, TransferSyntax,
 };
 
-use crate::internal::data_element_header::{
-  DataElementHeader, ValueLengthSize,
-};
 use crate::{
-  internal::value_length::ValueLength, p10_part, uids, P10Error,
-  P10FilterTransform, P10InsertTransform, P10Part,
+  internal::{
+    data_element_header::{DataElementHeader, ValueLengthSize},
+    value_length::ValueLength,
+  },
+  p10_part, uids, P10Error, P10FilterTransform, P10InsertTransform, P10Part,
 };
 
 /// Data is compressed into chunks of this size when writing deflated transfer
@@ -138,7 +138,7 @@ impl P10WriteContext {
 
         self.transfer_syntax = new_transfer_syntax;
 
-        let part_bytes = part_to_bytes(part, new_transfer_syntax)?;
+        let part_bytes = self.part_to_bytes(part)?;
         self.p10_total_byte_count += part_bytes.len() as u64;
         self.p10_bytes.push(part_bytes);
 
@@ -209,19 +209,7 @@ impl P10WriteContext {
         })?;
 
         // Convert part to bytes
-        let part_bytes =
-          part_to_bytes(part, self.transfer_syntax).map_err(|e| match e {
-            // Add the path and offset to any errors that occurred
-            P10Error::DataInvalid { when, details, .. } => {
-              P10Error::DataInvalid {
-                when,
-                details,
-                path: Some(self.path.clone()),
-                offset: Some(self.p10_total_byte_count),
-              }
-            }
-            _ => e,
-          })?;
+        let part_bytes = self.part_to_bytes(part)?;
 
         // Update the current path
         match part {
@@ -286,161 +274,241 @@ impl P10WriteContext {
       }
     }
   }
+
+  /// Converts a single DICOM P10 part to raw DICOM P10 bytes.
+  ///
+  fn part_to_bytes(&self, part: &P10Part) -> Result<Rc<Vec<u8>>, P10Error> {
+    match part {
+      P10Part::FilePreambleAndDICMPrefix { preamble } => {
+        let mut data = Vec::with_capacity(132);
+
+        data.extend_from_slice(preamble.as_ref());
+        data.extend_from_slice(b"DICM");
+
+        Ok(Rc::new(data))
+      }
+
+      P10Part::FileMetaInformation { data_set } => {
+        let mut file_meta_information = data_set.clone();
+        prepare_file_meta_information_part_data_set(&mut file_meta_information);
+
+        let mut fmi_bytes = Vec::with_capacity(8192);
+
+        // Set the File Meta Information Group Length, with a placeholder for the
+        // 32-bit length at the end. The length will be filled in once the rest of
+        // the FMI bytes have been created.
+        fmi_bytes
+          .extend_from_slice(&[0x02, 0x00, 0x00, 0x00, 0x55, 0x4C, 0x04, 0x00]);
+        fmi_bytes.extend_from_slice(&[0, 0, 0, 0]);
+
+        for (tag, value) in file_meta_information.into_iter() {
+          let vr = value.value_representation();
+
+          let value_bytes =
+            value.bytes().map_err(|_| P10Error::DataInvalid {
+              when: "Serializing File Meta Information".to_string(),
+              details: format!(
+            "Tag '{}' with value representation '{}' is not allowed in File \
+              Meta Information",
+            tag, vr
+          ),
+              path: self.path.clone(),
+              offset: self.p10_total_byte_count,
+            })?;
+
+          let header_bytes = self.data_element_header_to_bytes(
+            &DataElementHeader {
+              tag,
+              vr: Some(vr),
+              length: ValueLength::new(value_bytes.len() as u32),
+            },
+            transfer_syntax::Endianness::LittleEndian,
+          )?;
+
+          fmi_bytes.extend_from_slice(&header_bytes);
+          fmi_bytes.extend_from_slice(value_bytes);
+        }
+
+        // Set the final File Meta Information Group Length value
+        let fmi_length = fmi_bytes.len() - 12;
+        byteorder::LittleEndian::write_u32_into(
+          &[fmi_length as u32],
+          &mut fmi_bytes[8..12],
+        );
+
+        Ok(Rc::new(fmi_bytes))
+      }
+
+      P10Part::DataElementHeader { tag, vr, length } => {
+        let vr = match self.transfer_syntax.vr_serialization {
+          transfer_syntax::VrSerialization::VrExplicit => Some(*vr),
+          transfer_syntax::VrSerialization::VrImplicit => None,
+        };
+
+        self.data_element_header_to_bytes(
+          &DataElementHeader {
+            tag: *tag,
+            vr,
+            length: ValueLength::new(*length),
+          },
+          self.transfer_syntax.endianness,
+        )
+      }
+
+      P10Part::DataElementValueBytes { vr, data, .. } => {
+        if self.transfer_syntax.endianness.is_big() {
+          // To swap endianness the data needs to be cloned as it can't be swapped
+          // in place
+          let mut data_vec = (**data).clone();
+          vr.swap_endianness(&mut data_vec);
+          Ok(Rc::new(data_vec))
+        } else {
+          Ok(data.clone())
+        }
+      }
+
+      P10Part::SequenceStart { tag, vr } => {
+        let vr = match self.transfer_syntax.vr_serialization {
+          transfer_syntax::VrSerialization::VrExplicit => Some(*vr),
+          transfer_syntax::VrSerialization::VrImplicit => None,
+        };
+
+        self.data_element_header_to_bytes(
+          &DataElementHeader {
+            tag: *tag,
+            vr,
+            length: ValueLength::Undefined,
+          },
+          self.transfer_syntax.endianness,
+        )
+      }
+
+      P10Part::SequenceDelimiter => self.data_element_header_to_bytes(
+        &DataElementHeader {
+          tag: dictionary::SEQUENCE_DELIMITATION_ITEM.tag,
+          vr: None,
+          length: ValueLength::ZERO,
+        },
+        self.transfer_syntax.endianness,
+      ),
+
+      P10Part::SequenceItemStart => self.data_element_header_to_bytes(
+        &DataElementHeader {
+          tag: dictionary::ITEM.tag,
+          vr: None,
+          length: ValueLength::Undefined,
+        },
+        self.transfer_syntax.endianness,
+      ),
+
+      P10Part::SequenceItemDelimiter => self.data_element_header_to_bytes(
+        &DataElementHeader {
+          tag: dictionary::ITEM_DELIMITATION_ITEM.tag,
+          vr: None,
+          length: ValueLength::ZERO,
+        },
+        self.transfer_syntax.endianness,
+      ),
+
+      P10Part::PixelDataItem { length } => self.data_element_header_to_bytes(
+        &DataElementHeader {
+          tag: dictionary::ITEM.tag,
+          vr: None,
+          length: ValueLength::new(*length),
+        },
+        self.transfer_syntax.endianness,
+      ),
+
+      P10Part::End => Ok(Rc::new(vec![])),
+    }
+  }
+
+  /// Serializes a data element header to a `Vec<u8>`. If the VR is not
+  /// specified then the transfer syntax is assumed to use implicit VRs.
+  ///
+  fn data_element_header_to_bytes(
+    &self,
+    header: &DataElementHeader,
+    endianness: Endianness,
+  ) -> Result<Rc<Vec<u8>>, P10Error> {
+    let length = header.length.to_u32();
+
+    let mut bytes = Vec::with_capacity(12);
+
+    match endianness {
+      Endianness::LittleEndian => {
+        bytes.extend_from_slice(header.tag.group.to_le_bytes().as_slice());
+        bytes.extend_from_slice(header.tag.element.to_le_bytes().as_slice());
+      }
+      Endianness::BigEndian => {
+        bytes.extend_from_slice(header.tag.group.to_be_bytes().as_slice());
+        bytes.extend_from_slice(header.tag.element.to_be_bytes().as_slice());
+      }
+    };
+
+    match header.vr {
+      // Write with implicit VR
+      None => match endianness {
+        Endianness::LittleEndian => {
+          bytes.extend_from_slice(length.to_le_bytes().as_slice())
+        }
+        Endianness::BigEndian => {
+          bytes.extend_from_slice(length.to_be_bytes().as_slice())
+        }
+      },
+
+      // Write with explicit VR
+      Some(vr) => {
+        bytes.extend_from_slice(vr.to_string().as_bytes());
+
+        match DataElementHeader::value_length_size(vr) {
+          // All other VRs use a 16-bit length. Check that the data length fits
+          // inside this constraint.
+          ValueLengthSize::U16 => {
+            if length > u16::MAX as u32 {
+              return Err(P10Error::DataInvalid {
+                when: "Serializing data element header".to_string(),
+                details: format!(
+                  "Length 0x{:X} exceeds the maximum of 0xFFFF",
+                  header.length.to_u32(),
+                ),
+                path: self.path.clone(),
+                offset: self.p10_total_byte_count,
+              });
+            }
+
+            match endianness {
+              Endianness::LittleEndian => bytes
+                .extend_from_slice((length as u16).to_le_bytes().as_slice()),
+              Endianness::BigEndian => bytes
+                .extend_from_slice((length as u16).to_be_bytes().as_slice()),
+            }
+          }
+
+          // The following VRs use a 32-bit length preceded by two padding bytes
+          ValueLengthSize::U32 => {
+            bytes.extend_from_slice([0, 0].as_slice());
+
+            match endianness {
+              Endianness::LittleEndian => {
+                bytes.extend_from_slice(length.to_le_bytes().as_slice())
+              }
+              Endianness::BigEndian => {
+                bytes.extend_from_slice(length.to_be_bytes().as_slice())
+              }
+            }
+          }
+        };
+      }
+    }
+
+    Ok(Rc::new(bytes))
+  }
 }
 
 impl Default for P10WriteContext {
   fn default() -> Self {
     Self::new()
-  }
-}
-
-/// Converts a single DICOM P10 part to raw DICOM P10 bytes.
-///
-fn part_to_bytes(
-  part: &P10Part,
-  transfer_syntax: &'static TransferSyntax,
-) -> Result<Rc<Vec<u8>>, P10Error> {
-  match part {
-    P10Part::FilePreambleAndDICMPrefix { preamble } => {
-      let mut data = Vec::with_capacity(132);
-
-      data.extend_from_slice(preamble.as_ref());
-      data.extend_from_slice(b"DICM");
-
-      Ok(Rc::new(data))
-    }
-
-    P10Part::FileMetaInformation { data_set } => {
-      let mut file_meta_information = data_set.clone();
-      prepare_file_meta_information_part_data_set(&mut file_meta_information);
-
-      let mut fmi_bytes = Vec::with_capacity(8192);
-
-      // Set the File Meta Information Group Length, with a placeholder for the
-      // 32-bit length at the end. The length will be filled in once the rest of
-      // the FMI bytes have been created.
-      fmi_bytes
-        .extend_from_slice(&[0x02, 0x00, 0x00, 0x00, 0x55, 0x4C, 0x04, 0x00]);
-      fmi_bytes.extend_from_slice(&[0, 0, 0, 0]);
-
-      for (tag, value) in file_meta_information.into_iter() {
-        let vr = value.value_representation();
-
-        let value_bytes = value.bytes().map_err(|_| P10Error::DataInvalid {
-          when: "Serializing File Meta Information".to_string(),
-          details: format!(
-            "Tag '{}' with value representation '{}' is not allowed in File \
-              Meta Information",
-            tag, vr
-          ),
-          path: None,
-          offset: None,
-        })?;
-
-        let header_bytes = data_element_header_to_bytes(
-          &DataElementHeader {
-            tag,
-            vr: Some(vr),
-            length: ValueLength::new(value_bytes.len() as u32),
-          },
-          transfer_syntax::Endianness::LittleEndian,
-        )?;
-
-        fmi_bytes.extend_from_slice(&header_bytes);
-        fmi_bytes.extend_from_slice(value_bytes);
-      }
-
-      // Set the final File Meta Information Group Length value
-      let fmi_length = fmi_bytes.len() - 12;
-      byteorder::LittleEndian::write_u32_into(
-        &[fmi_length as u32],
-        &mut fmi_bytes[8..12],
-      );
-
-      Ok(Rc::new(fmi_bytes))
-    }
-
-    P10Part::DataElementHeader { tag, vr, length } => {
-      let vr = match transfer_syntax.vr_serialization {
-        transfer_syntax::VrSerialization::VrExplicit => Some(*vr),
-        transfer_syntax::VrSerialization::VrImplicit => None,
-      };
-
-      data_element_header_to_bytes(
-        &DataElementHeader {
-          tag: *tag,
-          vr,
-          length: ValueLength::new(*length),
-        },
-        transfer_syntax.endianness,
-      )
-    }
-
-    P10Part::DataElementValueBytes { vr, data, .. } => {
-      if transfer_syntax.endianness.is_big() {
-        // To swap endianness the data needs to be cloned as it can't be swapped
-        // in place
-        let mut data_vec = (**data).clone();
-        vr.swap_endianness(&mut data_vec);
-        Ok(Rc::new(data_vec))
-      } else {
-        Ok(data.clone())
-      }
-    }
-
-    P10Part::SequenceStart { tag, vr } => {
-      let vr = match transfer_syntax.vr_serialization {
-        transfer_syntax::VrSerialization::VrExplicit => Some(*vr),
-        transfer_syntax::VrSerialization::VrImplicit => None,
-      };
-
-      data_element_header_to_bytes(
-        &DataElementHeader {
-          tag: *tag,
-          vr,
-          length: ValueLength::Undefined,
-        },
-        transfer_syntax.endianness,
-      )
-    }
-
-    P10Part::SequenceDelimiter => data_element_header_to_bytes(
-      &DataElementHeader {
-        tag: dictionary::SEQUENCE_DELIMITATION_ITEM.tag,
-        vr: None,
-        length: ValueLength::ZERO,
-      },
-      transfer_syntax.endianness,
-    ),
-
-    P10Part::SequenceItemStart => data_element_header_to_bytes(
-      &DataElementHeader {
-        tag: dictionary::ITEM.tag,
-        vr: None,
-        length: ValueLength::Undefined,
-      },
-      transfer_syntax.endianness,
-    ),
-
-    P10Part::SequenceItemDelimiter => data_element_header_to_bytes(
-      &DataElementHeader {
-        tag: dictionary::ITEM_DELIMITATION_ITEM.tag,
-        vr: None,
-        length: ValueLength::ZERO,
-      },
-      transfer_syntax.endianness,
-    ),
-
-    P10Part::PixelDataItem { length } => data_element_header_to_bytes(
-      &DataElementHeader {
-        tag: dictionary::ITEM.tag,
-        vr: None,
-        length: ValueLength::new(*length),
-      },
-      transfer_syntax.endianness,
-    ),
-
-    P10Part::End => Ok(Rc::new(vec![])),
   }
 }
 
@@ -559,89 +627,6 @@ fn prepare_file_meta_information_part_data_set(
   )
 }
 
-/// Serializes a data element header to a `Vec<u8>`. If the VR is not
-/// specified then the transfer syntax is assumed to use implicit VRs.
-///
-fn data_element_header_to_bytes(
-  header: &DataElementHeader,
-  endianness: Endianness,
-) -> Result<Rc<Vec<u8>>, P10Error> {
-  let length = header.length.to_u32();
-
-  let mut bytes = Vec::with_capacity(12);
-
-  match endianness {
-    Endianness::LittleEndian => {
-      bytes.extend_from_slice(header.tag.group.to_le_bytes().as_slice());
-      bytes.extend_from_slice(header.tag.element.to_le_bytes().as_slice());
-    }
-    Endianness::BigEndian => {
-      bytes.extend_from_slice(header.tag.group.to_be_bytes().as_slice());
-      bytes.extend_from_slice(header.tag.element.to_be_bytes().as_slice());
-    }
-  };
-
-  match header.vr {
-    // Write with implicit VR
-    None => match endianness {
-      Endianness::LittleEndian => {
-        bytes.extend_from_slice(length.to_le_bytes().as_slice())
-      }
-      Endianness::BigEndian => {
-        bytes.extend_from_slice(length.to_be_bytes().as_slice())
-      }
-    },
-
-    // Write with explicit VR
-    Some(vr) => {
-      bytes.extend_from_slice(vr.to_string().as_bytes());
-
-      match DataElementHeader::value_length_size(vr) {
-        // All other VRs use a 16-bit length. Check that the data length fits
-        // inside this constraint.
-        ValueLengthSize::U16 => {
-          if length > u16::MAX as u32 {
-            return Err(P10Error::DataInvalid {
-              when: "Serializing data element header".to_string(),
-              details: format!(
-                "Length 0x{:X} exceeds the maximum of 0xFFFF",
-                header.length.to_u32(),
-              ),
-              path: None,
-              offset: None,
-            });
-          }
-
-          match endianness {
-            Endianness::LittleEndian => {
-              bytes.extend_from_slice((length as u16).to_le_bytes().as_slice())
-            }
-            Endianness::BigEndian => {
-              bytes.extend_from_slice((length as u16).to_be_bytes().as_slice())
-            }
-          }
-        }
-
-        // The following VRs use a 32-bit length preceded by two padding bytes
-        ValueLengthSize::U32 => {
-          bytes.extend_from_slice([0, 0].as_slice());
-
-          match endianness {
-            Endianness::LittleEndian => {
-              bytes.extend_from_slice(length.to_le_bytes().as_slice())
-            }
-            Endianness::BigEndian => {
-              bytes.extend_from_slice(length.to_be_bytes().as_slice())
-            }
-          }
-        }
-      };
-    }
-  }
-
-  Ok(Rc::new(bytes))
-}
-
 #[cfg(test)]
 mod tests {
   use super::*;
@@ -651,7 +636,7 @@ mod tests {
   #[test]
   fn data_element_header_to_bytes_test() {
     assert_eq!(
-      data_element_header_to_bytes(
+      P10WriteContext::new().data_element_header_to_bytes(
         &DataElementHeader {
           tag: dictionary::WAVEFORM_DATA.tag,
           vr: None,
@@ -663,7 +648,7 @@ mod tests {
     );
 
     assert_eq!(
-      data_element_header_to_bytes(
+      P10WriteContext::new().data_element_header_to_bytes(
         &DataElementHeader {
           tag: dictionary::WAVEFORM_DATA.tag,
           vr: None,
@@ -675,7 +660,7 @@ mod tests {
     );
 
     assert_eq!(
-      data_element_header_to_bytes(
+      P10WriteContext::new().data_element_header_to_bytes(
         &DataElementHeader {
           tag: dictionary::PATIENT_AGE.tag,
           vr: Some(ValueRepresentation::UnlimitedText),
@@ -687,7 +672,7 @@ mod tests {
     );
 
     assert_eq!(
-      data_element_header_to_bytes(
+      P10WriteContext::new().data_element_header_to_bytes(
         &DataElementHeader {
           tag: dictionary::PIXEL_DATA.tag,
           vr: Some(ValueRepresentation::OtherWordString),
@@ -701,7 +686,7 @@ mod tests {
     );
 
     assert_eq!(
-      data_element_header_to_bytes(
+      P10WriteContext::new().data_element_header_to_bytes(
         &DataElementHeader {
           tag: dictionary::PIXEL_DATA.tag,
           vr: Some(ValueRepresentation::OtherWordString),
@@ -715,7 +700,7 @@ mod tests {
     );
 
     assert_eq!(
-      data_element_header_to_bytes(
+      P10WriteContext::new().data_element_header_to_bytes(
         &DataElementHeader {
           tag: dictionary::PATIENT_AGE.tag,
           vr: Some(ValueRepresentation::AgeString),
@@ -726,13 +711,13 @@ mod tests {
       Err(P10Error::DataInvalid {
         when: "Serializing data element header".to_string(),
         details: "Length 0x12345 exceeds the maximum of 0xFFFF".to_string(),
-        path: None,
-        offset: None
+        path: DataSetPath::new(),
+        offset: 0
       })
     );
 
     assert_eq!(
-      data_element_header_to_bytes(
+      P10WriteContext::new().data_element_header_to_bytes(
         &DataElementHeader {
           tag: dictionary::SMALLEST_IMAGE_PIXEL_VALUE.tag,
           vr: Some(ValueRepresentation::SignedShort),
@@ -744,7 +729,7 @@ mod tests {
     );
 
     assert_eq!(
-      data_element_header_to_bytes(
+      P10WriteContext::new().data_element_header_to_bytes(
         &DataElementHeader {
           tag: dictionary::SMALLEST_IMAGE_PIXEL_VALUE.tag,
           vr: Some(ValueRepresentation::SignedShort),

@@ -403,8 +403,8 @@ impl P10ReadContext {
             details: "Data element in File Meta Information does not have the \
               group 0x0002"
               .to_string(),
-            path: Some(DataSetPath::new_with_data_element(tag)),
-            offset: Some(self.stream.bytes_read()),
+            path: DataSetPath::new_with_data_element(tag),
+            offset: self.stream.bytes_read(),
           });
         }
 
@@ -414,8 +414,8 @@ impl P10ReadContext {
             P10Error::DataInvalid {
               when: "Reading File Meta Information".to_string(),
               details: "Data element has invalid VR".to_string(),
-              path: Some(DataSetPath::new_with_data_element(tag)),
-              offset: Some(self.stream.bytes_read()),
+              path: DataSetPath::new_with_data_element(tag),
+              offset: self.stream.bytes_read(),
             }
           })?;
 
@@ -426,8 +426,8 @@ impl P10ReadContext {
             when: "Reading File Meta Information".to_string(),
             details: "Data element in File Meta Information is a sequence"
               .to_string(),
-            path: Some(DataSetPath::new_with_data_element(tag)),
-            offset: Some(self.stream.bytes_read()),
+            path: DataSetPath::new_with_data_element(tag),
+            offset: self.stream.bytes_read(),
           });
         }
 
@@ -497,8 +497,8 @@ impl P10ReadContext {
                 return Err(P10Error::DataInvalid {
                   when: "Reading File Meta Information".to_string(),
                   details: format!("Group length is invalid: {}", e),
-                  path: Some(DataSetPath::new_with_data_element(tag)),
-                  offset: Some(self.stream.bytes_read()),
+                  path: DataSetPath::new_with_data_element(tag),
+                  offset: self.stream.bytes_read(),
                 })
               }
             }
@@ -524,8 +524,10 @@ impl P10ReadContext {
                 Err(P10Error::DataInvalid {
                   when: "Reading File Meta Information".to_string(),
                   details: e.to_string(),
-                  path: e.path().cloned(),
-                  offset: Some(self.stream.bytes_read()),
+                  path: DataSetPath::new_with_data_element(
+                    dictionary::TRANSFER_SYNTAX_UID.tag,
+                  ),
+                  offset: self.stream.bytes_read(),
                 })
               }
             }
@@ -545,8 +547,8 @@ impl P10ReadContext {
               when: "Starting zlib decompression for deflated transfer syntax"
                 .to_string(),
               details: "Zlib data is invalid".to_string(),
-              path: None,
-              offset: Some(self.stream.bytes_read()),
+              path: DataSetPath::new(),
+              offset: self.stream.bytes_read(),
             })
           }
         }
@@ -616,8 +618,8 @@ impl P10ReadContext {
           .map_err(|details| P10Error::DataInvalid {
             when: "Reading data element header".to_string(),
             details,
-            path: Some(self.path.clone()),
-            offset: Some(self.stream.bytes_read()),
+            path: self.path.clone(),
+            offset: self.stream.bytes_read(),
           })?;
 
         // Check that the maximum sequence depth hasn't been reached
@@ -654,8 +656,8 @@ impl P10ReadContext {
           .map_err(|details| P10Error::DataInvalid {
             when: "Reading data element header".to_string(),
             details,
-            path: Some(self.path.clone()),
-            offset: Some(self.stream.bytes_read()),
+            path: self.path.clone(),
+            offset: self.stream.bytes_read(),
           })?;
 
         // Add item to the path
@@ -680,8 +682,8 @@ impl P10ReadContext {
           .map_err(|details| P10Error::DataInvalid {
             when: "Reading data element header".to_string(),
             details,
-            path: Some(self.path.clone()),
-            offset: Some(self.stream.bytes_read()),
+            path: self.path.clone(),
+            offset: self.stream.bytes_read(),
           })?;
 
         self.path.add_data_element(tag).unwrap();
@@ -728,8 +730,8 @@ impl P10ReadContext {
           .map_err(|details| P10Error::DataInvalid {
             when: "Reading data element header".to_string(),
             details,
-            path: Some(self.path.clone()),
-            offset: Some(self.stream.bytes_read()),
+            path: self.path.clone(),
+            offset: self.stream.bytes_read(),
           })?;
 
         self.path.pop().unwrap();
@@ -800,8 +802,8 @@ impl P10ReadContext {
       (_, _, _) => Err(P10Error::DataInvalid {
         when: "Reading data element header".to_string(),
         details: format!("Invalid data element '{}'", header),
-        path: Some(self.path.clone()),
-        offset: Some(self.stream.bytes_read()),
+        path: self.path.clone(),
+        offset: self.stream.bytes_read(),
       }),
     }
   }
@@ -948,8 +950,8 @@ impl P10ReadContext {
                 vr_bytes,
                 dictionary::tag_with_name(tag, None)
               ),
-              path: Some(self.path.clone()),
-              offset: Some(self.stream.bytes_read()),
+              path: self.path.clone(),
+              offset: self.stream.bytes_read(),
             }),
           },
         }
@@ -1200,8 +1202,8 @@ impl P10ReadContext {
             P10Error::DataInvalid {
               when: "Reading encapsulated pixel data item".to_string(),
               details,
-              path: Some(self.path.clone()),
-              offset: Some(self.stream.bytes_read()),
+              path: self.path.clone(),
+              offset: self.stream.bytes_read(),
             }
           })?;
 
@@ -1215,8 +1217,8 @@ impl P10ReadContext {
         _ => Err(P10Error::DataInvalid {
           when: "Reading encapsulated pixel data item".to_string(),
           details: format!("Invalid data element '{}'", header),
-          path: Some(self.path.clone()),
-          offset: Some(self.stream.bytes_read()),
+          path: self.path.clone(),
+          offset: self.stream.bytes_read(),
         }),
       },
 
@@ -1259,8 +1261,8 @@ fn map_byte_stream_error(
     ByteStreamError::ZlibDataError => P10Error::DataInvalid {
       when: when.to_string(),
       details: "Zlib data is invalid".to_string(),
-      path: Some(path.clone()),
-      offset: Some(offset),
+      path: path.clone(),
+      offset,
     },
 
     ByteStreamError::WriteAfterCompletion => P10Error::WriteAfterCompletion,

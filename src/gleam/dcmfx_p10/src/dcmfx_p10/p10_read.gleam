@@ -421,8 +421,8 @@ fn read_file_meta_information_part(
           Error(p10_error.DataInvalid(
             "Starting zlib decompression for deflated transfer syntax",
             "Zlib data is invalid",
-            None,
-            Some(byte_stream.bytes_read(context.stream)),
+            data_set_path.new(),
+            byte_stream.bytes_read(context.stream),
           ))
       }
     False -> Ok(new_context.stream)
@@ -501,8 +501,8 @@ fn read_file_meta_information_data_set(
       when: "Reading File Meta Information",
       details: "Data element in File Meta Information does not have the group "
         <> "0x0002",
-      path: Some(data_set_path.new_with_data_element(tag)),
-      offset: Some(byte_stream.bytes_read(context.stream)),
+      path: data_set_path.new_with_data_element(tag),
+      offset: byte_stream.bytes_read(context.stream),
     ))
   })
 
@@ -514,8 +514,8 @@ fn read_file_meta_information_data_set(
       p10_error.DataInvalid(
         when: "Reading File Meta Information",
         details: "Data element has invalid VR",
-        path: Some(data_set_path.new_with_data_element(tag)),
-        offset: Some(byte_stream.bytes_read(context.stream)),
+        path: data_set_path.new_with_data_element(tag),
+        offset: byte_stream.bytes_read(context.stream),
       )
     })
   use vr <- result.try(vr)
@@ -526,8 +526,8 @@ fn read_file_meta_information_data_set(
     Error(p10_error.DataInvalid(
       when: "Reading File Meta Information",
       details: "Data element in File Meta Information is a sequence",
-      path: Some(data_set_path.new_with_data_element(tag)),
-      offset: Some(byte_stream.bytes_read(context.stream)),
+      path: data_set_path.new_with_data_element(tag),
+      offset: byte_stream.bytes_read(context.stream),
     ))
   })
 
@@ -603,8 +603,8 @@ fn read_file_meta_information_data_set(
               Error(p10_error.DataInvalid(
                 when: "Reading File Meta Information",
                 details: "Group length is invalid: " <> data_error.to_string(e),
-                path: Some(data_set_path.new_with_data_element(tag)),
-                offset: Some(byte_stream.bytes_read(context.stream)),
+                path: data_set_path.new_with_data_element(tag),
+                offset: byte_stream.bytes_read(context.stream),
               ))
           }
         _, _ -> Ok(ends_at)
@@ -632,8 +632,10 @@ fn read_file_meta_information_data_set(
               Error(p10_error.DataInvalid(
                 when: "Reading File Meta Information",
                 details: data_error.to_string(e),
-                path: data_error.path(e),
-                offset: Some(byte_stream.bytes_read(context.stream)),
+                path: data_set_path.new_with_data_element(
+                  dictionary.transfer_syntax_uid.tag,
+                ),
+                offset: byte_stream.bytes_read(context.stream),
               ))
           }
       }
@@ -703,8 +705,8 @@ fn read_data_element_header_part(
           p10_error.DataInvalid(
             "Reading data element header",
             details,
-            Some(context.path),
-            Some(byte_stream.bytes_read(context.stream)),
+            context.path,
+            byte_stream.bytes_read(context.stream),
           )
         })
       use new_location <- result.try(new_location)
@@ -755,8 +757,8 @@ fn read_data_element_header_part(
           p10_error.DataInvalid(
             "Reading data element header",
             details,
-            Some(context.path),
-            Some(byte_stream.bytes_read(context.stream)),
+            context.path,
+            byte_stream.bytes_read(context.stream),
           )
         })
       use new_location <- result.try(new_location)
@@ -793,8 +795,8 @@ fn read_data_element_header_part(
           p10_error.DataInvalid(
             "Reading data element header",
             details,
-            Some(context.path),
-            Some(byte_stream.bytes_read(context.stream)),
+            context.path,
+            byte_stream.bytes_read(context.stream),
           )
         })
       use new_location <- result.try(new_location)
@@ -872,8 +874,8 @@ fn read_data_element_header_part(
           p10_error.DataInvalid(
             "Reading data element header",
             details,
-            Some(context.path),
-            Some(byte_stream.bytes_read(context.stream)),
+            context.path,
+            byte_stream.bytes_read(context.stream),
           )
         })
       use new_location <- result.try(new_location)
@@ -960,8 +962,8 @@ fn read_data_element_header_part(
       Error(p10_error.DataInvalid(
         "Reading data element header",
         "Invalid data element '" <> data_element_header.to_string(header) <> "'",
-        Some(context.path),
-        Some(byte_stream.bytes_read(context.stream)),
+        context.path,
+        byte_stream.bytes_read(context.stream),
       ))
   }
 }
@@ -1103,8 +1105,8 @@ fn read_explicit_vr_and_length(
                   <> " for tag '"
                   <> dictionary.tag_with_name(tag, None)
                   <> "'",
-                Some(context.path),
-                Some(byte_stream.bytes_read(context.stream)),
+                context.path,
+                byte_stream.bytes_read(context.stream),
               ))
           }
       }
@@ -1377,8 +1379,8 @@ fn read_pixel_data_item_part(
               p10_error.DataInvalid(
                 "Reading encapsulated pixel data item",
                 details,
-                Some(context.path),
-                Some(byte_stream.bytes_read(context.stream)),
+                context.path,
+                byte_stream.bytes_read(context.stream),
               )
             })
           use new_location <- result.try(new_location)
@@ -1405,8 +1407,8 @@ fn read_pixel_data_item_part(
             "Invalid data element '"
               <> data_element_header.to_string(header)
               <> "'",
-            Some(context.path),
-            Some(byte_stream.bytes_read(context.stream)),
+            context.path,
+            byte_stream.bytes_read(context.stream),
           ))
       }
 
@@ -1431,12 +1433,7 @@ fn map_byte_stream_error(
       p10_error.DataEndedUnexpectedly(when, context.path, offset)
 
     byte_stream.ZlibDataError ->
-      p10_error.DataInvalid(
-        when,
-        "Zlib data is invalid",
-        Some(context.path),
-        Some(offset),
-      )
+      p10_error.DataInvalid(when, "Zlib data is invalid", context.path, offset)
 
     byte_stream.WriteAfterCompletion -> p10_error.WriteAfterCompletion
 

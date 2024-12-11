@@ -254,21 +254,7 @@ pub fn write_part(
       use context <- result.try(context)
 
       // Convert part to bytes
-      let part_bytes =
-        part_to_bytes(part, context)
-        |> result.map_error(fn(e) {
-          case e {
-            p10_error.DataInvalid(when:, details:, ..) ->
-              p10_error.DataInvalid(
-                when:,
-                details:,
-                path: Some(context.path),
-                offset: Some(context.p10_total_byte_count),
-              )
-            e -> e
-          }
-        })
-      use part_bytes <- result.try(part_bytes)
+      use part_bytes <- result.try(part_to_bytes(part, context))
 
       // Update the current path
       let context =
@@ -349,8 +335,8 @@ fn part_to_bytes(
             "Preamble data must be 128 bytes in length but "
               <> int.to_string(preamble_length)
               <> " bytes were supplied",
-            None,
-            Some(0),
+            context.path,
+            context.p10_total_byte_count,
           ))
       }
     }
@@ -372,8 +358,8 @@ fn part_to_bytes(
                 <> "' with value representation '"
                 <> value_representation.to_string(vr)
                 <> "' is not allowed in File Meta Information",
-              None,
-              None,
+              context.path,
+              context.p10_total_byte_count,
             ))
           use value_bytes <- result.try(value_bytes)
 
@@ -381,7 +367,7 @@ fn part_to_bytes(
 
           let header_bytes =
             DataElementHeader(tag, Some(vr), value_length.new(value_length))
-            |> data_element_header_to_bytes(LittleEndian)
+            |> data_element_header_to_bytes(LittleEndian, context)
           use header_bytes <- result.try(header_bytes)
 
           Ok(bit_array.append(header_bytes, value_bytes))
@@ -411,7 +397,7 @@ fn part_to_bytes(
       }
 
       DataElementHeader(tag, vr, value_length.new(length))
-      |> data_element_header_to_bytes(transfer_syntax.endianness)
+      |> data_element_header_to_bytes(transfer_syntax.endianness, context)
     }
 
     p10_part.DataElementValueBytes(vr, data, _) ->
@@ -428,7 +414,7 @@ fn part_to_bytes(
       }
 
       DataElementHeader(tag, vr, value_length.Undefined)
-      |> data_element_header_to_bytes(transfer_syntax.endianness)
+      |> data_element_header_to_bytes(transfer_syntax.endianness, context)
     }
 
     p10_part.SequenceDelimiter ->
@@ -437,11 +423,11 @@ fn part_to_bytes(
         None,
         value_length.zero,
       )
-      |> data_element_header_to_bytes(transfer_syntax.endianness)
+      |> data_element_header_to_bytes(transfer_syntax.endianness, context)
 
     p10_part.SequenceItemStart ->
       DataElementHeader(dictionary.item.tag, None, value_length.Undefined)
-      |> data_element_header_to_bytes(transfer_syntax.endianness)
+      |> data_element_header_to_bytes(transfer_syntax.endianness, context)
 
     p10_part.SequenceItemDelimiter ->
       DataElementHeader(
@@ -449,13 +435,104 @@ fn part_to_bytes(
         None,
         value_length.zero,
       )
-      |> data_element_header_to_bytes(transfer_syntax.endianness)
+      |> data_element_header_to_bytes(transfer_syntax.endianness, context)
 
     p10_part.PixelDataItem(length) ->
       DataElementHeader(dictionary.item.tag, None, value_length.new(length))
-      |> data_element_header_to_bytes(transfer_syntax.endianness)
+      |> data_element_header_to_bytes(transfer_syntax.endianness, context)
 
     p10_part.End -> Ok(<<>>)
+  }
+}
+
+/// Serializes a data element header to a `BitArray`. If the VR is not specified
+/// then the transfer syntax is assumed to use implicit VRs.
+///
+@internal
+pub fn data_element_header_to_bytes(
+  header: DataElementHeader,
+  endianness: Endianness,
+  context: P10WriteContext,
+) -> Result(BitArray, P10Error) {
+  let length = value_length.to_int(header.length)
+
+  use <- bool.guard(
+    length < 0,
+    Error(p10_error.DataInvalid(
+      "Serializing data element header",
+      "Length is negative",
+      context.path,
+      context.p10_total_byte_count,
+    )),
+  )
+
+  let tag_bytes = case endianness {
+    LittleEndian -> <<header.tag.group:16-little, header.tag.element:16-little>>
+    BigEndian -> <<header.tag.group:16-big, header.tag.element:16-big>>
+  }
+
+  case header.vr {
+    // Write with implicit VR
+    None ->
+      case endianness {
+        LittleEndian -> Ok(<<tag_bytes:bits, length:32-little>>)
+        BigEndian -> Ok(<<tag_bytes:bits, length:32-big>>)
+      }
+
+    // Write with explicit VR
+    Some(vr) -> {
+      let length = value_length.to_int(header.length)
+
+      let length_bytes = case data_element_header.value_length_size(vr) {
+        data_element_header.ValueLengthU16 ->
+          case length > 0xFFFF {
+            True ->
+              p10_error.DataInvalid(
+                "Serializing data element header",
+                "Length 0x"
+                  <> int.to_base16(length)
+                  <> " exceeds the maximum of 0xFFFF",
+                context.path,
+                context.p10_total_byte_count,
+              )
+              |> Error
+
+            False ->
+              case endianness {
+                LittleEndian -> Ok(<<length:16-little>>)
+                BigEndian -> Ok(<<length:16-big>>)
+              }
+          }
+
+        data_element_header.ValueLengthU32 ->
+          case length > 0xFFFFFFFF {
+            True ->
+              p10_error.DataInvalid(
+                "Serializing data element header",
+                "Length 0x"
+                  <> int.to_base16(length)
+                  <> " exceeds the maximum of 0xFFFFFFFF",
+                context.path,
+                context.p10_total_byte_count,
+              )
+              |> Error
+
+            False ->
+              case endianness {
+                LittleEndian -> Ok(<<0, 0, length:32-little>>)
+                BigEndian -> Ok(<<0, 0, length:32-big>>)
+              }
+          }
+      }
+
+      use length_bytes <- result.try(length_bytes)
+
+      Ok(<<
+        tag_bytes:bits,
+        value_representation.to_string(vr):utf8,
+        length_bytes:bits,
+      >>)
+    }
   }
 }
 
@@ -592,94 +669,4 @@ fn prepare_file_meta_information_part_data_set(file_meta_information: DataSet) {
     dictionary.implementation_version_name.tag,
     implementation_version_name,
   )
-}
-
-/// Serializes a data element header to a `BitArray`. If the VR is not specified
-/// then the transfer syntax is assumed to use implicit VRs.
-///
-@internal
-pub fn data_element_header_to_bytes(
-  header: DataElementHeader,
-  endianness: Endianness,
-) -> Result(BitArray, P10Error) {
-  let length = value_length.to_int(header.length)
-
-  use <- bool.guard(
-    length < 0,
-    Error(p10_error.DataInvalid(
-      "Serializing data element header",
-      "Length is negative",
-      None,
-      None,
-    )),
-  )
-
-  let tag_bytes = case endianness {
-    LittleEndian -> <<header.tag.group:16-little, header.tag.element:16-little>>
-    BigEndian -> <<header.tag.group:16-big, header.tag.element:16-big>>
-  }
-
-  case header.vr {
-    // Write with implicit VR
-    None ->
-      case endianness {
-        LittleEndian -> Ok(<<tag_bytes:bits, length:32-little>>)
-        BigEndian -> Ok(<<tag_bytes:bits, length:32-big>>)
-      }
-
-    // Write with explicit VR
-    Some(vr) -> {
-      let length = value_length.to_int(header.length)
-
-      let length_bytes = case data_element_header.value_length_size(vr) {
-        data_element_header.ValueLengthU16 ->
-          case length > 0xFFFF {
-            True ->
-              p10_error.DataInvalid(
-                "Serializing data element header",
-                "Length 0x"
-                  <> int.to_base16(length)
-                  <> " exceeds the maximum of 0xFFFF",
-                None,
-                None,
-              )
-              |> Error
-
-            False ->
-              case endianness {
-                LittleEndian -> Ok(<<length:16-little>>)
-                BigEndian -> Ok(<<length:16-big>>)
-              }
-          }
-
-        data_element_header.ValueLengthU32 ->
-          case length > 0xFFFFFFFF {
-            True ->
-              p10_error.DataInvalid(
-                "Serializing data element header",
-                "Length 0x"
-                  <> int.to_base16(length)
-                  <> " exceeds the maximum of 0xFFFFFFFF",
-                None,
-                None,
-              )
-              |> Error
-
-            False ->
-              case endianness {
-                LittleEndian -> Ok(<<0, 0, length:32-little>>)
-                BigEndian -> Ok(<<0, 0, length:32-big>>)
-              }
-          }
-      }
-
-      use length_bytes <- result.try(length_bytes)
-
-      Ok(<<
-        tag_bytes:bits,
-        value_representation.to_string(vr):utf8,
-        length_bytes:bits,
-      >>)
-    }
-  }
 }

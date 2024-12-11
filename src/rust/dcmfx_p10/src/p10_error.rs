@@ -40,14 +40,11 @@ pub enum P10Error {
   /// This error occurs when a DICOM P10 read context is unable to read the next
   /// DICOM P10 part because the supplied data is invalid, and also when a DICOM
   /// P10 write context is unable to serialize a part written to it.
-  ///
-  /// The path and offset are only present when this error occurs in a DICOM P10
-  /// read context.
   DataInvalid {
     when: String,
     details: String,
-    path: Option<DataSetPath>,
-    offset: Option<u64>,
+    path: DataSetPath,
+    offset: u64,
   },
 
   /// This error occurs when one of the configured maximums for a DICOM P10 read
@@ -180,11 +177,7 @@ impl dcmfx_core::DcmfxError for P10Error {
     // Add the path and offset if present
     match self {
       P10Error::DataEndedUnexpectedly { offset, path, .. }
-      | P10Error::DataInvalid {
-        path: Some(path),
-        offset: Some(offset),
-        ..
-      }
+      | P10Error::DataInvalid { path, offset, .. }
       | P10Error::MaximumExceeded { offset, path, .. } => {
         lines.push(format!("  Path: {}", path.to_detailed_string()));
         lines.push(format!("  Offset: 0x{:X}", offset));
