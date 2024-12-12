@@ -123,6 +123,10 @@ impl DataSet {
     item: &dictionary::Item,
     value: &age_string::StructuredAge,
   ) -> Result<(), DataError> {
+    if !item.multiplicity.contains(1) {
+      return invalid_insert_error(item);
+    }
+
     let value = match item.vrs {
       [ValueRepresentation::AgeString] => {
         DataElementValue::new_age_string(value)
@@ -143,6 +147,10 @@ impl DataSet {
     item: &dictionary::Item,
     value: &[DataElementTag],
   ) -> Result<(), DataError> {
+    if !item.multiplicity.contains(value.len()) {
+      return invalid_insert_error(item);
+    }
+
     let value = match item.vrs {
       [ValueRepresentation::AttributeTag] => {
         DataElementValue::new_attribute_tag(value)
@@ -163,6 +171,10 @@ impl DataSet {
     item: &dictionary::Item,
     value: &date::StructuredDate,
   ) -> Result<(), DataError> {
+    if !item.multiplicity.contains(1) {
+      return invalid_insert_error(item);
+    }
+
     let value = match item.vrs {
       [ValueRepresentation::Date] => DataElementValue::new_date(value),
       _ => invalid_insert_error(item),
@@ -181,6 +193,10 @@ impl DataSet {
     item: &dictionary::Item,
     value: &date_time::StructuredDateTime,
   ) -> Result<(), DataError> {
+    if !item.multiplicity.contains(1) {
+      return invalid_insert_error(item);
+    }
+
     let value = match item.vrs {
       [ValueRepresentation::Date] => DataElementValue::new_date_time(value),
       _ => invalid_insert_error(item),
@@ -200,6 +216,10 @@ impl DataSet {
     item: &dictionary::Item,
     value: &[f64],
   ) -> Result<(), DataError> {
+    if !item.multiplicity.contains(value.len()) {
+      return invalid_insert_error(item);
+    }
+
     let value = match item.vrs {
       [ValueRepresentation::DecimalString] => {
         DataElementValue::new_decimal_string(value)
@@ -267,6 +287,10 @@ impl DataSet {
       }
 
       builder(&converted_values)
+    }
+
+    if !item.multiplicity.contains(value.len()) {
+      return invalid_insert_error(item);
     }
 
     let value = match item.vrs {
@@ -347,6 +371,10 @@ impl DataSet {
       builder(&converted_values)
     }
 
+    if !item.multiplicity.contains(value.len()) {
+      return invalid_insert_error(item);
+    }
+
     let value = match item.vrs {
       [ValueRepresentation::SignedVeryLong] => convert_and_build(
         value,
@@ -380,6 +408,10 @@ impl DataSet {
     item: &dictionary::Item,
     value: &[person_name::StructuredPersonName],
   ) -> Result<(), DataError> {
+    if !item.multiplicity.contains(value.len()) {
+      return invalid_insert_error(item);
+    }
+
     let value = match item.vrs {
       [ValueRepresentation::PersonName] => {
         DataElementValue::new_person_name(value)
@@ -422,6 +454,10 @@ impl DataSet {
     item: &dictionary::Item,
     value: &[&str],
   ) -> Result<(), DataError> {
+    if !item.multiplicity.contains(value.len()) {
+      return invalid_insert_error(item);
+    }
+
     let value = match (item.vrs, value) {
       ([ValueRepresentation::ApplicationEntity], [value]) => {
         DataElementValue::new_application_entity(value)
@@ -470,6 +506,10 @@ impl DataSet {
     item: &dictionary::Item,
     value: &time::StructuredTime,
   ) -> Result<(), DataError> {
+    if !item.multiplicity.contains(1) {
+      return invalid_insert_error(item);
+    }
+
     let value = match item.vrs {
       [ValueRepresentation::Time] => DataElementValue::new_time(value),
       _ => invalid_insert_error(item),
@@ -1003,9 +1043,7 @@ impl Extend<(DataElementTag, DataElementValue)> for DataSet {
 /// Helper function that returns an error message when one of the
 /// `insert_*_element` functions is called with invalid arguments.
 ///
-fn invalid_insert_error(
-  item: &dictionary::Item,
-) -> Result<DataElementValue, DataError> {
+fn invalid_insert_error<T>(item: &dictionary::Item) -> Result<T, DataError> {
   match item.vrs {
     [vr] => Err(DataError::new_value_invalid(format!(
       "Data element '{}' (VR: '{}', multiplicity: {}) does not support the \

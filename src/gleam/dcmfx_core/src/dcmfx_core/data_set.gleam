@@ -145,6 +145,11 @@ pub fn insert_age_string(
   item: dictionary.Item,
   value: age_string.StructuredAge,
 ) -> Result(DataSet, DataError) {
+  use <- bool.lazy_guard(
+    !value_multiplicity.contains(item.multiplicity, 1),
+    fn() { invalid_insert_error(item) },
+  )
+
   case item.vrs {
     [value_representation.AgeString] -> data_element_value.new_age_string(value)
     _ -> invalid_insert_error(item)
@@ -160,6 +165,11 @@ pub fn insert_attribute_tag_value(
   item: dictionary.Item,
   value: List(DataElementTag),
 ) -> Result(DataSet, DataError) {
+  use <- bool.lazy_guard(
+    !value_multiplicity.contains(item.multiplicity, list.length(value)),
+    fn() { invalid_insert_error(item) },
+  )
+
   case item.vrs {
     [value_representation.AttributeTag] ->
       data_element_value.new_attribute_tag(value)
@@ -176,6 +186,11 @@ pub fn insert_date_value(
   item: dictionary.Item,
   value: date.StructuredDate,
 ) -> Result(DataSet, DataError) {
+  use <- bool.lazy_guard(
+    !value_multiplicity.contains(item.multiplicity, 1),
+    fn() { invalid_insert_error(item) },
+  )
+
   case item.vrs {
     [value_representation.Date] -> data_element_value.new_date(value)
     _ -> invalid_insert_error(item)
@@ -191,6 +206,11 @@ pub fn insert_date_time_value(
   item: dictionary.Item,
   value: date_time.StructuredDateTime,
 ) -> Result(DataSet, DataError) {
+  use <- bool.lazy_guard(
+    !value_multiplicity.contains(item.multiplicity, 1),
+    fn() { invalid_insert_error(item) },
+  )
+
   case item.vrs {
     [value_representation.Date] -> data_element_value.new_date_time(value)
     _ -> invalid_insert_error(item)
@@ -207,6 +227,11 @@ pub fn insert_float_value(
   item: dictionary.Item,
   value: List(IEEEFloat),
 ) -> Result(DataSet, DataError) {
+  use <- bool.lazy_guard(
+    !value_multiplicity.contains(item.multiplicity, list.length(value)),
+    fn() { invalid_insert_error(item) },
+  )
+
   case item.vrs {
     [value_representation.DecimalString] ->
       value
@@ -241,6 +266,11 @@ pub fn insert_int_value(
   item: dictionary.Item,
   value: List(Int),
 ) -> Result(DataSet, DataError) {
+  use <- bool.lazy_guard(
+    !value_multiplicity.contains(item.multiplicity, list.length(value)),
+    fn() { invalid_insert_error(item) },
+  )
+
   case item.vrs {
     [value_representation.IntegerString] ->
       data_element_value.new_integer_string(value)
@@ -268,6 +298,11 @@ pub fn insert_big_int_value(
   item: dictionary.Item,
   value: List(BigInt),
 ) -> Result(DataSet, DataError) {
+  use <- bool.lazy_guard(
+    !value_multiplicity.contains(item.multiplicity, list.length(value)),
+    fn() { invalid_insert_error(item) },
+  )
+
   case item.vrs {
     [value_representation.SignedVeryLong] ->
       data_element_value.new_signed_very_long(value)
@@ -287,6 +322,11 @@ pub fn insert_person_name_value(
   item: dictionary.Item,
   value: List(person_name.StructuredPersonName),
 ) -> Result(DataSet, DataError) {
+  use <- bool.lazy_guard(
+    !value_multiplicity.contains(item.multiplicity, list.length(value)),
+    fn() { invalid_insert_error(item) },
+  )
+
   case item.vrs {
     [value_representation.PersonName] ->
       data_element_value.new_person_name(value)
@@ -321,6 +361,11 @@ pub fn insert_string_value(
   item: dictionary.Item,
   value: List(String),
 ) -> Result(DataSet, DataError) {
+  use <- bool.lazy_guard(
+    !value_multiplicity.contains(item.multiplicity, list.length(value)),
+    fn() { invalid_insert_error(item) },
+  )
+
   case item.vrs, value {
     [value_representation.ApplicationEntity], [value] ->
       data_element_value.new_application_entity(value)
@@ -356,6 +401,11 @@ pub fn insert_time_value(
   item: dictionary.Item,
   value: time.StructuredTime,
 ) -> Result(DataSet, DataError) {
+  use <- bool.lazy_guard(
+    !value_multiplicity.contains(item.multiplicity, 1),
+    fn() { invalid_insert_error(item) },
+  )
+
   case item.vrs {
     [value_representation.Time] -> data_element_value.new_time(value)
     _ -> invalid_insert_error(item)

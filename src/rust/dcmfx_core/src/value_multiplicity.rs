@@ -11,6 +11,15 @@ pub struct ValueMultiplicity {
   pub max: Option<u32>,
 }
 
+impl ValueMultiplicity {
+  /// Returns whether the given value lies in the range specified by this value
+  /// multiplicity.
+  ///
+  pub fn contains(&self, n: usize) -> bool {
+    n >= self.min as usize && n <= self.max.unwrap_or(u32::MAX) as usize
+  }
+}
+
 impl std::fmt::Display for ValueMultiplicity {
   /// Returns a value multiplicity as a human-readable string, e.g. "1-3", or
   /// "2-n".

@@ -12,6 +12,13 @@ pub type ValueMultiplicity {
   ValueMultiplicity(min: Int, max: Option(Int))
 }
 
+/// Returns whether the given value lies in the range specified by this value
+/// multiplicity.
+///
+pub fn contains(multiplicity: ValueMultiplicity, n: Int) -> Bool {
+  n >= multiplicity.min && n <= option.unwrap(multiplicity.max, 0xFFFFFFFF)
+}
+
 /// Returns a value multiplicity as a human-readable string, e.g. "1-3", or
 /// "2-n".
 ///
