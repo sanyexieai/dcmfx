@@ -424,13 +424,16 @@ impl P10Location {
     value_bytes: &[u8],
     tag: DataElementTag,
   ) {
-    let private_creator = std::str::from_utf8(value_bytes).unwrap().trim_end();
+    let private_creator = match std::str::from_utf8(value_bytes) {
+      Ok(value) => value.trim_end_matches(' ').to_string(),
+      Err(_) => return,
+    };
 
     let clarifying_data_elements = self.active_clarifying_data_elements_mut();
 
     clarifying_data_elements
       .private_creators
-      .insert(tag, private_creator.to_string());
+      .insert(tag, private_creator);
   }
 
   /// Returns whether the current specific character set is byte compatible with

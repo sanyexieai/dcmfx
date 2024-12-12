@@ -398,22 +398,25 @@ fn update_private_creator_clarifying_data_element(
   value_bytes: BitArray,
   tag: DataElementTag,
 ) -> #(BitArray, P10Location) {
-  let assert Ok(private_creator) =
-    bit_array.to_string(value_bytes)
-    |> result.map(utils.trim_end_whitespace)
+  let location = case bit_array.to_string(value_bytes) {
+    Ok(private_creator) -> {
+      let private_creator = private_creator |> utils.trim_end_codepoints([0x20])
 
-  let location =
-    location
-    |> map_clarifying_data_elements(fn(clarifying_data_elements) {
-      ClarifyingDataElements(
-        ..clarifying_data_elements,
-        private_creators: dict.insert(
-          clarifying_data_elements.private_creators,
-          tag,
-          private_creator,
-        ),
-      )
-    })
+      location
+      |> map_clarifying_data_elements(fn(clarifying_data_elements) {
+        ClarifyingDataElements(
+          ..clarifying_data_elements,
+          private_creators: dict.insert(
+            clarifying_data_elements.private_creators,
+            tag,
+            private_creator,
+          ),
+        )
+      })
+    }
+
+    Error(Nil) -> location
+  }
 
   #(value_bytes, location)
 }
