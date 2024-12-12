@@ -358,12 +358,13 @@ impl P10Location {
     if tag == dictionary::SPECIFIC_CHARACTER_SET.tag {
       self
         .update_specific_character_set_clarifying_data_element(value_bytes)?;
-    } else if vr == ValueRepresentation::UnsignedShort && value_bytes.len() == 2
-    {
-      self.update_unsigned_short_clarifying_data_element(
-        tag,
-        u16::from_le_bytes(value_bytes.as_slice().try_into().unwrap()),
-      );
+    } else if vr == ValueRepresentation::UnsignedShort {
+      if let Ok(u) = TryInto::<[u8; 2]>::try_into(value_bytes.as_slice()) {
+        self.update_unsigned_short_clarifying_data_element(
+          tag,
+          u16::from_le_bytes(u),
+        );
+      }
     } else if vr == ValueRepresentation::LongString && tag.is_private_creator()
     {
       self.update_private_creator_clarifying_data_element(value_bytes, tag);

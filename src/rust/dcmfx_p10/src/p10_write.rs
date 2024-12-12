@@ -153,13 +153,20 @@ impl P10WriteContext {
             let mut output = vec![0u8; ZLIB_DEFLATE_CHUNK_SIZE];
 
             let total_out = zlib_stream.total_out();
+
             let status = zlib_stream
               .compress(
                 &[],
                 output.as_mut_slice(),
                 flate2::FlushCompress::Finish,
               )
-              .unwrap();
+              .map_err(|error| P10Error::DataInvalid {
+                when: "Performing zlib compression".to_string(),
+                details: error.message().unwrap_or("<unknown>").to_string(),
+                path: self.path.clone(),
+                offset: self.p10_total_byte_count,
+              })?;
+
             output.resize((zlib_stream.total_out() - total_out) as usize, 0u8);
 
             if !output.is_empty() {

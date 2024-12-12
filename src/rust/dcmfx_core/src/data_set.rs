@@ -944,12 +944,11 @@ impl DataSet {
       }
     }
 
-    if private_creator_element.is_none() {
-      return Err(format!("Private creator '{}' not found", private_creator));
-    }
+    let private_creator_element = private_creator_element
+      .ok_or(format!("Private creator '{}' not found", private_creator))?;
 
     // Calculate the range of element values to include in the returned data set
-    let element_start = private_creator_element.unwrap() << 8;
+    let element_start = private_creator_element << 8;
     let element_end = element_start | 0xFF;
 
     // Filter this data set to only include the relevant private data elements

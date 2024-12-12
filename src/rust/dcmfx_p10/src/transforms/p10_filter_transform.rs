@@ -53,7 +53,7 @@ impl P10FilterTransform {
 
   /// Returns a data set containing all data elements allowed by the predicate
   /// function for the context. This is only available if `create_data_set` was
-  /// set when the context was created.
+  /// set to true when the context was created.
   ///
   pub fn data_set(&mut self) -> Result<DataSet, P10Error> {
     match std::mem::take(&mut self.data_set_builder) {

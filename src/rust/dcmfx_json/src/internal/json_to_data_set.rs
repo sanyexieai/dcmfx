@@ -401,31 +401,33 @@ fn read_dicom_json_primitive_value(
     }
 
     ValueRepresentation::FloatingPointDouble => {
-      if let Ok(floats) = read_dicom_json_float_array::<f64>(&value) {
-        let mut bytes = vec![0u8; floats.len() * 8];
-        byteorder::LittleEndian::write_f64_into(&floats, &mut bytes);
+      let floats =
+        read_dicom_json_float_array::<f64>(&value).map_err(|_| {
+          JsonDeserializeError::JsonInvalid {
+            details: "FloatingPointDouble value is invalid".to_string(),
+            path: path.clone(),
+          }
+        })?;
 
-        Ok(DataElementValue::new_binary_unchecked(vr, Rc::new(bytes)))
-      } else {
-        Err(JsonDeserializeError::JsonInvalid {
-          details: "FloatingPointDouble value is invalid".to_string(),
-          path: path.clone(),
-        })
-      }
+      let mut bytes = vec![0u8; floats.len() * 8];
+      byteorder::LittleEndian::write_f64_into(&floats, &mut bytes);
+
+      Ok(DataElementValue::new_binary_unchecked(vr, Rc::new(bytes)))
     }
 
     ValueRepresentation::FloatingPointSingle => {
-      if let Ok(floats) = read_dicom_json_float_array::<f32>(&value) {
-        let mut bytes = vec![0u8; floats.len() * 4];
-        byteorder::LittleEndian::write_f32_into(&floats, &mut bytes);
+      let floats =
+        read_dicom_json_float_array::<f32>(&value).map_err(|_| {
+          JsonDeserializeError::JsonInvalid {
+            details: "FloatingPointSingle value is invalid".to_string(),
+            path: path.clone(),
+          }
+        })?;
 
-        Ok(DataElementValue::new_binary_unchecked(vr, Rc::new(bytes)))
-      } else {
-        Err(JsonDeserializeError::JsonInvalid {
-          details: "FloatingPointSingle value is invalid".to_string(),
-          path: path.clone(),
-        })
-      }
+      let mut bytes = vec![0u8; floats.len() * 4];
+      byteorder::LittleEndian::write_f32_into(&floats, &mut bytes);
+
+      Ok(DataElementValue::new_binary_unchecked(vr, Rc::new(bytes)))
     }
 
     ValueRepresentation::AttributeTag => {
@@ -499,12 +501,14 @@ fn read_dicom_json_float_array<
   let mut floats: Vec<T> = Vec::with_capacity(array.len());
 
   for value in array {
-    let float = match value {
-      serde_json::Value::Number(num) if num.is_f64() => num.as_f64().unwrap(),
-      serde_json::Value::String(s) if s == "NaN" => f64::NAN,
-      serde_json::Value::String(s) if s == "Infinity" => f64::INFINITY,
-      serde_json::Value::String(s) if s == "-Infinity" => f64::NEG_INFINITY,
-      _ => return Err(()),
+    let float = match value.as_f64() {
+      Some(f) => f,
+      None => match value {
+        serde_json::Value::String(s) if s == "NaN" => f64::NAN,
+        serde_json::Value::String(s) if s == "Infinity" => f64::INFINITY,
+        serde_json::Value::String(s) if s == "-Infinity" => f64::NEG_INFINITY,
+        _ => return Err(()),
+      },
     };
 
     floats.push(T::from_f64(float).unwrap());

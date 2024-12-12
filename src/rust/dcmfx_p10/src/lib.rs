@@ -111,8 +111,8 @@ pub fn read_stream(
     }
 
     // If the data set builder is now complete then return the final data set
-    if builder.is_complete() {
-      return Ok(builder.final_data_set().unwrap());
+    if let Ok(final_data_set) = builder.final_data_set() {
+      return Ok(final_data_set);
     }
   }
 }
@@ -184,8 +184,8 @@ pub fn read_bytes(
 
         // If the data set builder is now complete then return the final data
         // set
-        if builder.is_complete() {
-          return Ok(builder.final_data_set().unwrap());
+        if let Ok(final_data_set) = builder.final_data_set() {
+          return Ok(final_data_set);
         }
       }
 

@@ -220,11 +220,11 @@ impl DataSetBuilder {
       }
 
       (P10Part::SequenceDelimiter, Some(BuilderLocation::Sequence { .. })) => {
-        if let BuilderLocation::Sequence { tag, items } =
-          self.location.pop().unwrap()
+        if let Some(BuilderLocation::Sequence { tag, items }) =
+          self.location.pop()
         {
-          let value = DataElementValue::new_sequence(items);
-          self.insert_data_element_at_current_location(tag, value);
+          let sequence = DataElementValue::new_sequence(items);
+          self.insert_data_element_at_current_location(tag, sequence);
         }
 
         Ok(())
@@ -369,23 +369,24 @@ impl DataSetBuilder {
     &mut self,
     part: &P10Part,
   ) -> Result<(), P10Error> {
-    let PendingDataElement {
-      tag,
-      vr,
-      data: value_bytes,
-    } = self.pending_data_element.as_mut().unwrap();
-
-    match part {
-      P10Part::DataElementValueBytes {
-        data,
-        bytes_remaining,
-        ..
-      } => {
-        value_bytes.push(data.clone());
+    match (part, self.pending_data_element.as_mut()) {
+      (
+        P10Part::DataElementValueBytes {
+          data,
+          bytes_remaining,
+          ..
+        },
+        Some(pending_data_element),
+      ) => {
+        pending_data_element.data.push(data.clone());
 
         if *bytes_remaining == 0 {
-          let tag = *tag;
-          let value = build_final_data_element_value(tag, *vr, value_bytes);
+          let tag = pending_data_element.tag;
+          let value = build_final_data_element_value(
+            tag,
+            pending_data_element.vr,
+            &pending_data_element.data,
+          );
 
           self.insert_data_element_at_current_location(tag, value);
 
@@ -395,7 +396,7 @@ impl DataSetBuilder {
         Ok(())
       }
 
-      part => self.unexpected_part_error(part),
+      (part, _) => self.unexpected_part_error(part),
     }
   }
 

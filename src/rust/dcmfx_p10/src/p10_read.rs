@@ -322,12 +322,17 @@ impl P10ReadContext {
     let preamble = match self.stream.peek(132) {
       Ok(data) => {
         if &data[128..132] == b"DICM" {
-          self.stream.read(132).unwrap();
+          self.stream.read(132).map_err(|error| {
+            self.map_byte_stream_error(error, "Reading file header")
+          })?;
 
-          Ok(Box::new(data[0..128].try_into().unwrap()))
+          let mut preamble = [0u8; 128];
+          preamble.copy_from_slice(&data[0..128]);
+
+          Ok(Box::new(preamble))
         } else {
           // There is no DICM prefix, so return empty preamble bytes
-          Ok(Box::new([0; 128]))
+          Ok(Box::new([0u8; 128]))
         }
       }
 

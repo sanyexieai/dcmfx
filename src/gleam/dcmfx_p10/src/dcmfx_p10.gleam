@@ -106,12 +106,9 @@ fn do_read_stream(
         Ok(builder) ->
           // If the data set builder is now complete then return the final data
           // set
-          case data_set_builder.is_complete(builder) {
-            True -> {
-              let assert Ok(data_set) = data_set_builder.final_data_set(builder)
-              Ok(data_set)
-            }
-            False -> do_read_stream(stream, context, builder)
+          case data_set_builder.final_data_set(builder) {
+            Ok(final_data_set) -> Ok(final_data_set)
+            Error(Nil) -> do_read_stream(stream, context, builder)
           }
 
         Error(e) -> Error(e)
@@ -191,12 +188,9 @@ fn do_read_bytes(
         // If the data set builder is now complete then return the final data
         // set
         Ok(builder) ->
-          case data_set_builder.is_complete(builder) {
-            True -> {
-              let assert Ok(data_set) = data_set_builder.final_data_set(builder)
-              Ok(data_set)
-            }
-            False -> do_read_bytes(context, builder)
+          case data_set_builder.final_data_set(builder) {
+            Ok(final_data_set) -> Ok(final_data_set)
+            Error(Nil) -> do_read_bytes(context, builder)
           }
 
         Error(e) -> Error(#(e, builder))

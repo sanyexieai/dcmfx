@@ -876,10 +876,10 @@ impl DataElementValue {
       }
 
       _ => {
-        let mut strings = self.get_strings()?;
+        let strings = self.get_strings()?;
 
         match strings.as_slice() {
-          [_] => Ok(strings.pop().unwrap()),
+          [s] => Ok(s),
           _ => Err(DataError::new_multiplicity_mismatch()),
         }
       }
@@ -1245,10 +1245,13 @@ impl DataElementValue {
   ) -> Result<person_name::StructuredPersonName, DataError> {
     let mut person_names = self.get_person_names()?;
 
-    match person_names.as_slice() {
-      [_] => Ok(person_names.pop().unwrap()),
-      _ => Err(DataError::new_multiplicity_mismatch()),
+    if let Some(s) = person_names.pop() {
+      if person_names.is_empty() {
+        return Ok(s);
+      }
     }
+
+    Err(DataError::new_multiplicity_mismatch())
   }
 
   /// Returns the structured person names contained in a data element value.

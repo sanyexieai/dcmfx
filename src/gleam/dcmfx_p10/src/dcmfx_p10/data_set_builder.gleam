@@ -198,13 +198,17 @@ fn add_part_in_sequence(
       )
 
     p10_part.SequenceDelimiter, [Sequence(tag, items), ..sequence_location] -> {
-      let value =
+      let sequence =
         items
         |> list.reverse
         |> data_element_value.new_sequence
 
       let new_location =
-        insert_data_element_at_current_location(sequence_location, tag, value)
+        insert_data_element_at_current_location(
+          sequence_location,
+          tag,
+          sequence,
+        )
 
       Ok(DataSetBuilder(..builder, location: new_location))
     }
@@ -333,16 +337,17 @@ fn add_part_in_pending_data_element(
   builder: DataSetBuilder,
   part: P10Part,
 ) -> Result(DataSetBuilder, P10Error) {
-  let assert Some(PendingDataElement(tag, vr, value_bytes)) =
-    builder.pending_data_element
-
-  case part {
-    p10_part.DataElementValueBytes(_, data, bytes_remaining) -> {
-      let new_value_bytes = [data, ..value_bytes]
+  case part, builder.pending_data_element {
+    p10_part.DataElementValueBytes(_, data, bytes_remaining),
+      Some(pending_data_element)
+    -> {
+      let tag = pending_data_element.tag
+      let vr = pending_data_element.vr
+      let data = [data, ..pending_data_element.data]
 
       case bytes_remaining {
         0 -> {
-          let value = build_final_data_element_value(tag, vr, new_value_bytes)
+          let value = build_final_data_element_value(tag, vr, data)
 
           let new_location =
             insert_data_element_at_current_location(
@@ -362,14 +367,13 @@ fn add_part_in_pending_data_element(
         _ ->
           DataSetBuilder(
             ..builder,
-            pending_data_element: PendingDataElement(tag, vr, new_value_bytes)
-              |> Some,
+            pending_data_element: Some(PendingDataElement(tag, vr, data)),
           )
           |> Ok
       }
     }
 
-    part -> unexpected_part_error(part, builder)
+    part, _ -> unexpected_part_error(part, builder)
   }
 }
 
