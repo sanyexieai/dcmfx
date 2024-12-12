@@ -2,7 +2,7 @@
 
 use regex::Regex;
 
-use crate::{utils, DataError};
+use crate::DataError;
 
 /// A structured date that can be converted to/from a `Date` value.
 ///
@@ -26,7 +26,7 @@ impl StructuredDate {
       DataError::new_value_invalid("Date is invalid UTF-8".to_string())
     })?;
 
-    let date_string = utils::trim_end_whitespace(date_string);
+    let date_string = date_string.trim_matches('\0').trim();
 
     match PARSE_DATE_REGEX.captures(date_string) {
       Some(caps) => {

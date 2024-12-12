@@ -726,7 +726,7 @@ impl P10JsonTransform {
           .map(|raw_name| {
             let mut component_groups: Vec<_> = raw_name
               .split("=")
-              .map(|s| s.trim_end())
+              .map(|s| s.trim_end_matches(' '))
               .enumerate()
               .collect();
 
@@ -831,7 +831,7 @@ impl P10JsonTransform {
               "String bytes are not valid UTF-8".to_string(),
             )
           })?
-          .trim_end_matches(['\u{0000}', '\u{0020}']);
+          .trim_end_matches(' ');
 
         Ok(vec![prepare_json_string(string)])
       }

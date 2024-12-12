@@ -9,6 +9,7 @@ import gleam/int
 import gleam/option.{type Option, None, Some}
 import gleam/regexp
 import gleam/result
+import gleam/string
 
 /// A structured time that can be converted from/to a `Time` data element value.
 ///
@@ -22,11 +23,12 @@ pub fn from_bytes(bytes: BitArray) -> Result(StructuredTime, DataError) {
   let time_string =
     bytes
     |> bit_array.to_string
-    |> result.map(utils.trim_end_whitespace)
     |> result.replace_error(data_error.new_value_invalid(
       "Time is invalid UTF-8",
     ))
   use time_string <- result.try(time_string)
+
+  let time_string = time_string |> utils.trim_ascii(0x00) |> string.trim()
 
   let assert Ok(re) =
     regexp.from_string("^(\\d\\d)((\\d\\d)((\\d\\d)(\\.\\d{1,6})?)?)?$")
@@ -180,7 +182,7 @@ fn format_second(seconds: Float) -> String {
       let fractional_seconds =
         fractional_seconds
         |> int.to_string
-        |> utils.trim_end("0")
+        |> utils.trim_ascii_end(0x30)
 
       whole_seconds <> "." <> fractional_seconds
     }

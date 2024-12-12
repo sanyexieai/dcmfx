@@ -1,11 +1,3 @@
-/// Removes all whitespace from the end of the passed string. Whitespace is
-/// defined as the following Unicode codepoints: U+0000, U+0009, U+000A, U+000D,
-/// U+0020.
-///
-pub fn trim_end_whitespace(s: &str) -> &str {
-  s.trim_end_matches(['\0', '\u{0009}', '\u{000A}', '\u{000D}', '\u{0020}'])
-}
-
 /// Inspects a byte slice in hexadecimal, e.g. `[1A 2B 3C 4D]`. If the number of
 /// bytes in the slice exceeds `max_length` then not all bytes will be
 /// shown and a trailing ellipsis will be appended, e.g. `[1A 2B 3C 4D ...]`.

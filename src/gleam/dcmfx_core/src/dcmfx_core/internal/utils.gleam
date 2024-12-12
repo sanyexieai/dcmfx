@@ -1,7 +1,6 @@
 import gleam/bit_array
 import gleam/float
 import gleam/int
-import gleam/list
 import gleam/result
 import gleam/string
 
@@ -36,48 +35,60 @@ pub fn pad_start(s: String, desired_length: Int, pad_string: String) -> String {
 /// digits following the decimal point.
 ///
 pub fn smart_parse_float(input: String) -> Result(Float, Nil) {
-  let input = trim_end_codepoints(input, [0x2E])
+  let input = trim_ascii_end(input, 0x2E)
 
   input
   |> float.parse
   |> result.lazy_or(fn() { float.parse(input <> ".0") })
 }
 
-/// Removes all occurrences of the specified characters from the end of a
+/// Removes all occurrences of the specified ASCII codepoint from the start and
+/// end of a string.
+///
+pub fn trim_ascii(s: String, ascii_character: Int) -> String {
+  s
+  |> trim_ascii_start(ascii_character)
+  |> trim_ascii_end(ascii_character)
+}
+
+/// Removes all occurrences of the specified ASCII character from the start of a
 /// string.
 ///
-pub fn trim_end(s: String, chars: String) -> String {
-  let codepoints =
-    chars
-    |> string.to_utf_codepoints
-    |> list.map(string.utf_codepoint_to_int)
+fn trim_ascii_start(s: String, ascii_character: Int) -> String {
+  let s = bit_array.from_string(s)
 
-  trim_end_codepoints(s, codepoints)
+  do_trim_ascii_start(s, ascii_character)
 }
 
-/// Removes all whitespace from the end of the passed string. Whitespace is
-/// defined as the following Unicode codepoints: U+0000, U+0009, U+000A, U+000D,
-/// U+0020.
-///
-pub fn trim_end_whitespace(s: String) -> String {
-  trim_end_codepoints(s, [0x00, 0x09, 0x0A, 0x0D, 0x20])
+fn do_trim_ascii_start(s: BitArray, ascii_character: Int) -> String {
+  case s {
+    <<x, rest:bytes>> ->
+      case x == ascii_character {
+        True -> do_trim_ascii_start(rest, ascii_character)
+        False -> {
+          let assert Ok(s) = bit_array.to_string(s)
+          s
+        }
+      }
+
+    _ -> ""
+  }
 }
 
-/// Removes all occurrences of the specified codepoints from the end of a
-/// string. This function can only remove ASCII codepoints, i.e. those with
-/// values <= `0x7F`.
+/// Removes all occurrences of the specified ASCII character from the end of a
+/// string.
 ///
-pub fn trim_end_codepoints(s: String, codepoints: List(Int)) -> String {
+pub fn trim_ascii_end(s: String, ascii_character: Int) -> String {
   let s = bit_array.from_string(s)
   let len = bit_array.byte_size(s)
 
-  do_trim_end_codepoints(s, len, codepoints)
+  do_trim_end_codepoints(s, len, ascii_character)
 }
 
 fn do_trim_end_codepoints(
   s: BitArray,
   length: Int,
-  codepoints: List(Int),
+  ascii_character: Int,
 ) -> String {
   case length {
     0 -> ""
@@ -85,8 +96,8 @@ fn do_trim_end_codepoints(
       // Get the last byte in the string
       let assert Ok(<<x>>) = bit_array.slice(s, length - 1, 1)
 
-      case list.contains(codepoints, x) {
-        True -> do_trim_end_codepoints(s, length - 1, codepoints)
+      case x == ascii_character {
+        True -> do_trim_end_codepoints(s, length - 1, ascii_character)
         False -> {
           let assert Ok(s) = bit_array.slice(s, 0, length)
           let assert Ok(s) = bit_array.to_string(s)

@@ -2,7 +2,7 @@
 
 use regex::Regex;
 
-use crate::{utils, DataError};
+use crate::DataError;
 
 /// The time units that can be specified by a structured age.
 ///
@@ -50,7 +50,7 @@ impl StructuredAge {
       DataError::new_value_invalid("AgeString is invalid UTF-8".to_string())
     })?;
 
-    let age_string = utils::trim_end_whitespace(age_string);
+    let age_string = age_string.trim_matches('\0').trim();
 
     match PARSE_AGE_STRING_REGEX.captures(age_string) {
       Some(caps) => {

@@ -1,6 +1,6 @@
 //! Work with the DICOM `PersonName` value representation.
 
-use crate::{utils, DataError};
+use crate::DataError;
 
 /// The components of a single person name.
 ///
@@ -33,8 +33,6 @@ pub fn from_bytes(
   let person_name_string = std::str::from_utf8(bytes).map_err(|_| {
     DataError::new_value_invalid("PersonName is invalid UTF-8".to_string())
   })?;
-
-  let person_name_string = utils::trim_end_whitespace(person_name_string);
 
   let person_names = person_name_string
     .split('\\')
@@ -79,8 +77,10 @@ fn parse_person_name_string(
 fn parse_person_name_component_group(
   component_group: &str,
 ) -> Result<Option<PersonNameComponents>, DataError> {
-  let mut components: Vec<&str> =
-    component_group.split('^').map(|s| s.trim_end()).collect();
+  let mut components: Vec<&str> = component_group
+    .split('^')
+    .map(|s| s.trim_end_matches(' '))
+    .collect();
 
   if components.len() > 5 {
     return Err(DataError::new_value_invalid(format!(
@@ -137,11 +137,11 @@ fn components_to_string(
   components: &PersonNameComponents,
 ) -> Result<String, DataError> {
   let components: [&str; 5] = [
-    components.last_name.trim(),
-    components.first_name.trim(),
-    components.middle_name.trim(),
-    components.prefix.trim(),
-    components.suffix.trim(),
+    components.last_name.trim_end_matches(' '),
+    components.first_name.trim_end_matches(' '),
+    components.middle_name.trim_end_matches(' '),
+    components.prefix.trim_end_matches(' '),
+    components.suffix.trim_end_matches(' '),
   ];
 
   for component in components {

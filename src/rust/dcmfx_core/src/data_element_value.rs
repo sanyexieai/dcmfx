@@ -146,7 +146,7 @@ impl DataElementValue {
                   ValueRepresentation::UnlimitedCharacters => {
                     format!("{:?}", s.trim_end_matches(' '))
                   }
-                  _ => format!("{:?}", s.trim()),
+                  _ => format!("{:?}", s.trim_matches(' ')),
                 })
                 .collect::<Vec<String>>()
                 .join(", "),
@@ -157,7 +157,7 @@ impl DataElementValue {
             // Add a descriptive suffix for known UIDs and CodeStrings
             let suffix = match vr {
               ValueRepresentation::UniqueIdentifier => {
-                match dictionary::uid_name(utils::trim_end_whitespace(value)) {
+                match dictionary::uid_name(value.trim_end_matches('\0')) {
                   Ok(uid_name) => Some(format!(" ({})", uid_name)),
                   Err(()) => None,
                 }
@@ -475,7 +475,10 @@ impl DataElementValue {
   /// Creates a new `ApplicationEntity` data element value.
   ///
   pub fn new_application_entity(value: &str) -> Result<Self, DataError> {
-    new_string_list(ValueRepresentation::ApplicationEntity, &[value.trim()])
+    new_string_list(
+      ValueRepresentation::ApplicationEntity,
+      &[value.trim_matches(' ')],
+    )
   }
 
   /// Creates a new `AttributeTag` data element value.
@@ -493,7 +496,10 @@ impl DataElementValue {
   pub fn new_code_string(value: &[&str]) -> Result<Self, DataError> {
     new_string_list(
       ValueRepresentation::CodeString,
-      &value.iter().map(|s| s.trim()).collect::<Vec<&str>>(),
+      &value
+        .iter()
+        .map(|s| s.trim_matches(' '))
+        .collect::<Vec<&str>>(),
     )
   }
 
@@ -560,7 +566,10 @@ impl DataElementValue {
   pub fn new_long_string(value: &[&str]) -> Result<Self, DataError> {
     new_string_list(
       ValueRepresentation::LongString,
-      &value.iter().map(|s| s.trim()).collect::<Vec<&str>>(),
+      &value
+        .iter()
+        .map(|s| s.trim_matches(' '))
+        .collect::<Vec<&str>>(),
     )
   }
 
@@ -569,7 +578,7 @@ impl DataElementValue {
   pub fn new_long_text(value: String) -> Result<Self, DataError> {
     let vr = ValueRepresentation::LongText;
 
-    let mut bytes = value.trim_end().to_string().into_bytes();
+    let mut bytes = value.trim_end_matches(' ').to_string().into_bytes();
     vr.pad_bytes_to_even_length(&mut bytes);
 
     Self::new_binary(vr, Rc::new(bytes))
@@ -639,7 +648,10 @@ impl DataElementValue {
   /// Creates a new `ShortString` data element value.
   ///
   pub fn new_short_string(value: &[&str]) -> Result<Self, DataError> {
-    let value = value.iter().map(|s| s.trim()).collect::<Vec<&str>>();
+    let value = value
+      .iter()
+      .map(|s| s.trim_matches(' '))
+      .collect::<Vec<&str>>();
 
     new_string_list(ValueRepresentation::ShortString, &value)
   }
@@ -649,7 +661,7 @@ impl DataElementValue {
   pub fn new_short_text(value: &str) -> Result<Self, DataError> {
     let vr = ValueRepresentation::ShortText;
 
-    let mut bytes = value.trim_end().to_string().into_bytes();
+    let mut bytes = value.trim_end_matches(' ').to_string().into_bytes();
     vr.pad_bytes_to_even_length(&mut bytes);
 
     Self::new_binary(vr, Rc::new(bytes))
@@ -708,7 +720,7 @@ impl DataElementValue {
   ) -> Result<Self, DataError> {
     let vr = ValueRepresentation::UniversalResourceIdentifier;
 
-    let mut bytes = value.trim().to_owned().into_bytes();
+    let mut bytes = value.trim_matches(' ').to_string().into_bytes();
     vr.pad_bytes_to_even_length(&mut bytes);
 
     Self::new_binary(vr, Rc::new(bytes))
@@ -725,7 +737,10 @@ impl DataElementValue {
   pub fn new_unlimited_characters(value: &[&str]) -> Result<Self, DataError> {
     new_string_list(
       ValueRepresentation::UnlimitedCharacters,
-      &value.iter().map(|s| s.trim_end()).collect::<Vec<&str>>(),
+      &value
+        .iter()
+        .map(|s| s.trim_end_matches(' '))
+        .collect::<Vec<&str>>(),
     )
   }
 
@@ -734,7 +749,7 @@ impl DataElementValue {
   pub fn new_unlimited_text(value: &str) -> Result<Self, DataError> {
     let vr = ValueRepresentation::UnlimitedText;
 
-    let mut bytes = value.trim_end().to_owned().into_bytes();
+    let mut bytes = value.trim_end_matches(' ').to_string().into_bytes();
     vr.pad_bytes_to_even_length(&mut bytes);
 
     Self::new_binary(vr, Rc::new(bytes))
@@ -872,7 +887,15 @@ impl DataElementValue {
           )
         })?;
 
-        Ok(string.trim_end_matches(['\u{0000}', ' ']))
+        let string = match *vr {
+          ValueRepresentation::ApplicationEntity
+          | ValueRepresentation::UniversalResourceIdentifier => {
+            string.trim_matches(' ')
+          }
+          _ => string.trim_end_matches(' '),
+        };
+
+        Ok(string)
       }
 
       _ => {
@@ -906,7 +929,11 @@ impl DataElementValue {
 
         let strings = string
           .split('\\')
-          .map(|s| s.trim_end_matches(['\u{0000}', ' ']))
+          .map(|s| match vr {
+            ValueRepresentation::UniqueIdentifier => s.trim_end_matches('\0'),
+            ValueRepresentation::UnlimitedCharacters => s.trim_end_matches(' '),
+            _ => s.trim_matches([' ']),
+          })
           .collect::<Vec<&str>>();
 
         Ok(strings)
@@ -2662,7 +2689,7 @@ mod tests {
       ]),
       DataElementValue::new_binary(
         ValueRepresentation::PersonName,
-        Rc::new(b"=1^2^3^4^5\\==1^2^3^4^5".to_vec()),
+        Rc::new(b"=1^ 2^3^4^5\\==1^2^3^4^5 ".to_vec()),
       )
     );
   }

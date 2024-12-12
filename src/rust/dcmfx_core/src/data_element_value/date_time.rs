@@ -3,7 +3,7 @@
 use regex::Regex;
 
 use crate::data_element_value::date::StructuredDate;
-use crate::{utils, DataError, StructuredTime};
+use crate::{DataError, StructuredTime};
 
 /// A structured date/time that can be converted to/from a `DateTime` value.
 ///
@@ -34,7 +34,7 @@ impl StructuredDateTime {
       DataError::new_value_invalid("DateTime is invalid UTF-8".to_string())
     })?;
 
-    let date_time_string = utils::trim_end_whitespace(date_time_string);
+    let date_time_string = date_time_string.trim_matches('\0').trim();
 
     match PARSE_DATE_TIME_REGEX.captures(date_time_string) {
       Some(caps) => {

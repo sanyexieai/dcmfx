@@ -1,6 +1,6 @@
 //! Work with the DICOM `IntegerString` value representation.
 
-use crate::{utils, DataError};
+use crate::DataError;
 
 /// Converts a `IntegerString` value to a list of ints.
 ///
@@ -9,7 +9,7 @@ pub fn from_bytes(bytes: &[u8]) -> Result<Vec<i32>, DataError> {
     DataError::new_value_invalid("IntegerString is invalid UTF-8".to_string())
   })?;
 
-  let integer_string = utils::trim_end_whitespace(integer_string);
+  let integer_string = integer_string.trim_matches('\0');
 
   integer_string
     .split('\\')

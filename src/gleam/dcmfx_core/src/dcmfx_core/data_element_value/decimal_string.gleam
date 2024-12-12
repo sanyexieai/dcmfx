@@ -15,11 +15,12 @@ pub fn from_bytes(bytes: BitArray) -> Result(List(Float), DataError) {
   let decimal_string =
     bytes
     |> bit_array.to_string
-    |> result.map(utils.trim_end_whitespace)
     |> result.replace_error(data_error.new_value_invalid(
       "DecimalString is invalid UTF-8",
     ))
   use decimal_string <- result.try(decimal_string)
+
+  let decimal_string = utils.trim_ascii(decimal_string, 0x00)
 
   decimal_string
   |> string.split("\\")
@@ -47,8 +48,8 @@ pub fn to_bytes(values: List(Float)) -> BitArray {
         True -> value
         False ->
           value
-          |> utils.trim_end("0")
-          |> utils.trim_end(".")
+          |> utils.trim_ascii_end(0x30)
+          |> utils.trim_ascii_end(0x2E)
           |> string.slice(0, 16)
       }
     })

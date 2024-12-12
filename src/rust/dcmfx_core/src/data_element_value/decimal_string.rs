@@ -1,6 +1,6 @@
 //! Work with the DICOM `DecimalString` value representation.
 
-use crate::{utils, DataError};
+use crate::DataError;
 
 /// Converts a `DecimalString` value to a list of floats.
 ///
@@ -9,7 +9,7 @@ pub fn from_bytes(bytes: &[u8]) -> Result<Vec<f64>, DataError> {
     DataError::new_value_invalid("DecimalString is invalid UTF-8".to_string())
   })?;
 
-  let decimal_string = utils::trim_end_whitespace(decimal_string);
+  let decimal_string = decimal_string.trim_matches('\0');
 
   decimal_string
     .split('\\')

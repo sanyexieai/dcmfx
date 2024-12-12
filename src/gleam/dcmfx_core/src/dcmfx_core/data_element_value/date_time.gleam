@@ -34,11 +34,13 @@ pub fn from_bytes(bytes: BitArray) -> Result(StructuredDateTime, DataError) {
   let date_time_string =
     bytes
     |> bit_array.to_string
-    |> result.map(utils.trim_end_whitespace)
     |> result.replace_error(data_error.new_value_invalid(
       "DateTime is invalid UTF-8",
     ))
   use date_time_string <- result.try(date_time_string)
+
+  let date_time_string =
+    date_time_string |> utils.trim_ascii(0x00) |> string.trim()
 
   let assert Ok(re) =
     regexp.from_string(

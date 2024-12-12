@@ -400,7 +400,7 @@ fn update_private_creator_clarifying_data_element(
 ) -> #(BitArray, P10Location) {
   let location = case bit_array.to_string(value_bytes) {
     Ok(private_creator) -> {
-      let private_creator = private_creator |> utils.trim_end_codepoints([0x20])
+      let private_creator = private_creator |> utils.trim_ascii_end(0x20)
 
       location
       |> map_clarifying_data_elements(fn(clarifying_data_elements) {

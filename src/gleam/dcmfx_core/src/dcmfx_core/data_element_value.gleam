@@ -107,7 +107,7 @@ pub fn to_string(
 
             value_representation.ApplicationEntity ->
               value
-              |> utils.trim_end_codepoints([0x20])
+              |> utils.trim_ascii_end(0x20)
               |> string.inspect
 
             value_representation.Date ->
@@ -144,28 +144,25 @@ pub fn to_string(
               |> list.map(fn(s) {
                 case vr {
                   value_representation.UniqueIdentifier ->
-                    s
-                    |> utils.trim_end_codepoints([0x00])
-                    |> string.inspect
+                    utils.trim_ascii_end(s, 0x00)
                   value_representation.UnlimitedCharacters ->
-                    s
-                    |> utils.trim_end_codepoints([0x20])
-                    |> string.inspect
-                  _ -> s |> string.trim |> string.inspect
+                    utils.trim_ascii_end(s, 0x20)
+                  _ -> utils.trim_ascii(s, 0x20)
                 }
+                |> string.inspect
               })
               |> string.join(", ")
 
             _ ->
               value
-              |> utils.trim_end_codepoints([0x20])
+              |> utils.trim_ascii_end(0x20)
               |> string.inspect
           }
 
           // Add a descriptive suffix for known UIDs and CodeStrings
           let suffix = case vr {
             value_representation.UniqueIdentifier ->
-              case dictionary.uid_name(utils.trim_end_whitespace(value)) {
+              case dictionary.uid_name(utils.trim_ascii_end(value, 0x00)) {
                 Ok(uid_name) -> Some(" (" <> uid_name <> ")")
                 Error(Nil) -> None
               }
@@ -512,7 +509,7 @@ pub fn new_application_entity(
   value: String,
 ) -> Result(DataElementValue, DataError) {
   [value]
-  |> list.map(string.trim)
+  |> list.map(utils.trim_ascii_end(_, 0x20))
   |> new_string_list(value_representation.ApplicationEntity, _)
 }
 
@@ -532,7 +529,7 @@ pub fn new_code_string(
   value: List(String),
 ) -> Result(DataElementValue, DataError) {
   value
-  |> list.map(string.trim)
+  |> list.map(utils.trim_ascii(_, 0x20))
   |> new_string_list(value_representation.CodeString, _)
 }
 
@@ -604,7 +601,7 @@ pub fn new_long_string(
   value: List(String),
 ) -> Result(DataElementValue, DataError) {
   value
-  |> list.map(string.trim)
+  |> list.map(utils.trim_ascii(_, 0x20))
   |> new_string_list(value_representation.LongString, _)
 }
 
@@ -612,7 +609,7 @@ pub fn new_long_string(
 ///
 pub fn new_long_text(value: String) -> Result(DataElementValue, DataError) {
   value
-  |> string.trim_end
+  |> utils.trim_ascii_end(0x20)
   |> bit_array.from_string
   |> value_representation.pad_bytes_to_even_length(
     value_representation.LongText,
@@ -699,7 +696,7 @@ pub fn new_short_string(
   value: List(String),
 ) -> Result(DataElementValue, DataError) {
   value
-  |> list.map(string.trim)
+  |> list.map(utils.trim_ascii(_, 0x20))
   |> new_string_list(value_representation.ShortString, _)
 }
 
@@ -707,7 +704,7 @@ pub fn new_short_string(
 ///
 pub fn new_short_text(value: String) -> Result(DataElementValue, DataError) {
   value
-  |> string.trim_end
+  |> utils.trim_ascii_end(0x20)
   |> bit_array.from_string
   |> value_representation.pad_bytes_to_even_length(
     value_representation.ShortText,
@@ -790,7 +787,7 @@ pub fn new_universal_resource_identifier(
   value: String,
 ) -> Result(DataElementValue, DataError) {
   value
-  |> string.trim_end
+  |> utils.trim_ascii(0x20)
   |> bit_array.from_string
   |> value_representation.pad_bytes_to_even_length(
     value_representation.UniversalResourceIdentifier,
@@ -811,7 +808,7 @@ pub fn new_unlimited_characters(
   value: List(String),
 ) -> Result(DataElementValue, DataError) {
   value
-  |> list.map(string.trim_end)
+  |> list.map(utils.trim_ascii_end(_, 0x20))
   |> new_string_list(value_representation.UnlimitedCharacters, _)
 }
 
@@ -819,7 +816,7 @@ pub fn new_unlimited_characters(
 ///
 pub fn new_unlimited_text(value: String) -> Result(DataElementValue, DataError) {
   value
-  |> string.trim_end
+  |> utils.trim_ascii_end(0x20)
   |> bit_array.from_string
   |> value_representation.pad_bytes_to_even_length(
     value_representation.UnlimitedText,
@@ -975,7 +972,14 @@ pub fn get_string(value: DataElementValue) -> Result(String, DataError) {
       |> result.map_error(fn(_) {
         data_error.new_value_invalid("String bytes are not valid UTF-8")
       })
-      |> result.map(utils.trim_end_codepoints(_, [0x00, 0x20]))
+      |> result.map(fn(s) {
+        case value_representation(value) {
+          value_representation.ApplicationEntity
+          | value_representation.UniversalResourceIdentifier ->
+            utils.trim_ascii(s, 0x20)
+          _ -> utils.trim_ascii_end(s, 0x20)
+        }
+      })
 
     _ -> {
       use strings <- result.try(get_strings(value))
@@ -1004,7 +1008,14 @@ pub fn get_strings(value: DataElementValue) -> Result(List(String), DataError) {
         data_error.new_value_invalid("String bytes are not valid UTF-8")
       })
       |> result.map(string.split(_, "\\"))
-      |> result.map(list.map(_, utils.trim_end_codepoints(_, [0x00, 0x20])))
+      |> result.map(list.map(_, fn(s) {
+        case value_representation(value) {
+          value_representation.UniqueIdentifier -> utils.trim_ascii_end(s, 0x00)
+          value_representation.UnlimitedCharacters ->
+            utils.trim_ascii_end(s, 0x20)
+          _ -> utils.trim_ascii(s, 0x20)
+        }
+      }))
 
     _ -> Error(data_error.new_value_not_present())
   }

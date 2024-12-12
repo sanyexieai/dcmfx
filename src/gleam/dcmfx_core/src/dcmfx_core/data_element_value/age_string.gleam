@@ -50,11 +50,12 @@ pub fn from_bytes(bytes: BitArray) -> Result(StructuredAge, DataError) {
   let age_string =
     bytes
     |> bit_array.to_string
-    |> result.map(utils.trim_end_whitespace)
     |> result.replace_error(data_error.new_value_invalid(
       "AgeString is invalid UTF-8",
     ))
   use age_string <- result.try(age_string)
+
+  let age_string = age_string |> utils.trim_ascii(0x00) |> string.trim()
 
   let assert Ok(re) = regexp.from_string("^(\\d\\d\\d)([DWMY])$")
 

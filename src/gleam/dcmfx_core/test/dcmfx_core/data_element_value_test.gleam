@@ -943,7 +943,7 @@ pub fn new_person_name_test() {
   |> data_element_value.new_person_name
   |> should.equal(
     data_element_value.new_binary(value_representation.PersonName, <<
-      "=1^2^3^4^5\\==1^2^3^4^5",
+      "=1^ 2^3^4^5\\==1^2^3^4^5 ",
     >>),
   )
 }

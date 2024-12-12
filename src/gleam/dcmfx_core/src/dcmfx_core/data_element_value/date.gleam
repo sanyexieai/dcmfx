@@ -8,6 +8,7 @@ import gleam/int
 import gleam/option.{type Option, None, Some}
 import gleam/regexp
 import gleam/result
+import gleam/string
 
 /// A structured date that can be converted to/from a `Date` value.
 ///
@@ -21,11 +22,12 @@ pub fn from_bytes(bytes: BitArray) -> Result(StructuredDate, DataError) {
   let date_string =
     bytes
     |> bit_array.to_string
-    |> result.map(utils.trim_end_whitespace)
     |> result.replace_error(data_error.new_value_invalid(
       "Date is invalid UTF-8",
     ))
   use date_string <- result.try(date_string)
+
+  let date_string = date_string |> utils.trim_ascii(0x00) |> string.trim()
 
   let assert Ok(re) = regexp.from_string("^(\\d{4})(\\d\\d)(\\d\\d)$")
 

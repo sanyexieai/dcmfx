@@ -544,7 +544,7 @@ fn read_dicom_json_person_name_value(
       option.unwrap(raw_person_name.phonetic, ""),
     ]
     |> string.join("=")
-    |> utils.trim_end("=")
+    |> utils.trim_ascii_end(0x3D)
   })
   |> string.join("\\")
   |> bit_array.from_string

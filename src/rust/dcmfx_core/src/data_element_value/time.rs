@@ -2,7 +2,7 @@
 
 use regex::Regex;
 
-use crate::{utils, DataError};
+use crate::DataError;
 
 /// A structured time that can be converted from/to a `Time` data element value.
 ///
@@ -26,7 +26,7 @@ impl StructuredTime {
       DataError::new_value_invalid("Time is invalid UTF-8".to_string())
     })?;
 
-    let time_string = utils::trim_end_whitespace(time_string);
+    let time_string = time_string.trim_matches('\0').trim();
 
     match PARSE_TIME_REGEX.captures(time_string) {
       Some(caps) => {
