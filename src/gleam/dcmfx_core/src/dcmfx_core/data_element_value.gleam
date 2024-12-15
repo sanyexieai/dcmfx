@@ -91,8 +91,8 @@ pub fn to_string(
           bit_array_utils.reverse_index(bytes, fn(b) {
             int.bitwise_and(b, 0b1100_0000) != 0b1000_0000
           })
-          |> result.try(bit_array.slice(bytes, 0, _))
-          |> result.try(bit_array.to_string)
+          |> result.then(bit_array.slice(bytes, 0, _))
+          |> result.then(bit_array.to_string)
       }
 
       case utf8 {
@@ -520,7 +520,7 @@ pub fn new_attribute_tag(
 ) -> Result(DataElementValue, DataError) {
   value
   |> attribute_tag.to_bytes
-  |> result.try(new_binary(value_representation.AttributeTag, _))
+  |> result.then(new_binary(value_representation.AttributeTag, _))
 }
 
 /// Creates a new `CodeString` data element value.
@@ -592,7 +592,7 @@ pub fn new_integer_string(
 ) -> Result(DataElementValue, DataError) {
   value
   |> integer_string.to_bytes
-  |> result.try(new_binary(value_representation.IntegerString, _))
+  |> result.then(new_binary(value_representation.IntegerString, _))
 }
 
 /// Creates a new `LongString` data element value.
@@ -679,7 +679,7 @@ pub fn new_person_name(
 ) -> Result(DataElementValue, DataError) {
   value
   |> person_name.to_bytes
-  |> result.try(new_binary(value_representation.PersonName, _))
+  |> result.then(new_binary(value_representation.PersonName, _))
 }
 
 /// Creates a new `Sequence` data element value.
@@ -758,7 +758,7 @@ pub fn new_signed_very_long(
     data_error.new_value_invalid("Value out of range for SignedVeryLong VR")
   })
   |> result.map(bit_array.concat)
-  |> result.try(new_binary(value_representation.SignedVeryLong, _))
+  |> result.then(new_binary(value_representation.SignedVeryLong, _))
 }
 
 /// Creates a new `Time` data element value.
@@ -778,7 +778,7 @@ pub fn new_unique_identifier(
 ) -> Result(DataElementValue, DataError) {
   value
   |> unique_identifier.to_bytes
-  |> result.try(new_binary(value_representation.UniqueIdentifier, _))
+  |> result.then(new_binary(value_representation.UniqueIdentifier, _))
 }
 
 /// Creates a new `UniversalResourceIdentifier` data element value.
@@ -875,7 +875,7 @@ pub fn new_unsigned_very_long(
     data_error.new_value_invalid("Value out of range for UnsignedVeryLong VR")
   })
   |> result.map(bit_array.concat)
-  |> result.try(new_binary(value_representation.UnsignedVeryLong, _))
+  |> result.then(new_binary(value_representation.UnsignedVeryLong, _))
 }
 
 /// Returns the value representation for a data element value.

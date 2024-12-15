@@ -124,7 +124,7 @@ pub fn get_pixel_data_test() {
   // that causes each fragment to be its own frame
   data_set_with_three_fragments
   |> data_set.insert_int_value(dictionary.number_of_frames, [3])
-  |> result.try(dcmfx_pixel_data.get_pixel_data)
+  |> result.then(dcmfx_pixel_data.get_pixel_data)
   |> should.equal(
     Ok(
       #(value_representation.OtherByteString, [

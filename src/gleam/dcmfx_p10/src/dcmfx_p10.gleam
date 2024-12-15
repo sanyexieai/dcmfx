@@ -67,7 +67,7 @@ pub fn read_file_returning_builder_on_error(
   |> result.map_error(fn(e) {
     #(p10_error.FileStreamError("Opening file", e), data_set_builder.new())
   })
-  |> result.try(read_stream)
+  |> result.then(read_stream)
 }
 
 /// Reads DICOM P10 data from a file read stream into an in-memory data set.

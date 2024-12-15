@@ -953,7 +953,7 @@ fn read_data_element_header_part(
       // Add data element to the path
       let new_path =
         data_set_path.add_data_element(context.path, tag)
-        |> result.map_error(fn(e) {
+        |> result.map_error(fn(_) {
           p10_error.DataInvalid(
             "Reading data element header",
             "Data element '"

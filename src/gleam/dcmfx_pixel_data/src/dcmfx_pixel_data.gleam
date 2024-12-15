@@ -332,7 +332,7 @@ fn parse_extended_offset_table(
       dictionary.extended_offset_table.tag,
       value_representation.OtherVeryLongString,
     )
-    |> result.try(fn(bytes) {
+    |> result.then(fn(bytes) {
       bit_array_utils.to_uint64_list(bytes)
       |> result.replace_error(data_error.new_value_invalid(
         "Invalid Uint64 list",
@@ -349,7 +349,7 @@ fn parse_extended_offset_table(
       dictionary.extended_offset_table_lengths.tag,
       value_representation.OtherVeryLongString,
     )
-    |> result.try(fn(bytes) {
+    |> result.then(fn(bytes) {
       bit_array_utils.to_uint64_list(bytes)
       |> result.replace_error(data_error.new_value_invalid(
         "Invalid Uint64 list",

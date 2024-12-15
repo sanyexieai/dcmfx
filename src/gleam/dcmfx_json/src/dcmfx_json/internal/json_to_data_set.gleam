@@ -211,7 +211,7 @@ fn read_dicom_json_primitive_value(
     value_representation.DecimalString ->
       value
       |> dynamic.list(of: dynamic.dynamic)
-      |> result.try(fn(lst) {
+      |> result.then(fn(lst) {
         list.map(lst, fn(i) {
           case dynamic.float(i) {
             Ok(i) -> Ok(i)

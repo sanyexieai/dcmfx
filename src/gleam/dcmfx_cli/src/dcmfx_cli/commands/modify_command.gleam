@@ -130,7 +130,7 @@ pub fn run() {
 
   let modify_result =
     parse_transfer_syntax_flag(transfer_syntax_flag, flags)
-    |> result.try(fn(output_transfer_syntax) {
+    |> result.then(fn(output_transfer_syntax) {
       streaming_rewrite(
         input_filename,
         output_filename,

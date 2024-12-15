@@ -152,7 +152,7 @@ fn do_to_list(
       let item =
         bytes
         |> bit_array.slice(i * item_size, item_size)
-        |> result.try(read_item)
+        |> result.then(read_item)
 
       case item {
         Ok(item) ->

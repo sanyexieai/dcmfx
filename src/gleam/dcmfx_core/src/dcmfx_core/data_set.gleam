@@ -249,7 +249,7 @@ pub fn insert_float_value(
       |> result.replace_error(data_error.new_value_invalid(
         "DecimalString float value was not finite",
       ))
-      |> result.try(data_element_value.new_decimal_string)
+      |> result.then(data_element_value.new_decimal_string)
 
     [value_representation.FloatingPointDouble] ->
       data_element_value.new_floating_point_double(value)
@@ -858,7 +858,7 @@ pub fn get_string(
 ) -> Result(String, DataError) {
   data_set
   |> get_value(tag)
-  |> result.try(data_element_value.get_string)
+  |> result.then(data_element_value.get_string)
   |> result.map_error(
     data_error.with_path(_, data_set_path.new_with_data_element(tag)),
   )
@@ -874,7 +874,7 @@ pub fn get_strings(
 ) -> Result(List(String), DataError) {
   data_set
   |> get_value(tag)
-  |> result.try(data_element_value.get_strings)
+  |> result.then(data_element_value.get_strings)
   |> result.map_error(
     data_error.with_path(_, data_set_path.new_with_data_element(tag)),
   )
@@ -887,7 +887,7 @@ pub fn get_strings(
 pub fn get_int(data_set: DataSet, tag: DataElementTag) -> Result(Int, DataError) {
   data_set
   |> get_value(tag)
-  |> result.try(data_element_value.get_int)
+  |> result.then(data_element_value.get_int)
   |> result.map_error(
     data_error.with_path(_, data_set_path.new_with_data_element(tag)),
   )
@@ -903,7 +903,7 @@ pub fn get_ints(
 ) -> Result(List(Int), DataError) {
   data_set
   |> get_value(tag)
-  |> result.try(data_element_value.get_ints)
+  |> result.then(data_element_value.get_ints)
   |> result.map_error(
     data_error.with_path(_, data_set_path.new_with_data_element(tag)),
   )
@@ -919,7 +919,7 @@ pub fn get_big_int(
 ) -> Result(BigInt, DataError) {
   data_set
   |> get_value(tag)
-  |> result.try(data_element_value.get_big_int)
+  |> result.then(data_element_value.get_big_int)
   |> result.map_error(
     data_error.with_path(_, data_set_path.new_with_data_element(tag)),
   )
@@ -935,7 +935,7 @@ pub fn get_big_ints(
 ) -> Result(List(BigInt), DataError) {
   data_set
   |> get_value(tag)
-  |> result.try(data_element_value.get_big_ints)
+  |> result.then(data_element_value.get_big_ints)
   |> result.map_error(
     data_error.with_path(_, data_set_path.new_with_data_element(tag)),
   )
@@ -951,7 +951,7 @@ pub fn get_float(
 ) -> Result(IEEEFloat, DataError) {
   data_set
   |> get_value(tag)
-  |> result.try(data_element_value.get_float)
+  |> result.then(data_element_value.get_float)
   |> result.map_error(
     data_error.with_path(_, data_set_path.new_with_data_element(tag)),
   )
@@ -967,7 +967,7 @@ pub fn get_floats(
 ) -> Result(List(IEEEFloat), DataError) {
   data_set
   |> get_value(tag)
-  |> result.try(data_element_value.get_floats)
+  |> result.then(data_element_value.get_floats)
   |> result.map_error(
     data_error.with_path(_, data_set_path.new_with_data_element(tag)),
   )
@@ -982,7 +982,7 @@ pub fn get_age(
 ) -> Result(age_string.StructuredAge, DataError) {
   data_set
   |> get_value(tag)
-  |> result.try(data_element_value.get_age)
+  |> result.then(data_element_value.get_age)
   |> result.map_error(
     data_error.with_path(_, data_set_path.new_with_data_element(tag)),
   )
@@ -997,7 +997,7 @@ pub fn get_date(
 ) -> Result(date.StructuredDate, DataError) {
   data_set
   |> get_value(tag)
-  |> result.try(data_element_value.get_date)
+  |> result.then(data_element_value.get_date)
   |> result.map_error(
     data_error.with_path(_, data_set_path.new_with_data_element(tag)),
   )
@@ -1012,7 +1012,7 @@ pub fn get_date_time(
 ) -> Result(date_time.StructuredDateTime, DataError) {
   data_set
   |> get_value(tag)
-  |> result.try(data_element_value.get_date_time)
+  |> result.then(data_element_value.get_date_time)
   |> result.map_error(
     data_error.with_path(_, data_set_path.new_with_data_element(tag)),
   )
@@ -1027,7 +1027,7 @@ pub fn get_time(
 ) -> Result(time.StructuredTime, DataError) {
   data_set
   |> get_value(tag)
-  |> result.try(data_element_value.get_time)
+  |> result.then(data_element_value.get_time)
   |> result.map_error(
     data_error.with_path(_, data_set_path.new_with_data_element(tag)),
   )
@@ -1043,7 +1043,7 @@ pub fn get_person_name(
 ) -> Result(person_name.StructuredPersonName, DataError) {
   data_set
   |> get_value(tag)
-  |> result.try(data_element_value.get_person_name)
+  |> result.then(data_element_value.get_person_name)
   |> result.map_error(
     data_error.with_path(_, data_set_path.new_with_data_element(tag)),
   )
@@ -1059,7 +1059,7 @@ pub fn get_person_names(
 ) -> Result(List(person_name.StructuredPersonName), DataError) {
   data_set
   |> get_value(tag)
-  |> result.try(data_element_value.get_person_names)
+  |> result.then(data_element_value.get_person_names)
 }
 
 /// Looks up the *'(0002,0010) Transfer Syntax UID'* data element in a data set,
