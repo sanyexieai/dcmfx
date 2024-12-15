@@ -15,6 +15,7 @@ use crate::{P10Error, P10Part};
 /// A data set builder that can be fed a stream of DICOM P10 parts and
 /// materialize them into an in-memory data set.
 ///
+#[derive(Debug, PartialEq)]
 pub struct DataSetBuilder {
   file_preamble: Option<Box<[u8; 128]>>,
   file_meta_information: Option<DataSet>,
@@ -26,6 +27,7 @@ pub struct DataSetBuilder {
 /// Tracks where in the data set the builder is currently at, specifically the
 /// sequences and sequence items currently in the process of being created.
 ///
+#[derive(Debug, PartialEq)]
 enum BuilderLocation {
   RootDataSet {
     data_set: DataSet,
@@ -47,6 +49,7 @@ enum BuilderLocation {
 /// part has been received, but one or more of its `DataElementValueBytes` parts
 /// are still pending.
 ///
+#[derive(Debug, PartialEq)]
 struct PendingDataElement {
   tag: DataElementTag,
   vr: ValueRepresentation,

@@ -74,6 +74,13 @@ impl DataSet {
       .map(|(tag, value)| (*tag, value.clone()))
       .collect();
 
+    // Exclude any data elements that don't hold a chunk of binary data, i.e.
+    // sequences or encapsulated pixel data, as they aren't allowed in File
+    // Meta Information
+    file_meta_information
+      .0
+      .retain(|_tag, value| value.bytes().is_ok());
+
     if let Ok(value) = self.get_value(dictionary::SOP_CLASS_UID.tag) {
       file_meta_information
         .insert(dictionary::MEDIA_STORAGE_SOP_CLASS_UID.tag, value.clone());
