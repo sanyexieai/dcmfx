@@ -598,7 +598,14 @@ fn read_file_meta_information_data_set(
       case ends_at, data_set.is_empty(fmi_data_set) {
         None, True ->
           case data_element_value.get_int(value) {
-            Ok(i) -> Ok(Some(starts_at + 12 + i))
+            Ok(i) if i >= 0 -> Ok(Some(starts_at + 12 + i))
+            Ok(i) ->
+              Error(p10_error.DataInvalid(
+                when: "Reading File Meta Information",
+                details: "Group length is invalid: " <> int.to_string(i),
+                path: data_set_path.new_with_data_element(tag),
+                offset: byte_stream.bytes_read(context.stream),
+              ))
             Error(e) ->
               Error(p10_error.DataInvalid(
                 when: "Reading File Meta Information",

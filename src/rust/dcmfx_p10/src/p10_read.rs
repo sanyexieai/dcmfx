@@ -497,7 +497,15 @@ impl P10ReadContext {
         if tag == dictionary::FILE_META_INFORMATION_GROUP_LENGTH.tag {
           if ends_at.is_none() && fmi_data_set.is_empty() {
             match value.get_int() {
-              Ok(i) => *ends_at = Some(*starts_at + 12 + i as u64),
+              Ok(i) if i >= 0 => *ends_at = Some(*starts_at + 12 + i as u64),
+              Ok(i) => {
+                return Err(P10Error::DataInvalid {
+                  when: "Reading File Meta Information".to_string(),
+                  details: format!("Group length is invalid: {}", i),
+                  path: DataSetPath::new_with_data_element(tag),
+                  offset: self.stream.bytes_read(),
+                })
+              }
               Err(e) => {
                 return Err(P10Error::DataInvalid {
                   when: "Reading File Meta Information".to_string(),
