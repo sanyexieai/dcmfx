@@ -67,7 +67,7 @@ pub struct LengthRequirements {
 
 impl std::fmt::Display for ValueRepresentation {
   fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-    f.write_str(unsafe { std::str::from_utf8_unchecked(&self.to_bytes()) })
+    f.write_str(std::str::from_utf8(&self.to_bytes()).unwrap())
   }
 }
 

@@ -18,8 +18,8 @@ impl std::fmt::Display for DataElementTag {
     write!(
       f,
       "({},{})",
-      unsafe { std::str::from_utf8_unchecked(&hex_digits[0..4]) },
-      unsafe { std::str::from_utf8_unchecked(&hex_digits[4..8]) }
+      std::str::from_utf8(&hex_digits[0..4]).unwrap(),
+      std::str::from_utf8(&hex_digits[4..8]).unwrap()
     )
   }
 }
@@ -57,7 +57,9 @@ impl DataElementTag {
   /// Formats a data element tag as `"$GROUP$ELEMENT"`, e.g.`"0008002D"`.
   ///
   pub fn to_hex_string(&self) -> String {
-    unsafe { std::str::from_utf8_unchecked(&self.to_hex_digits()) }.to_string()
+    std::str::from_utf8(&self.to_hex_digits())
+      .unwrap()
+      .to_string()
   }
 
   /// Returns the eight hexadecimal digits for this data element tag's group

@@ -49,7 +49,7 @@ impl DataSetJsonExtensions for DataSet {
 
     self.to_json_stream(config, &mut cursor)?;
 
-    Ok(unsafe { String::from_utf8_unchecked(cursor.into_inner()) })
+    Ok(String::from_utf8(cursor.into_inner()).unwrap())
   }
 
   fn to_json_stream(
