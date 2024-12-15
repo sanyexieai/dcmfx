@@ -1,3 +1,5 @@
+use crate::internal::utils;
+
 /// Decodes the next codepoint from the given bytes using a 16-bit lookup table.
 /// The lookup table must have exactly 8,836 (94 * 94) 16-bit codepoint values.
 ///
@@ -13,8 +15,9 @@ pub fn decode_next_codepoint<'a>(
 ) -> Result<(char, &'a [u8]), ()> {
   match bytes {
     [byte_0, rest @ ..] if *byte_0 <= 0x20 => {
-      let char = unsafe { char::from_u32_unchecked(*byte_0 as u32) };
-      Ok((char, rest))
+      let codepoint = *byte_0 as u32;
+
+      Ok((utils::codepoint_to_char(codepoint), rest))
     }
 
     [byte_0, byte_1, rest @ ..]
@@ -23,17 +26,12 @@ pub fn decode_next_codepoint<'a>(
       // Calculate lookup table index
       let index = (*byte_0 as usize - 0x21) * 0x5E + (*byte_1 as usize - 0x21);
 
-      let char =
-        unsafe { char::from_u32_unchecked(lookup_table[index] as u32) };
+      let codepoint = lookup_table[index] as u32;
 
-      Ok((char, rest))
+      Ok((utils::codepoint_to_char(codepoint), rest))
     }
 
-    [_, rest @ ..] => {
-      let char = unsafe { char::from_u32_unchecked(0xFFFD) };
-
-      Ok((char, rest))
-    }
+    [_, rest @ ..] => Ok((utils::REPLACEMENT_CHARACTER, rest)),
 
     _ => Err(()),
   }

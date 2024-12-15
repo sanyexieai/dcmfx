@@ -1,5 +1,5 @@
+import dcmfx_character_set/internal/utils
 import gleam/bit_array
-import gleam/string
 
 /// Decodes the next codepoint from the given KS X 1001 bytes.
 ///
@@ -13,17 +13,13 @@ pub fn decode_next_codepoint(
       // Calculate lookup table index
       let index = { byte_0 - 0xA1 } * 0x5E + { byte_1 - 0xA1 }
 
-      let assert Ok(<<codepoint:16>>) =
+      let assert Ok(<<codepoint_value:16>>) =
         bit_array.slice(lookup_table, index * 2, 2)
-      let assert Ok(codepoint) = string.utf_codepoint(codepoint)
 
-      Ok(#(codepoint, rest))
+      Ok(#(utils.int_to_codepoint(codepoint_value), rest))
     }
 
-    <<_, rest:bytes>> -> {
-      let assert Ok(codepoint) = string.utf_codepoint(0xFFFD)
-      Ok(#(codepoint, rest))
-    }
+    <<_, rest:bytes>> -> Ok(#(utils.replacement_character(), rest))
 
     _ -> Error(Nil)
   }

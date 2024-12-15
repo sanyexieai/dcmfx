@@ -19,3 +19,4 @@ pub mod ks_x_1001;
 pub mod lookup_table_16bit;
 pub mod lookup_table_8bit;
 pub mod utf8;
+pub mod utils;

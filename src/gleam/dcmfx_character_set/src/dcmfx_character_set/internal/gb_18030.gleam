@@ -1,5 +1,5 @@
+import dcmfx_character_set/internal/utils
 import gleam/bit_array
-import gleam/string
 
 /// Decodes the next codepoint from the given GB 18030 bytes.
 ///
@@ -10,9 +10,9 @@ pub fn decode_next_codepoint(
     // Single-byte GB 18030 characters have a first (and only) byte value <=
     // 0x7F that maps directly to a Unicode codepoint
     <<byte_0, rest:bytes>> if byte_0 <= 0x7F -> {
-      let assert Ok(codepoint) = string.utf_codepoint(byte_0)
+      let codepoint_value = byte_0
 
-      Ok(#(codepoint, rest))
+      Ok(#(utils.int_to_codepoint(codepoint_value), rest))
     }
 
     // Double-byte GB 18030 characters, with the first and second bytes in the
@@ -24,12 +24,10 @@ pub fn decode_next_codepoint(
       // Calculate lookup table index
       let index = { byte_0 - 0x81 } * 0xBF + { byte_1 - 0x40 }
 
-      let assert Ok(<<codepoint:16>>) =
+      let assert Ok(<<codepoint_value:16>>) =
         bit_array.slice(gbk_lookup_table, index * 2, 2)
 
-      let assert Ok(codepoint) = string.utf_codepoint(codepoint)
-
-      Ok(#(codepoint, rest))
+      Ok(#(utils.int_to_codepoint(codepoint_value), rest))
     }
 
     // Four-byte characters with the first byte in the range 0x81 - 0x84 are
@@ -53,7 +51,7 @@ pub fn decode_next_codepoint(
       let byte_3 = byte_3 - 0x30
       let index = { { byte_0 * 10 + byte_1 } * 126 + byte_2 } * 10 + byte_3
 
-      let codepoint = case index {
+      let codepoint_value = case index {
         index if index <= 0x0023 -> 0x0080 + index - 0x0000
         index if index >= 0x0024 && index <= 0x0025 -> 0x00A5 + index - 0x0024
         index if index >= 0x0026 && index <= 0x002C -> 0x00A9 + index - 0x0026
@@ -263,9 +261,7 @@ pub fn decode_next_codepoint(
         _ -> 0xFFFD
       }
 
-      let assert Ok(codepoint) = string.utf_codepoint(codepoint)
-
-      Ok(#(codepoint, rest))
+      Ok(#(utils.int_to_codepoint(codepoint_value), rest))
     }
 
     // Four-byte codes with the first byte in the range 0x90-0xE3 are mapped
@@ -286,17 +282,15 @@ pub fn decode_next_codepoint(
       let byte_1 = byte_1 - 0x30
       let byte_2 = byte_2 - 0x81
       let byte_3 = byte_3 - 0x30
-      let codepoint =
+      let codepoint_value =
         { { byte_0 * 10 + byte_1 } * 126 + byte_2 } * 10 + byte_3 + 0x10000
 
       // If codepoint is outside of the mapped range then return the replacement
       // character
-      let codepoint = case codepoint > 0x10FFFF {
-        True -> 0xFFFD
-        False -> codepoint
+      let codepoint = case codepoint_value > 0x10FFFF {
+        True -> utils.replacement_character()
+        False -> utils.int_to_codepoint(codepoint_value)
       }
-
-      let assert Ok(codepoint) = string.utf_codepoint(codepoint)
 
       Ok(#(codepoint, rest))
     }
@@ -317,19 +311,11 @@ pub fn decode_next_codepoint(
       && byte_2 <= 0xFE
       && byte_3 >= 0x30
       && byte_3 <= 0x39
-    -> {
-      let assert Ok(codepoint) = string.utf_codepoint(0xFFFD)
-
-      Ok(#(codepoint, rest))
-    }
+    -> Ok(#(utils.replacement_character(), rest))
 
     // Any other data is invalid and maps to the replacement character with only
     // one byte being consumed
-    <<_, rest:bytes>> -> {
-      let assert Ok(codepoint) = string.utf_codepoint(0xFFFD)
-
-      Ok(#(codepoint, rest))
-    }
+    <<_, rest:bytes>> -> Ok(#(utils.replacement_character(), rest))
 
     _ -> Error(Nil)
   }

@@ -1,3 +1,5 @@
+use crate::internal::utils;
+
 /// Decodes the next codepoint from the given GB 18030 bytes.
 ///
 pub fn decode_next_codepoint(bytes: &[u8]) -> Result<(char, &[u8]), ()> {
@@ -5,9 +7,9 @@ pub fn decode_next_codepoint(bytes: &[u8]) -> Result<(char, &[u8]), ()> {
     // Single-byte GB 18030 characters have a first (and only) byte value <=
     // 0x7F that maps directly to a Unicode codepoint
     [byte_0, rest @ ..] if *byte_0 <= 0x7F => {
-      let char = unsafe { char::from_u32_unchecked(*byte_0 as u32) };
+      let codepoint = *byte_0 as u32;
 
-      Ok((char, rest))
+      Ok((utils::codepoint_to_char(codepoint), rest))
     }
 
     // Double-byte GB 18030 characters, with the first and second bytes in the
@@ -19,10 +21,9 @@ pub fn decode_next_codepoint(bytes: &[u8]) -> Result<(char, &[u8]), ()> {
       // Calculate lookup table index
       let index = (*byte_0 as usize - 0x81) * 0xBF + (*byte_1 as usize - 0x40);
 
-      let char =
-        unsafe { char::from_u32_unchecked(GBK_LOOKUP_TABLE[index] as u32) };
+      let codepoint = GBK_LOOKUP_TABLE[index] as u32;
 
-      Ok((char, rest))
+      Ok((utils::codepoint_to_char(codepoint), rest))
     }
 
     // Four-byte characters with the first byte in the range 0x81 - 0x84 are
@@ -252,9 +253,7 @@ pub fn decode_next_codepoint(bytes: &[u8]) -> Result<(char, &[u8]), ()> {
         _ => 0xFFFD,
       };
 
-      let char = unsafe { char::from_u32_unchecked(codepoint) };
-
-      Ok((char, rest))
+      Ok((utils::codepoint_to_char(codepoint), rest))
     }
 
     // Four-byte codes with the first byte in the range 0x90-0xE3 are mapped
@@ -276,13 +275,11 @@ pub fn decode_next_codepoint(bytes: &[u8]) -> Result<(char, &[u8]), ()> {
 
       // If codepoint is outside of the mapped range then return the replacement
       // character
-      let codepoint = if codepoint > 0x10FFFF {
-        0xFFFD
+      let char = if codepoint > 0x10FFFF {
+        utils::REPLACEMENT_CHARACTER
       } else {
-        codepoint
+        utils::codepoint_to_char(codepoint)
       };
-
-      let char = unsafe { char::from_u32_unchecked(codepoint) };
 
       Ok((char, rest))
     }
@@ -297,18 +294,12 @@ pub fn decode_next_codepoint(bytes: &[u8]) -> Result<(char, &[u8]), ()> {
         && (0x81..=0xFE).contains(byte_2)
         && (0x30..=0x39).contains(byte_3) =>
     {
-      let char = unsafe { char::from_u32_unchecked(0xFFFD) };
-
-      Ok((char, rest))
+      Ok((utils::REPLACEMENT_CHARACTER, rest))
     }
 
     // Any other data is invalid and maps to the replacement character with only
     // one byte being consumed
-    [_, rest @ ..] => {
-      let char = unsafe { char::from_u32_unchecked(0xFFFD) };
-
-      Ok((char, rest))
-    }
+    [_, rest @ ..] => Ok((utils::REPLACEMENT_CHARACTER, rest)),
 
     _ => Err(()),
   }

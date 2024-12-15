@@ -1,12 +1,14 @@
+use crate::internal::utils;
+
 /// Decodes the next codepoint from the given UTF-8 bytes.
 ///
 pub fn decode_next_codepoint(bytes: &[u8]) -> Result<(char, &[u8]), ()> {
   match bytes {
     // 1-byte UTF-8 character
     [b0, rest @ ..] if *b0 <= 0x7F => {
-      let char = unsafe { char::from_u32_unchecked(*b0 as u32) };
+      let codepoint = *b0 as u32;
 
-      Ok((char, rest))
+      Ok((utils::codepoint_to_char(codepoint), rest))
     }
 
     // 2-byte UTF-8 character
@@ -14,9 +16,8 @@ pub fn decode_next_codepoint(bytes: &[u8]) -> Result<(char, &[u8]), ()> {
       if (0xC0..=0xDF).contains(b0) && (0x80..=0xBF).contains(b1) =>
     {
       let codepoint = ((*b0 as u32 & 0x1F) << 6) | (*b1 as u32 & 0x3F);
-      let char = unsafe { char::from_u32_unchecked(codepoint) };
 
-      Ok((char, rest))
+      Ok((utils::codepoint_to_char(codepoint), rest))
     }
 
     // 3-byte UTF-8 character
@@ -29,9 +30,7 @@ pub fn decode_next_codepoint(bytes: &[u8]) -> Result<(char, &[u8]), ()> {
         | ((*b1 as u32 & 0x3F) << 6)
         | (*b2 as u32 & 0x3F);
 
-      let char = unsafe { char::from_u32_unchecked(codepoint) };
-
-      Ok((char, rest))
+      Ok((utils::codepoint_to_char(codepoint), rest))
     }
 
     // 4-byte UTF-8 character
@@ -46,18 +45,12 @@ pub fn decode_next_codepoint(bytes: &[u8]) -> Result<(char, &[u8]), ()> {
         | ((*b2 as u32 & 0x3F) << 6)
         | (*b3 as u32 & 0x3F);
 
-      let char = unsafe { char::from_u32_unchecked(codepoint) };
-
-      Ok((char, rest))
+      Ok((utils::codepoint_to_char(codepoint), rest))
     }
 
     // Any other byte is invalid data, so return the replacement character and
     // continue with the next byte
-    [_, rest @ ..] => {
-      let char = unsafe { char::from_u32_unchecked(0xFFFD) };
-
-      Ok((char, rest))
-    }
+    [_, rest @ ..] => Ok((utils::REPLACEMENT_CHARACTER, rest)),
 
     _ => Err(()),
   }

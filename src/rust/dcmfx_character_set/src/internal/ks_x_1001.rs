@@ -1,3 +1,5 @@
+use crate::internal::utils;
+
 /// Decodes the next codepoint from the given KS X 1001 bytes.
 ///
 pub fn decode_next_codepoint(bytes: &[u8]) -> Result<(char, &[u8]), ()> {
@@ -8,17 +10,12 @@ pub fn decode_next_codepoint(bytes: &[u8]) -> Result<(char, &[u8]), ()> {
       // Calculate lookup table index
       let index = (*byte_0 as usize - 0xA1) * 0x5E + (*byte_1 as usize - 0xA1);
 
-      let char =
-        unsafe { char::from_u32_unchecked(LOOKUP_TABLE[index] as u32) };
+      let codepoint = LOOKUP_TABLE[index] as u32;
 
-      Ok((char, rest))
+      Ok((utils::codepoint_to_char(codepoint), rest))
     }
 
-    [_, rest @ ..] => {
-      let char = unsafe { char::from_u32_unchecked(0xFFFD) };
-
-      Ok((char, rest))
-    }
+    [_, rest @ ..] => Ok((utils::REPLACEMENT_CHARACTER, rest)),
 
     _ => Err(()),
   }

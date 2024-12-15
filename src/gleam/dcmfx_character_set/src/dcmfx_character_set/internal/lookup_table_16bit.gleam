@@ -1,5 +1,5 @@
+import dcmfx_character_set/internal/utils
 import gleam/bit_array
-import gleam/string
 
 /// Decodes the next codepoint from the given bytes using a 16-bit lookup table.
 /// The lookup table must have exactly 8,836 (94 * 94) 16-bit codepoint values.
@@ -16,8 +16,9 @@ pub fn decode_next_codepoint(
 ) -> Result(#(UtfCodepoint, BitArray), Nil) {
   case bytes {
     <<byte_0, rest:bytes>> if byte_0 <= 0x20 -> {
-      let assert Ok(codepoint) = string.utf_codepoint(byte_0)
-      Ok(#(codepoint, rest))
+      let codepoint_value = byte_0
+
+      Ok(#(utils.int_to_codepoint(codepoint_value), rest))
     }
 
     <<byte_0, byte_1, rest:bytes>>
@@ -26,17 +27,13 @@ pub fn decode_next_codepoint(
       // Calculate lookup table index
       let index = { byte_0 - 0x21 } * 0x5E + { byte_1 - 0x21 }
 
-      let assert Ok(<<codepoint:16>>) =
+      let assert Ok(<<codepoint_value:16>>) =
         bit_array.slice(lookup_table, index * 2, 2)
-      let assert Ok(codepoint) = string.utf_codepoint(codepoint)
 
-      Ok(#(codepoint, rest))
+      Ok(#(utils.int_to_codepoint(codepoint_value), rest))
     }
 
-    <<_, rest:bytes>> -> {
-      let assert Ok(codepoint) = string.utf_codepoint(0xFFFD)
-      Ok(#(codepoint, rest))
-    }
+    <<_, rest:bytes>> -> Ok(#(utils.replacement_character(), rest))
 
     _ -> Error(Nil)
   }
