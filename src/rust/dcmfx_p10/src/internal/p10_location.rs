@@ -32,6 +32,7 @@ use crate::{internal::value_length::ValueLength, P10Error, P10Part};
 /// A P10 location is a list of location entries, with the current/most recently
 /// added one at the end of the vector.
 ///
+#[derive(Debug)]
 pub struct P10Location {
   entries: Vec<LocationEntry>,
 }
@@ -40,6 +41,7 @@ pub struct P10Location {
 /// once at the start, and can then be followed by sequences, each containing
 /// nested lists of items that can themselves contain sequences.
 ///
+#[derive(Debug)]
 enum LocationEntry {
   RootDataSet {
     clarifying_data_elements: ClarifyingDataElements,
@@ -59,7 +61,7 @@ enum LocationEntry {
 /// transfer syntax is 'Implicit VR Little Endian', and to decode non-UTF-8
 /// string data.
 ///
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 struct ClarifyingDataElements {
   specific_character_set: SpecificCharacterSet,
   bits_allocated: Option<u16>,

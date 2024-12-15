@@ -7,6 +7,7 @@ use std::collections::VecDeque;
 /// Incoming bytes can optionally be passed through zlib inflate prior to being
 /// made available for reading.
 ///
+#[derive(Debug)]
 pub struct ByteStream {
   bytes_queue: VecDeque<QueueItem>,
   bytes_queue_size: u64,
@@ -17,6 +18,7 @@ pub struct ByteStream {
   zlib_inflate_complete: bool,
 }
 
+#[derive(Debug)]
 struct QueueItem {
   data: Vec<u8>,
   bytes_read: usize,

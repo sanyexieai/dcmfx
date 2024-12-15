@@ -38,7 +38,7 @@ pub enum StringType {
 /// that Code Extension techniques are being used and that escape sequences may
 /// be encountered when decoding.
 ///
-#[derive(Clone, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct SpecificCharacterSet(Vec<&'static CharacterSet>);
 
 impl SpecificCharacterSet {

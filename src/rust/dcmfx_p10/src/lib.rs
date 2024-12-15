@@ -127,7 +127,13 @@ pub fn read_parts_from_stream(
 ) -> Result<Vec<P10Part>, P10Error> {
   loop {
     match context.read_parts() {
-      Ok(parts) if !parts.is_empty() => return Ok(parts),
+      Ok(parts) => {
+        if parts.is_empty() {
+          continue;
+        } else {
+          return Ok(parts);
+        }
+      }
 
       // If the read context needs more data then read bytes from the stream,
       // write them to the read context, and try again

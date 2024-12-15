@@ -32,6 +32,7 @@ use crate::{internal::value_length::ValueLength, P10Error, P10Part};
 
 /// Configuration used when reading DICOM P10 data.
 ///
+#[derive(Clone, Debug)]
 pub struct P10ReadConfig {
   /// The maximum size in bytes of a DICOM P10 part emitted by a read context.
   /// This can be used to control memory usage during a streaming read, and must
@@ -108,6 +109,7 @@ impl Default for P10ReadConfig {
 /// An updated read context is returned whenever data is added or parts are read
 /// out, and the updated read context must be used for subsequent calls.
 ///
+#[derive(Debug)]
 pub struct P10ReadContext {
   config: P10ReadConfig,
   stream: ByteStream,
@@ -121,6 +123,7 @@ pub struct P10ReadContext {
 /// The next action specifies what will be attempted to be read next from a read
 /// context by `read_parts`.
 ///
+#[derive(Debug)]
 #[allow(clippy::enum_variant_names)]
 enum NextAction {
   ReadFilePreambleAndDICMPrefix,
