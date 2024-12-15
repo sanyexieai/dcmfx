@@ -951,8 +951,19 @@ fn read_data_element_header_part(
         ReadDataElementValueBytes(header.tag, vr, length, length, emit_parts)
 
       // Add data element to the path
-      let assert Ok(new_path) =
+      let new_path =
         data_set_path.add_data_element(context.path, tag)
+        |> result.map_error(fn(e) {
+          p10_error.DataInvalid(
+            "Reading data element header",
+            "Data element '"
+              <> data_element_header.to_string(header)
+              <> "' is not valid for the current path",
+            context.path,
+            byte_stream.bytes_read(context.stream),
+          )
+        })
+      use new_path <- result.try(new_path)
 
       let new_context =
         P10ReadContext(

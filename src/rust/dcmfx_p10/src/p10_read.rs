@@ -807,7 +807,18 @@ impl P10ReadContext {
         };
 
         // Add data element to the path
-        self.path.add_data_element(tag).unwrap();
+        self
+          .path
+          .add_data_element(tag)
+          .map_err(|_| P10Error::DataInvalid {
+            when: "Reading data element header".to_string(),
+            details: format!(
+              "Data element '{}' is not valid for the current path",
+              header
+            ),
+            path: self.path.clone(),
+            offset: self.stream.bytes_read(),
+          })?;
 
         Ok(parts)
       }
