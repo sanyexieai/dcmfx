@@ -40,6 +40,9 @@ Some test files were excluded. The reasons for these exclusions are listed here:
   String (`CS`) value to a `?` character, but `pydicom` interprets them as ISO
   8859-1 bytes.
 
+- `fo-dicom/GH1376.dcm`: excluded because DCMfx does not allow File Meta
+  Information data elements (those with group = 0x0002) in the main data set.
+
 - `fo-dicom/GH179A.dcm`, `fo-dicom/GH179B.dcm`, `fo-dicom/GH626.dcm`: excluded
   because `pydicom` reads these invalid files incorrectly.
 

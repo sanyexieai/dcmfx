@@ -877,6 +877,20 @@ impl P10ReadContext {
       transfer_syntax.vr_serialization
     };
 
+    // File Meta Information data elements aren't allowed in the main data set
+    if tag.group == 0x0002
+      && !matches!(self.next_action, NextAction::ReadFileMetaInformation { .. })
+    {
+      return Err(P10Error::DataInvalid {
+        when: "Reading data element header".to_string(),
+        details:
+          "File Meta Information data element found in the main data set"
+            .to_string(),
+        path: DataSetPath::new_with_data_element(tag),
+        offset: self.stream.bytes_read(),
+      });
+    }
+
     match vr_serialization {
       transfer_syntax::VrSerialization::VrExplicit => {
         self.read_explicit_vr_and_length(tag)

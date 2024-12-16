@@ -1028,6 +1028,22 @@ fn read_data_element_header(
     False -> transfer_syntax.vr_serialization
   }
 
+  // File Meta Information data elements aren't allowed in the main data set
+  let is_invalid_data_element = case tag.group, context.next_action {
+    0x0002, ReadFileMetaInformation(..) -> False
+    0x0002, _ -> True
+    _, _ -> False
+  }
+  use <- bool.guard(
+    is_invalid_data_element,
+    Error(p10_error.DataInvalid(
+      when: "Reading data element header",
+      details: "File Meta Information data element found in the main data set",
+      path: context.path,
+      offset: byte_stream.bytes_read(context.stream),
+    )),
+  )
+
   case vr_serialization {
     transfer_syntax.VrExplicit -> read_explicit_vr_and_length(context, tag)
     transfer_syntax.VrImplicit -> read_implicit_vr_and_length(context, tag)
