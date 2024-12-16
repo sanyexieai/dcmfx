@@ -33,8 +33,7 @@ way.
 
 ## DICOM JSON
 
-DCMfx supports conversion to and from the DICOM JSON Model. The following
-details are relevant to users of this feature:
+DCMfx supports conversion to and from the DICOM JSON Model.
 
 1. The DICOM JSON specification is optionally extended to allow encapsulated
    pixel data to be stored. This is done by encoding the binary data present in

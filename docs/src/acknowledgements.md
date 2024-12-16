@@ -13,3 +13,6 @@ its suite of test DICOM files are used as part of the validation process.
 
 [__`fo-dicom`__](https://github.com/fo-dicom/fo-dicom). This DICOM library's test
 DICOM files are used as part of the validation process.
+
+[__`AFLplusplus`__](https://aflplus.plus). This excellent fuzzing library was
+used to identify a number of crashes and correctness issues in DCMfx.

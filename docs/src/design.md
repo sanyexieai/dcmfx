@@ -1,11 +1,10 @@
 # Design
 
-DCMfx is built with a streaming-centered design, which means that all operations
-operate in a streaming fashion wherever possible, enabling fast operation while
-keeping memory usage extremely low regardless of DICOM or data set size.
+DCMfx's design is focused around streaming DICOM data, i.e. all operations are
+performed in a streaming fashion wherever possible, enabling fast operation
+while with extremely low memory usage regardless of DICOM or data set size.
 
-Materializing data sets in memory is also supported, and is built on top of the
-underlying stream-based design.
+Loading DICOM data sets completely into memory is also supported, if preferred.
 
 ## Languages
 

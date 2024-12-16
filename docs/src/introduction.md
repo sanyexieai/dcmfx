@@ -3,7 +3,7 @@
 DCMfx is a novel free-software DICOM implementation that provides a range of
 tools and libraries licensed under the [AGPLv3](./license).
 
-Currently available are a CLI tool, an extension for popular IDEs, and re-usable
+These currently include a CLI tool, an extension for popular IDEs, and re-usable
 DICOM libraries for a range of programming languages.
 
 ---
