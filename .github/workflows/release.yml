@@ -204,7 +204,7 @@ jobs:
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
           git add Formula/dcmfx.rb
-          git commit -m "chore: release v${{ needs.check_semantic_release.outputs.new_release_version }}"
+          git commit -m "chore: Release v${{ needs.check_semantic_release.outputs.new_release_version }}"
           git push
 
   release_docs:
@@ -250,5 +250,5 @@ jobs:
           git config user.email "actions@github.com"
 
           git add .
-          git commit -m "chore: update docs"
+          git commit -m "chore: Update docs"
           git push
