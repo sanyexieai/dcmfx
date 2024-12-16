@@ -505,7 +505,7 @@ impl P10Location {
     match allowed_vrs {
       [vr] => *vr,
 
-      // For '(7FE0, 0010) Pixel Data', OB is not usable when in an implicit VR
+      // For '(7FE0,0010) Pixel Data', OB is not usable when in an implicit VR
       // transfer syntax. Ref: PS3.5 8.2.
       [ValueRepresentation::OtherByteString, ValueRepresentation::OtherWordString]
         if tag == dictionary::PIXEL_DATA.tag =>
@@ -541,8 +541,8 @@ impl P10Location {
           || tag == dictionary::HISTOGRAM_LAST_BIN_VALUE.tag =>
       {
         match clarifying_data_elements.pixel_representation {
-          Some(0) => ValueRepresentation::UnsignedShort,
-          _ => ValueRepresentation::SignedShort,
+          Some(1) => ValueRepresentation::SignedShort,
+          _ => ValueRepresentation::UnsignedShort,
         }
       }
 

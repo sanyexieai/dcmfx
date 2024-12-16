@@ -504,7 +504,7 @@ pub fn infer_vr_for_tag(
   case allowed_vrs {
     [vr] -> vr
 
-    // For '(7FE0, 0010) Pixel Data', OB is not usable when in an implicit VR
+    // For '(7FE0,0010) Pixel Data', OB is not usable when in an implicit VR
     // transfer syntax. Ref: PS3.5 8.2.
     [value_representation.OtherByteString, value_representation.OtherWordString]
       if tag == dictionary.pixel_data.tag
@@ -535,8 +535,8 @@ pub fn infer_vr_for_tag(
       || tag == dictionary.histogram_last_bin_value.tag
     ->
       case clarifying_data_elements.pixel_representation {
-        Some(0) -> value_representation.UnsignedShort
-        _ -> value_representation.SignedShort
+        Some(1) -> value_representation.SignedShort
+        _ -> value_representation.UnsignedShort
       }
 
     // Use '(003A,021A) WaveformBitsStored' to determine an OB/OW VR on relevant
