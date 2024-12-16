@@ -430,8 +430,8 @@ impl P10WriteContext {
     }
   }
 
-  /// Serializes a data element header to a `Vec<u8>`. If the VR is not
-  /// specified then the transfer syntax is assumed to use implicit VRs.
+  /// Serializes a data element header to a `Vec<u8>`. If a VR is not supplied
+  /// then implicit VR encoding will be used.
   ///
   fn data_element_header_to_bytes(
     &self,
@@ -476,7 +476,7 @@ impl P10WriteContext {
               return Err(P10Error::DataInvalid {
                 when: "Serializing data element header".to_string(),
                 details: format!(
-                  "Length 0x{:X} exceeds the maximum of 0xFFFF",
+                  "Length {} exceeds the maximum of 2^16 - 1 bytes",
                   header.length.to_u32(),
                 ),
                 path: self.path.clone(),
@@ -711,13 +711,14 @@ mod tests {
         &DataElementHeader {
           tag: dictionary::PATIENT_AGE.tag,
           vr: Some(ValueRepresentation::AgeString),
-          length: ValueLength::new(0x12345),
+          length: ValueLength::new(74565),
         },
         Endianness::LittleEndian,
       ),
       Err(P10Error::DataInvalid {
         when: "Serializing data element header".to_string(),
-        details: "Length 0x12345 exceeds the maximum of 0xFFFF".to_string(),
+        details: "Length 74565 exceeds the maximum of 2^16 - 1 bytes"
+          .to_string(),
         path: DataSetPath::new(),
         offset: 0
       })

@@ -1232,16 +1232,30 @@ fn read_data_element_value_bytes_part(
           // If this is a materialized value then the data element header for it
           // needs to be emitted, along with its final value bytes
           case materialized_value_required {
-            True -> [
-              p10_part.DataElementHeader(tag, vr, bit_array.byte_size(data)),
-              value_bytes_part,
-            ]
-            False -> [value_bytes_part]
+            True -> {
+              let length = bit_array.byte_size(data)
+              case length < 0xFFFFFFFF {
+                True ->
+                  Ok([
+                    p10_part.DataElementHeader(tag, vr, length),
+                    value_bytes_part,
+                  ])
+                False ->
+                  Error(p10_error.DataInvalid(
+                    "Reading data element value bytes",
+                    "Value exceeds 2^32 - 2 bytes when converted to UTF-8",
+                    context.path,
+                    byte_stream.bytes_read(context.stream),
+                  ))
+              }
+            }
+            False -> Ok([value_bytes_part])
           }
         }
 
-        False -> []
+        False -> Ok([])
       }
+      use parts <- result.try(parts)
 
       let next_action = case bytes_remaining {
         // This data element is complete, so the next action is either to read

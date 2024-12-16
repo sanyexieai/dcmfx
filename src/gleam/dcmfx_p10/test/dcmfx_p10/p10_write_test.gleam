@@ -64,7 +64,7 @@ pub fn data_element_header_to_bytes_test() {
   DataElementHeader(
     dictionary.patient_age.tag,
     Some(value_representation.AgeString),
-    value_length.new(0x12345),
+    value_length.new(74_565),
   )
   |> p10_write.data_element_header_to_bytes(
     transfer_syntax.LittleEndian,
@@ -73,7 +73,7 @@ pub fn data_element_header_to_bytes_test() {
   |> should.equal(
     Error(p10_error.DataInvalid(
       "Serializing data element header",
-      "Length 0x12345 exceeds the maximum of 0xFFFF",
+      "Length 74565 exceeds the maximum of 2^16 - 1 bytes",
       data_set_path.new(),
       0,
     )),

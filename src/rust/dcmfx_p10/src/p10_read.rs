@@ -1081,11 +1081,21 @@ impl P10ReadContext {
           // is emitted now. It was not emitted when it was read due to the
           // possibility of the Value and Value Length being altered above.
           if materialized_value_required {
-            parts.push(P10Part::DataElementHeader {
-              tag,
-              vr,
-              length: bytes_to_read,
-            });
+            if data.len() < 0xFFFFFFFF {
+              parts.push(P10Part::DataElementHeader {
+                tag,
+                vr,
+                length: data.len() as u32,
+              });
+            } else {
+              return Err(P10Error::DataInvalid {
+                when: "Reading data element value bytes".to_string(),
+                details: "Value exceeds 2^32 - 2 bytes when converted to UTF-8"
+                  .to_string(),
+                path: self.path.clone(),
+                offset: self.stream.bytes_read(),
+              });
+            }
           }
 
           parts.push(P10Part::DataElementValueBytes {

@@ -147,7 +147,8 @@ impl DataSet {
   }
 
   /// Inserts a data element with an attribute tag value into a data set. The
-  /// data element being inserted must be referenced through its dictionary entry.
+  /// data element being inserted must be referenced through its dictionary
+  /// entry.
   ///
   pub fn insert_attribute_tag_value(
     &mut self,
@@ -215,8 +216,9 @@ impl DataSet {
   }
 
   /// Inserts a data element with float values into a data set. The data element
-  /// being inserted must be referenced through its dictionary entry. This method
-  /// automatically determines the correct VR to use for the new data element.
+  /// being inserted must be referenced through its dictionary entry. This
+  /// method automatically determines the correct VR to use for the new data
+  /// element.
   ///
   pub fn insert_float_value(
     &mut self,

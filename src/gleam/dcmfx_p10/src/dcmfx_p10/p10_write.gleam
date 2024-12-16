@@ -445,8 +445,8 @@ fn part_to_bytes(
   }
 }
 
-/// Serializes a data element header to a `BitArray`. If the VR is not specified
-/// then the transfer syntax is assumed to use implicit VRs.
+/// Serializes a data element header to a `BitArray`. If a VR is not supplied
+/// then implicit VR encoding will be used.
 ///
 @internal
 pub fn data_element_header_to_bytes(
@@ -489,9 +489,9 @@ pub fn data_element_header_to_bytes(
             True ->
               p10_error.DataInvalid(
                 "Serializing data element header",
-                "Length 0x"
-                  <> int.to_base16(length)
-                  <> " exceeds the maximum of 0xFFFF",
+                "Length "
+                  <> int.to_string(length)
+                  <> " exceeds the maximum of 2^16 - 1 bytes",
                 context.path,
                 context.p10_total_byte_count,
               )
@@ -509,8 +509,8 @@ pub fn data_element_header_to_bytes(
             True ->
               p10_error.DataInvalid(
                 "Serializing data element header",
-                "Length 0x"
-                  <> int.to_base16(length)
+                "Length "
+                  <> int.to_string(length)
                   <> " exceeds the maximum of 0xFFFFFFFF",
                 context.path,
                 context.p10_total_byte_count,
